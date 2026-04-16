@@ -1,0 +1,112 @@
+/* AQL Brand CSS — Eagle Vision Screener */
+
+/* Grade Colors */
+.grade-a { color: #1DB954; }
+.grade-b { color: #66BB6A; }
+.grade-c { color: #FFB300; }
+.grade-d { color: #F57C00; }
+.grade-f { color: #D32F2F; }
+
+.grade-bg-a { background-color: #1DB954; }
+.grade-bg-b { background-color: #66BB6A; }
+.grade-bg-c { background-color: #FFB300; }
+.grade-bg-d { background-color: #F57C00; }
+.grade-bg-f { background-color: #D32F2F; }
+
+/* Disposition Badges */
+.badge-go {
+  background-color: rgba(29, 185, 84, 0.15);
+  border: 1px solid #1DB954;
+  color: #1DB954;
+}
+.badge-maybe {
+  background-color: rgba(255, 179, 0, 0.15);
+  border: 1px solid #FFB300;
+  color: #FFB300;
+}
+.badge-nogo {
+  background-color: rgba(211, 47, 47, 0.15);
+  border: 1px solid #D32F2F;
+  color: #D32F2F;
+}
+
+/* Navy Card Styles */
+.card-navy {
+  background-color: #001A2E;
+  border: 1px solid rgba(197, 165, 114, 0.2);
+  border-radius: 12px;
+}
+
+.card-navy-light {
+  background-color: #003A63;
+  border: 1px solid rgba(197, 165, 114, 0.15);
+  border-radius: 12px;
+}
+
+/* Gold Accent Line */
+.gold-line {
+  border-left: 3px solid #C5A572;
+}
+
+/* Lime CTA Button */
+.btn-lime {
+  background-color: #CFFF04;
+  color: #002B49;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+.btn-lime:hover {
+  background-color: #A8CC00;
+}
+.btn-lime:active {
+  transform: scale(0.98);
+}
+
+/* Critical Gap Row */
+.critical-gap-row {
+  border-left: 4px solid #F57C00;
+  background-color: rgba(245, 124, 0, 0.08);
+}
+
+/* Investment grade text sizes */
+.text-display {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.text-headline {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+/* Glassmorphism cards */
+.glass-card {
+  background: rgba(0, 43, 73, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(197, 165, 114, 0.25);
+  border-radius: 16px;
+}
+
+/* Pack status animations */
+@keyframes pulse-gold {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.pack-running {
+  animation: pulse-gold 1.5s ease-in-out infinite;
+}
+
+/* Quadrant Plot container */
+.quadrant-plot {
+  position: relative;
+}
+.quadrant-execute { background-color: rgba(29, 185, 84, 0.08); }
+.quadrant-race { background-color: rgba(255, 179, 0, 0.08); }
+.quadrant-build { background-color: rgba(100, 116, 139, 0.08); }
+.quadrant-danger { background-color: rgba(211, 47, 47, 0.08); }

@@ -1,0 +1,81 @@
+@media print {
+  /* Hide navigation and non-report elements */
+  nav,
+  header.app-header,
+  .no-print,
+  .abort-button,
+  .export-bar,
+  .sidebar,
+  .back-button {
+    display: none !important;
+  }
+
+  /* Force white background for print */
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .card-navy,
+  .card-navy-light,
+  .glass-card {
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    color: #000000 !important;
+  }
+
+  /* Each report page on its own print page */
+  .report-page {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .report-page:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Print-friendly colors */
+  .text-white { color: #000000 !important; }
+  .text-gray-300, .text-gray-400 { color: #555555 !important; }
+
+  /* AQL colors translate to print */
+  .text-yellow-400, .text-amber-400 { color: #b45309 !important; }
+  .text-green-400 { color: #166534 !important; }
+  .text-red-400 { color: #991b1b !important; }
+
+  /* Disposition badges */
+  .badge-go { background-color: #dcfce7 !important; color: #166534 !important; }
+  .badge-maybe { background-color: #fef3c7 !important; color: #92400e !important; }
+  .badge-nogo { background-color: #fee2e2 !important; color: #991b1b !important; }
+
+  /* Page margins */
+  @page {
+    margin: 0.75in;
+    size: letter;
+  }
+
+  /* Force text colors in table cells */
+  td, th {
+    color: #000000 !important;
+  }
+
+  /* Ensure full width */
+  .max-w-7xl,
+  .max-w-6xl,
+  .max-w-5xl {
+    max-width: 100% !important;
+  }
+
+  /* Hide scrollbars in print */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Grade badges in print */
+  .grade-a { color: #166534 !important; }
+  .grade-b { color: #166534 !important; }
+  .grade-c { color: #92400e !important; }
+  .grade-d { color: #c2410c !important; }
+  .grade-f { color: #991b1b !important; }
+}

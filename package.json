@@ -1,0 +1,38 @@
+{
+  "name": "eagle-vision-screener",
+  "private": true,
+  "version": "1.0.0-mvp",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "package": "node scripts/package.mjs",
+    "bundle-functions": "node scripts/bundle-functions.mjs"
+  },
+  "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.5.1",
+    "recharts": "^2.15.3",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.40.0",
+    "@netlify/functions": "^5.2.0",
+    "@tailwindcss/vite": "^4.1.4",
+    "@types/node": "^22.15.3",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "esbuild": "^0.25.3",
+    "pdf-parse": "^1.1.1",
+    "tailwindcss": "^4.1.4",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.2",
+    "zod": "^3.24.3"
+  }
+}

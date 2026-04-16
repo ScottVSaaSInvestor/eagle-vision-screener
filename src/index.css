@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+@import "./styles/brand.css";
+@import "./styles/print.css";
+
+:root {
+  /* AQL Brand Colors */
+  --aql-navy: #002B49;
+  --aql-navy-dark: #001A2E;
+  --aql-navy-light: #003A63;
+  --aql-gold: #C5A572;
+  --aql-gold-light: #D4BF96;
+  --aql-lime: #CFFF04;
+  --aql-lime-dark: #A8CC00;
+
+  /* Signal Colors */
+  --signal-go: #1DB954;
+  --signal-maybe: #FFB300;
+  --signal-gap: #F57C00;
+  --signal-nogo: #D32F2F;
+
+  /* Neutrals */
+  --card-bg: #F5F7FA;
+  --text-dark: #0A1929;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+
+  /* Typography */
+  --font-header: 'Montserrat', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--aql-navy);
+  color: #ffffff;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-header);
+}
+
+code, pre, .mono {
+  font-family: var(--font-mono);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(197,165,114,0.4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(197,165,114,0.7);
+}

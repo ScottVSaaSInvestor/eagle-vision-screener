@@ -1,0 +1,10 @@
+node_modules/
+dist/
+deploy/
+.env
+.env.local
+.env.*.local
+.netlify/
+*.log
+.DS_Store
+Thumbs.db
