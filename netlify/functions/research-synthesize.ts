@@ -35,7 +35,7 @@ const SYNTHESIS_FALLBACK_MODEL = 'claude-haiku-3-5';
 // Attempt 1: 50K chars  — ~15-25s on Sonnet (Vercel) / ~8-12s on 30K (Netlify)
 // Attempt 2: 25K chars  — ~8-12s, reliable fallback
 // Attempt 3: 10K chars  — ~3-5s on Haiku, guaranteed completion
-const EVIDENCE_CAPS = [50000, 25000, 10000];
+const EVIDENCE_CAPS = [20000, 12000, 6000]; // Kept low so Vercel function completes in <20s per attempt
 
 // What each dimension's synthesis should focus on extracting
 const SYNTHESIS_FOCUS: Record<string, string> = {

@@ -53,13 +53,13 @@ const CFG = {
   // On Vercel Pro (300s timeout) we can feed full evidence to Sonnet comfortably.
   // Sonnet on 50K chars: ~15-25s. Well within 300s budget.
   // On Netlify (26s): the synthesize function's own retry ladder caps at 30K/15K/8K.
-  SYNTH_MAX_CHARS: 50000,
+  SYNTH_MAX_CHARS: 20000,  // Kept low so browser fetch completes in <15s (50K was causing browser abort)
   // Pack call timeout — Vercel Pro allows 300s. Opus on 8K input tokens: ~60-90s.
   // Set to 180s to allow Opus to fully reason through complex evidence.
   PACK_TIMEOUT_MS: 180000,
   // Synthesis call timeout — Sonnet finishes in 15-25s on 50K chars.
   // Set to 90s to give 3 retry attempts comfortable room.
-  SYNTH_TIMEOUT_MS: 90000,
+  SYNTH_TIMEOUT_MS: 55000,  // 55s client timeout — synthesis at 20K chars takes ~8-12s on Sonnet
   // Gap-fill call timeout — Sonnet generates queries in 5-10s.
   GAPFILL_TIMEOUT_MS: 45000,
   // Delay between search batches — 800ms to avoid Tavily rate limits

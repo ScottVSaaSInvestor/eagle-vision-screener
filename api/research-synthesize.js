@@ -10084,7 +10084,7 @@ var sdk_default = Anthropic;
 var client = new sdk_default({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
 var SYNTHESIS_MODEL = "claude-sonnet-4-5";
 var SYNTHESIS_FALLBACK_MODEL = "claude-haiku-3-5";
-var EVIDENCE_CAPS = [5e4, 25e3, 1e4];
+var EVIDENCE_CAPS = [2e4, 12e3, 6e3];
 var SYNTHESIS_FOCUS = {
   company_profile: `Extract and structure the following:
 1. COMPANY OVERVIEW: Official name, founded, HQ, description, vertical/industry, target customer segment
