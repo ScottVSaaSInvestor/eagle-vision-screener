@@ -43,7 +43,7 @@ cp .env.example .env.local
 
 ```
 ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
+ANTHROPIC_MODEL=claude-sonnet-4-6
 TAVILY_API_KEY=tvly-...
 BRAVE_SEARCH_API_KEY=BSA-...  # optional
 ACCESS_PASSCODE=your-passcode
@@ -84,7 +84,7 @@ npm run package      # Creates deploy/ folder
 3. Drag the `./deploy/` folder onto the **"Deploy manually"** drop zone
 4. Go to **Site Settings → Environment Variables → Add a variable** for each:
    - `ANTHROPIC_API_KEY` = your Claude API key
-   - `ANTHROPIC_MODEL` = `claude-sonnet-4-5-20250929`
+   - `ANTHROPIC_MODEL` = `claude-sonnet-4-6`
    - `TAVILY_API_KEY` = your Tavily API key
    - `ACCESS_PASSCODE` = your secure passcode
    - `BRAVE_SEARCH_API_KEY` = (optional fallback)

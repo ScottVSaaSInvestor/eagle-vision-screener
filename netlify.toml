@@ -13,15 +13,13 @@
 # TAVILY_API_KEY      = tvly-...   (for web search — REQUIRED)
 # ACCESS_PASSCODE     = yourpass   (gate the app — REQUIRED)
 #
-# ANTHROPIC_MODEL     = claude-sonnet-4-5-20250929
-#   ↑ THIS IS THE FIX FOR THE 1-MINUTE TIMEOUT ERROR ↑
-#   The default model (claude-opus-4-5) takes 40-90s per pack call.
-#   Netlify's hard limit is 26s → every pack times out → all packs return failed.
-#   Setting ANTHROPIC_MODEL=claude-sonnet-4-5-20250929 fixes this:
+# ANTHROPIC_MODEL     = claude-sonnet-4-6  (optional override)
+#   Default pack model is claude-opus-4-7 (latest, Feb 2026 training).
+#   If Netlify free tier timeouts occur (26s limit), set this to claude-sonnet-4-6:
 #     - Sonnet generates structured JSON packs in 8-15s (well within 26s)
 #     - Quality is nearly identical for structured JSON extraction tasks
 #     - Each pack has a 3-attempt fallback: Sonnet → Sonnet(shorter) → Haiku
-#   DO NOT use claude-opus-4-5 unless you are on Netlify Pro with 60s+ timeouts.
+#   Netlify Pro (60s timeout) can run claude-opus-4-7 without override.
 # ══════════════════════════════════════════════════════════════════════════════
 
 [[redirects]]
@@ -72,6 +70,9 @@
   timeout = 26
 
 [functions."research-synthesize"]
+  timeout = 26
+
+[functions."run-synthesis-all"]
   timeout = 26
 
 # ── Auth & Document Functions ─────────────────────────────────────────────────
