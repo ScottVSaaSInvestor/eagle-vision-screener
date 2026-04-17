@@ -228,61 +228,73 @@ export function generateUpgradeBreakConditions(
   score: ScoreBundle,
   companyName: string
 ): UpgradeBreakConditions {
-  const upgradeToGo: string[] = [];
-  const keepMaybe: string[] = [];
-  const dropToNogo: string[] = [];
+  const advanceSignals: string[] = [];
+  const keyQuestions: string[] = [];
+  const watchList: string[] = [];
 
   const criticalGapNames = score.factor_scores
     .filter(f => f.is_critical_gap)
     .map(f => f.factor_name)
     .join(', ');
 
-  if (score.disposition === 'MAYBE') {
-    upgradeToGo.push(
-      `AI Risk Score drops below 50 (currently ${score.risk_score.toFixed(0)}/100) through confirmed evidence of durable competitive advantage — specifically, validated low switching costs and no credible Series B+ AI-native entrant`,
-      criticalGapNames ? `Critical gaps in ${criticalGapNames} resolved with HIGH-confidence evidence from customer interviews and technical review` : 'All readiness factors above 50-point threshold confirmed through technical diligence',
-      `${companyName} demonstrates active AI product roadmap with shipped features and measurable customer adoption, validating the AI value creation thesis`,
-      'Customer win/loss analysis from last 6 months shows <15% losses attributable to AI-native competitors or incumbent AI features'
+  // ADVANCE SIGNALS — evidence that builds conviction to move forward
+  advanceSignals.push(
+    `Management 1:1 confirms specific AI product roadmap with budget allocated, named AI hires planned or in place, and executive sponsor driving the initiative`,
+    criticalGapNames
+      ? `Diligence resolves critical gaps in: ${criticalGapNames} — specifically through customer interviews confirming workflow lock-in and technical review confirming data infrastructure`
+      : `Customer interviews confirm >80% workflow dependency with low switching intent and active AI feature requests`,
+    `Win/loss analysis from last 12 months shows <15% losses attributable to AI-native competitors or incumbent AI features in ${companyName}'s core verticals`,
+    `Technical review confirms ${companyName}'s data architecture can support ML workloads within 6-12 months without a full replatform`
+  );
+
+  // KEY QUESTIONS — the specific open questions to resolve in diligence
+  const quadrant = score.quadrant;
+  if (quadrant === 'DANGER_ZONE') {
+    keyQuestions.push(
+      `How fast is the competitive window closing? Get specific timelines: when do AI-native entrants reach Series B, when do incumbents ship GA AI features?`,
+      `What is management's current AI awareness? A CEO who can name 3 AI-native competitors and has a response plan is very different from one who cannot`,
+      `What is the switching cost structure? If customers are genuinely locked in by workflow integration, the threat timeline extends materially`
     );
-    keepMaybe.push(
-      `Confidence remains ${score.confidence_overall} due to incomplete data — full data collection with management access and data room would clarify disposition within 2-3 weeks`,
-      score.confidence_overall === 'L' ? 'Multiple pack functions returned LOW confidence — the disposition is sensitive to data quality and could shift materially with better evidence' : `AI risk (${score.risk_score.toFixed(0)}/100) and readiness (${score.readiness_score.toFixed(0)}/100) scores suggest a company at a genuine inflection point — the thesis is real but timing and execution risk need further de-risking`,
-      'No single factor creates a binary kill switch, but the combination of risks requires active monitoring through customer reference calls before conviction is established'
+  } else if (quadrant === 'BUILD_MODE') {
+    keyQuestions.push(
+      `How deep is the System of Record position? Get customer cohort data: what % of daily operations run through ${companyName}, and what would switching cost operationally?`,
+      `What is the realistic AI build timeline? Given current engineering team and data infrastructure, can they reach Stage 2 (AI-Enabled) within 12-18 months post-close?`,
+      `Who owns AI internally? Is there a technical co-founder, VP Engineering, or Head of AI who can actually execute the build plan?`
     );
-    dropToNogo.push(
-      '2 or more additional critical gaps confirmed in technical diligence (any readiness factor falling below 30/100)',
-      `AI-native entrants with Series B+ funding confirmed at 3+ companies with documented customer traction in ${companyName}'s core verticals`,
-      'Incumbent AI features achieve GA status with >20% customer adoption within the target vertical, collapsing the competitive window below 12 months',
-      `${companyName} management demonstrates low AI conviction in 1:1 sessions — no specific roadmap, no AI hiring plan, no experimentation budget`
-    );
-  } else if (score.disposition === 'GO') {
-    upgradeToGo.push(
-      `${companyName} is already GO — maintain conviction but complete full technical and commercial diligence to validate the thesis holds at scale`,
-      'Key remaining validation: customer reference calls confirming workflow embeddedness, technical audit of AI readiness depth, and management 1:1 on AI execution capability'
-    );
-    keepMaybe.push(
-      'No pathway back to MAYBE given current evidence — only confirmed disconfirming evidence would change disposition',
-      'Monitor: AI-native entrant funding rounds, incumbent AI feature launches, and customer NPS trends throughout diligence process'
-    );
-    dropToNogo.push(
-      `Technical diligence reveals ${companyName}'s architecture cannot support ML workloads without a complete replatform (>18 months and >$5M investment)`,
-      'Customer interviews reveal high switching propensity — >40% of customers actively evaluating competitive alternatives or expressing willingness to switch',
-      `3+ AI-native entrants confirmed with ARR > $5M in ${companyName}'s core use cases — competitive window effectively closed`,
-      'Financial review reveals undisclosed liabilities, inflated revenue metrics, or customer concentration >40% in a single account'
+  } else if (quadrant === 'RACE_MODE') {
+    keyQuestions.push(
+      `What is the AI acceleration plan for the first 100 days post-close? The window is open but competitors are moving — what is the specific sprint plan?`,
+      `Which AI features are table-stakes vs. differentiators? Focus first on the features that protect the SOR position, then on features that expand the value prop`,
+      `Can the team execute at the required speed? Assess whether current engineering velocity is compatible with the competitive timeline`
     );
   } else {
-    // NO-GO
-    upgradeToGo.push(
-      `${companyName} is currently NO-GO — would require fundamental reassessment to change disposition`,
-      `Unlikely pathways: ${criticalGapNames ? `resolution of ${criticalGapNames} gaps plus ` : ''}complete competitive repositioning away from at-risk verticals`,
-      'Reassess only if: new AI product launch with customer traction, structural change in competitive landscape, or significant management team upgrade'
-    );
-    keepMaybe.push('Not applicable — disposition is NO-GO. Reassessment would require returning to full screening with new evidence.');
-    dropToNogo.push(
-      `Already NO-GO — conviction strengthens with: further AI-native entrant traction, continued incumbent AI feature launches, or additional critical gaps confirmed in technical review`,
-      'Track for 12 months: if the company successfully launches differentiated AI features with customer adoption, the disposition may warrant reassessment'
+    // EXECUTE
+    keyQuestions.push(
+      `Validate the AI moat: what specifically prevents a well-funded AI-native entrant from replicating the core workflow in 18-24 months?`,
+      `What is the SOA (System of Action) roadmap? The company is well-positioned — but do they have a credible plan to move from AI-Enabled to AI-Native in the hold period?`,
+      `What does outcome-based pricing look like in this vertical? Can the company shift from seat-based to value-based pricing as AI proves ROI?`
     );
   }
 
-  return { upgrade_to_go: upgradeToGo, keep_maybe: keepMaybe, drop_to_nogo: dropToNogo };
+  // Current confidence note
+  if (score.confidence_overall === 'L') {
+    keyQuestions.push(
+      `Note: Perch confidence is LOW — this is a directional screen, not a deep research. Management access and data room review will materially sharpen the picture on most factors`
+    );
+  }
+
+  // WATCH LIST — factors to monitor that could change the picture if confirmed negative
+  watchList.push(
+    `AI-native entrant Series B+ funding rounds in ${companyName}'s specific sub-vertical — track funding databases monthly through diligence`,
+    `Incumbent AI feature launches: monitor product release notes from the 3-5 largest incumbents for GA-status AI features targeting ${companyName}'s use cases`,
+    `${companyName} management AI conviction in 1:1 sessions — if leadership cannot articulate a specific AI roadmap with budget and timeline, the build thesis is at risk`
+  );
+
+  if (criticalGapNames) {
+    watchList.push(
+      `Technical diligence finding: if ${criticalGapNames} gaps cannot be closed within the hold period without a full replatform (>18 months, >$5M), reassess the build economics`
+    );
+  }
+
+  return { advance_signals: advanceSignals, key_questions: keyQuestions, watch_list: watchList };
 }

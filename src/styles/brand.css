@@ -1,112 +1,83 @@
-/* AQL Brand CSS — Eagle Vision Screener */
+/* Perch / AQL Brand CSS */
 
-/* Grade Colors */
+/* ── Grade Colors ── */
 .grade-a { color: #1DB954; }
-.grade-b { color: #66BB6A; }
+.grade-b { color: #4CAF8A; }
 .grade-c { color: #FFB300; }
 .grade-d { color: #F57C00; }
-.grade-f { color: #D32F2F; }
+.grade-f { color: #E53935; }
 
 .grade-bg-a { background-color: #1DB954; }
-.grade-bg-b { background-color: #66BB6A; }
+.grade-bg-b { background-color: #4CAF8A; }
 .grade-bg-c { background-color: #FFB300; }
 .grade-bg-d { background-color: #F57C00; }
-.grade-bg-f { background-color: #D32F2F; }
+.grade-bg-f { background-color: #E53935; }
 
-/* Disposition Badges */
+/* ── Disposition Badges ── */
 .badge-go {
-  background-color: rgba(29, 185, 84, 0.15);
-  border: 1px solid #1DB954;
+  background: rgba(29, 185, 84, 0.12);
+  border: 1px solid rgba(29, 185, 84, 0.5);
   color: #1DB954;
+  box-shadow: 0 0 12px rgba(29,185,84,0.15);
 }
 .badge-maybe {
-  background-color: rgba(255, 179, 0, 0.15);
-  border: 1px solid #FFB300;
+  background: rgba(255, 179, 0, 0.12);
+  border: 1px solid rgba(255, 179, 0, 0.5);
   color: #FFB300;
 }
 .badge-nogo {
-  background-color: rgba(211, 47, 47, 0.15);
-  border: 1px solid #D32F2F;
-  color: #D32F2F;
+  background: rgba(229, 57, 53, 0.12);
+  border: 1px solid rgba(229, 57, 53, 0.5);
+  color: #E53935;
 }
 
-/* Navy Card Styles */
+/* ── Card styles ── */
 .card-navy {
-  background-color: #001A2E;
-  border: 1px solid rgba(197, 165, 114, 0.2);
-  border-radius: 12px;
+  background: #071E30;
+  border: 1px solid rgba(0, 200, 220, 0.12);
+  border-radius: 14px;
 }
-
 .card-navy-light {
-  background-color: #003A63;
-  border: 1px solid rgba(197, 165, 114, 0.15);
-  border-radius: 12px;
+  background: #0A2540;
+  border: 1px solid rgba(0, 200, 220, 0.15);
+  border-radius: 14px;
 }
 
-/* Gold Accent Line */
-.gold-line {
-  border-left: 3px solid #C5A572;
-}
+/* ── Teal accent line ── */
+.teal-line { border-left: 3px solid #00C8DC; }
+.gold-line  { border-left: 3px solid #C5A572; }
 
-/* Lime CTA Button */
-.btn-lime {
-  background-color: #CFFF04;
-  color: #002B49;
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-}
-.btn-lime:hover {
-  background-color: #A8CC00;
-}
-.btn-lime:active {
-  transform: scale(0.98);
-}
-
-/* Critical Gap Row */
-.critical-gap-row {
-  border-left: 4px solid #F57C00;
-  background-color: rgba(245, 124, 0, 0.08);
-}
-
-/* Investment grade text sizes */
-.text-display {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 3.5rem;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.text-headline {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 1.75rem;
-  font-weight: 700;
-}
-
-/* Glassmorphism cards */
+/* ── Glass card ── */
 .glass-card {
-  background: rgba(0, 43, 73, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(197, 165, 114, 0.25);
+  background: rgba(4, 24, 40, 0.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 200, 220, 0.18);
   border-radius: 16px;
 }
 
-/* Pack status animations */
-@keyframes pulse-gold {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-.pack-running {
-  animation: pulse-gold 1.5s ease-in-out infinite;
+/* ── Critical gap row ── */
+.critical-gap-row {
+  border-left: 3px solid #F57C00;
+  background: rgba(245, 124, 0, 0.07);
 }
 
-/* Quadrant Plot container */
-.quadrant-plot {
-  position: relative;
+/* ── Typography ── */
+.text-display {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
 }
-.quadrant-execute { background-color: rgba(29, 185, 84, 0.08); }
-.quadrant-race { background-color: rgba(255, 179, 0, 0.08); }
-.quadrant-build { background-color: rgba(100, 116, 139, 0.08); }
-.quadrant-danger { background-color: rgba(211, 47, 47, 0.08); }
+.text-headline {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ── Quadrant colors ── */
+.quadrant-execute { background: rgba(29, 185, 84, 0.07); }
+.quadrant-race    { background: rgba(255, 179, 0, 0.07); }
+.quadrant-build   { background: rgba(0, 200, 220, 0.05); }
+.quadrant-danger  { background: rgba(229, 57, 53, 0.07); }

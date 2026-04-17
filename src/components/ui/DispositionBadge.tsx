@@ -1,9 +1,9 @@
 import type { Disposition, Confidence } from '@/engine/types';
 
-const DISPOSITION_CONFIG: Record<Disposition, { bg: string; border: string; text: string; icon: string; label: string }> = {
-  'GO': { bg: 'rgba(29,185,84,0.15)', border: '#1DB954', text: '#1DB954', icon: '✓', label: 'GO' },
-  'MAYBE': { bg: 'rgba(255,179,0,0.15)', border: '#FFB300', text: '#FFB300', icon: '~', label: 'MAYBE' },
-  'NO-GO': { bg: 'rgba(211,47,47,0.15)', border: '#D32F2F', text: '#D32F2F', icon: '✕', label: 'NO-GO' },
+const DISPOSITION_CONFIG: Record<Disposition, { bg: string; border: string; text: string; icon: string; label: string; sublabel: string }> = {
+  'ADVANCE':   { bg: 'rgba(29,185,84,0.15)',  border: '#1DB954', text: '#1DB954', icon: '→', label: 'ADVANCE',   sublabel: 'Take to full diligence now' },
+  'DILIGENCE': { bg: 'rgba(0,200,220,0.12)',  border: '#00C8DC', text: '#00C8DC', icon: '?', label: 'DILIGENCE', sublabel: 'Real opportunity — resolve open questions' },
+  'PASS':      { bg: 'rgba(211,47,47,0.15)',  border: '#D32F2F', text: '#D32F2F', icon: '✕', label: 'PASS',      sublabel: 'Extreme risk + insufficient foundation' },
 };
 
 interface DispositionBadgeProps {
@@ -33,6 +33,11 @@ export function DispositionBadge({ disposition, confidence, size = 'md' }: Dispo
         <span className={iconSize}>{config.icon}</span>
         <span className={textSize}>{config.label}</span>
       </div>
+      {size !== 'sm' && (
+        <div className="text-xs text-center" style={{ color: config.text, opacity: 0.7, fontFamily: 'Inter' }}>
+          {config.sublabel}
+        </div>
+      )}
       {confidence && (
         <div className="text-xs text-gray-400 font-mono tracking-wider">
           Confidence: {confidence === 'H' ? 'HIGH' : confidence === 'M' ? 'MEDIUM' : 'LOW'}

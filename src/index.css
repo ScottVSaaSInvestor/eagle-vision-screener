@@ -1,44 +1,52 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 @import "./styles/brand.css";
 @import "./styles/print.css";
 
 :root {
-  /* AQL Brand Colors */
-  --aql-navy: #002B49;
-  --aql-navy-dark: #001A2E;
-  --aql-navy-light: #003A63;
-  --aql-gold: #C5A572;
-  --aql-gold-light: #D4BF96;
-  --aql-lime: #CFFF04;
-  --aql-lime-dark: #A8CC00;
+  /* Core Brand Colors */
+  --navy:        #020F1A;
+  --navy-mid:    #041828;
+  --navy-card:   #071E30;
+  --navy-raised: #0A2540;
+  --navy-border: rgba(0, 200, 220, 0.12);
 
-  /* Signal Colors */
-  --signal-go: #1DB954;
-  --signal-maybe: #FFB300;
-  --signal-gap: #F57C00;
-  --signal-nogo: #D32F2F;
+  /* Teal / Cyan — primary accent (from eagle glow) */
+  --teal:        #00C8DC;
+  --teal-dim:    rgba(0, 200, 220, 0.18);
+  --teal-glow:   rgba(0, 200, 220, 0.08);
 
-  /* Neutrals */
-  --card-bg: #F5F7FA;
-  --text-dark: #0A1929;
-  --text-muted: #64748B;
-  --border: #E2E8F0;
+  /* Gold — secondary accent */
+  --gold:        #C5A572;
+  --gold-dim:    rgba(197, 165, 114, 0.18);
+
+  /* Lime — CTA */
+  --lime:        #CFFF04;
+  --lime-dark:   #A8CC00;
+
+  /* Signal */
+  --go:          #1DB954;
+  --maybe:       #FFB300;
+  --gap:         #F57C00;
+  --nogo:        #E53935;
+
+  /* Text */
+  --text-primary:   #F0F4F8;
+  --text-secondary: #7A90A4;
+  --text-muted:     #3D5166;
 
   /* Typography */
-  --font-header: 'Montserrat', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body:    'Space Grotesk', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   font-family: var(--font-body);
-  background-color: var(--aql-navy);
-  color: #ffffff;
+  background-color: var(--navy);
+  color: var(--text-primary);
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -47,25 +55,100 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-header);
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
 }
 
 code, pre, .mono {
   font-family: var(--font-mono);
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+::-webkit-scrollbar-thumb { background: rgba(0,200,220,0.25); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,200,220,0.45); }
+
+/* ── Teal glow utility ── */
+.teal-glow {
+  box-shadow: 0 0 24px rgba(0,200,220,0.15), 0 0 60px rgba(0,200,220,0.06);
 }
-::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.05);
+.teal-text-glow {
+  text-shadow: 0 0 20px rgba(0,200,220,0.5);
 }
-::-webkit-scrollbar-thumb {
-  background: rgba(197,165,114,0.4);
-  border-radius: 3px;
+
+/* ── Card base ── */
+.perch-card {
+  background: var(--navy-card);
+  border: 1px solid var(--navy-border);
+  border-radius: 14px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(197,165,114,0.7);
+.perch-card-raised {
+  background: var(--navy-raised);
+  border: 1px solid rgba(0,200,220,0.2);
+  border-radius: 14px;
+}
+
+/* ── Gradient text ── */
+.gradient-text-teal {
+  background: linear-gradient(135deg, #00C8DC 0%, #00E8FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-gold {
+  background: linear-gradient(135deg, #C5A572 0%, #E8D09A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Lime CTA button ── */
+.btn-lime {
+  background: var(--lime);
+  color: var(--navy);
+  font-family: var(--font-display);
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  letter-spacing: 0.03em;
+}
+.btn-lime:hover {
+  background: var(--lime-dark);
+  box-shadow: 0 0 20px rgba(207,255,4,0.3);
+}
+.btn-lime:active { transform: scale(0.98); }
+
+/* ── Teal CTA button ── */
+.btn-teal {
+  background: linear-gradient(135deg, #00B8CC, #00C8DC);
+  color: var(--navy);
+  font-family: var(--font-display);
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-teal:hover {
+  box-shadow: 0 0 24px rgba(0,200,220,0.4);
+  transform: translateY(-1px);
+}
+
+/* ── Pack animations ── */
+@keyframes pulse-teal {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(0,200,220,0.3); }
+  50% { opacity: 0.6; box-shadow: 0 0 20px rgba(0,200,220,0.6); }
+}
+.pack-running { animation: pulse-teal 1.5s ease-in-out infinite; }
+
+/* ── Subtle scan line bg texture ── */
+.scanline-bg {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,200,220,0.015) 2px,
+    rgba(0,200,220,0.015) 4px
+  );
 }

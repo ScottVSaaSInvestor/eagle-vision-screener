@@ -1,6 +1,6 @@
 // Eagle Vision Screener — Core Type Definitions
 
-export type Disposition = 'GO' | 'MAYBE' | 'NO-GO';
+export type Disposition = 'ADVANCE' | 'DILIGENCE' | 'PASS';
 export type Quadrant = 'EXECUTE' | 'RACE_MODE' | 'BUILD_MODE' | 'DANGER_ZONE';
 export type Confidence = 'H' | 'M' | 'L';
 export type LetterGrade = 'A' | 'B' | 'C' | 'D' | 'F';
@@ -153,7 +153,7 @@ export interface StageAssessment {
 export interface ScoreBundle {
   risk_score: number;       // 0–100, LOWER = SAFER (internal only)
   readiness_score: number;  // 0–100, HIGHER = MORE READY
-  threat_level: ThreatLevel; // derived from risk_score — the GO/NO-GO signal
+  threat_level: ThreatLevel; // derived from risk_score — the pacing signal for the diligence
   readiness_stage: ReadinessStage; // 1-4 stage on SOR→SOA journey
   stage_assessment: StageAssessment;
   // Legacy fields kept for compatibility
@@ -182,11 +182,11 @@ export interface DiligenceFocusArea {
   priority: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
-// ─── Upgrade/Break Conditions ─────────────────────────────────────────────────
+// ─── Diligence Path Conditions ─────────────────────────────────────────────────
 export interface UpgradeBreakConditions {
-  upgrade_to_go: string[];
-  keep_maybe: string[];
-  drop_to_nogo: string[];
+  advance_signals: string[];    // Evidence that would build conviction to ADVANCE
+  key_questions: string[];      // Open questions to resolve in diligence
+  watch_list: string[];         // Factors that would cause you to pause if confirmed negative
 }
 
 // ─── Competitive Intelligence ─────────────────────────────────────────────────

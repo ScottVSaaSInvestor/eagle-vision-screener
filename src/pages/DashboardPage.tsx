@@ -73,15 +73,15 @@ export function DashboardPage() {
         {entries.length > 0 && (
           <div className="flex items-center gap-4 mb-6 flex-wrap">
             <div className="flex gap-2">
-              {(['all', 'GO', 'MAYBE', 'NO-GO'] as const).map((d) => (
+              {(['all', 'ADVANCE', 'DILIGENCE', 'PASS'] as const).map((d) => (
                 <button
                   key={d}
                   onClick={() => setFilter(d)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all`}
                   style={{
                     fontFamily: 'Montserrat',
-                    background: filter === d ? (d === 'all' ? '#C5A572' : d === 'GO' ? '#1DB954' : d === 'MAYBE' ? '#FFB300' : '#D32F2F') : 'rgba(255,255,255,0.06)',
-                    color: filter === d ? (d === 'all' ? '#002B49' : '#fff') : '#94A3B8',
+                    background: filter === d ? (d === 'all' ? '#C5A572' : d === 'ADVANCE' ? '#1DB954' : d === 'DILIGENCE' ? '#00C8DC' : '#D32F2F') : 'rgba(255,255,255,0.06)',
+                    color: filter === d ? (d === 'all' ? '#002B49' : '#002B49') : '#94A3B8',
                     border: `1px solid ${filter === d ? 'transparent' : 'rgba(255,255,255,0.1)'}`,
                   }}
                 >

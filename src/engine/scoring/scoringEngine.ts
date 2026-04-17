@@ -1,14 +1,13 @@
 /**
- * Eagle Vision Scoring Engine — V14
+ * Perch Scoring Engine — V18
  * DETERMINISTIC — No LLM calls. LLMs produce evidence. This code produces scores.
  *
- * V14 REDESIGN:
- * - No combined "overall score" driving a single letter grade — too confusing
- * - Risk → ThreatLevel (LOW / MODERATE / HIGH / CRITICAL) — clear directional signal
- * - Readiness → ReadinessStage (1-4) — where are they on SOR→SOA journey?
- * - Verdict logic: BUILD_MODE is never NO-GO. Only DANGER_ZONE or hard structural
- *   blockers produce NO-GO. The question is "can they get there in the hold period?"
- * - what_to_fix: roadmap for closing gaps to reach Stage 3 in hold period
+ * V18 REDESIGN:
+ * - Journey framing: every output is instructive, not a verdict
+ * - Disposition: ADVANCE (strong signal, go now) | DILIGENCE (real opportunity, here's what to resolve) | PASS (extreme risk + zero foundation — rare)
+ * - PASS only when riskScore >= 80 AND readinessScore < 25 simultaneously
+ * - DILIGENCE replaces MAYBE — it's actionable, not ambiguous
+ * - what_to_fix: roadmap to reach Stage 3 (AI-Native) in the hold period
  */
 
 import type {
@@ -137,17 +136,20 @@ function getQuadrant(riskScore: number, readinessScore: number): Quadrant {
 }
 
 /**
- * V14 Disposition Logic — investment verdict.
+ * V18 Disposition Logic — journey framing, not verdict framing.
  *
- * KEY CHANGE: BUILD_MODE is never automatically NO-GO.
- * AxisCare problem: LOW risk + MODERATE readiness → BUILD_MODE → was returning NO-GO. WRONG.
- * BUILD_MODE = patient opportunity with a clear build plan. The question is:
- * "Can they reach Stage 3 in the 3-5yr hold period?" If yes → GO or MAYBE, not NO-GO.
+ * PHILOSOPHY: Perch is a fast-pass screener used at top-of-funnel, before management
+ * meetings or data room access. At this stage, almost every company either:
+ *   ADVANCE  → Strong enough signal to take to the next stage of diligence immediately
+ *   DILIGENCE → Real opportunity with specific open questions — here's exactly what to resolve
  *
- * NO-GO only when:
- * 1. CRITICAL threat level (riskScore >= 70) AND Stage 1 (not yet even started) → DANGER_ZONE
- * 2. CRITICAL threat level AND 3+ critical gaps → structural disaster
- * 3. Missing the foundational SOR position entirely (A1 + A10 both < 30) → no thesis
+ * PASS is reserved for structurally broken cases only:
+ *   - AI risk is extreme (riskScore >= 80) AND readiness is critically low (readinessScore < 25)
+ *     → the competitive window has already closed AND the company has no foundation to recover
+ *   This is genuinely rare and requires both conditions simultaneously.
+ *
+ * Everything else — including DANGER_ZONE — goes to DILIGENCE with a specific plan.
+ * A DANGER_ZONE company with Stage 2 readiness is not a pass; it's a focused diligence question.
  */
 function getDisposition(
   quadrant: Quadrant,
@@ -155,48 +157,27 @@ function getDisposition(
   stage: ReadinessStage,
   criticalGaps: FactorId[],
   readinessFactors: FactorScore[],
-  confidenceOverall: Confidence
+  confidenceOverall: Confidence,
+  riskScore: number,
+  readinessScore: number
 ): Disposition {
 
-  // DANGER_ZONE: high threat + readiness not established
-  if (quadrant === 'DANGER_ZONE') {
-    if (threatLevel === 'CRITICAL') return 'NO-GO';
-    if (threatLevel === 'HIGH' && stage <= 1) return 'NO-GO';
-    return 'MAYBE'; // DANGER_ZONE but not hopeless — flag for deep diligence
-  }
+  // PASS: only when AI risk is extreme AND readiness is structurally unrecoverable
+  // This means: threat window has already closed (risk 80+) AND company has almost no foundation (readiness <25)
+  // Both conditions must be true simultaneously — either alone is not enough to PASS
+  const extremeRisk = riskScore >= 80;
+  const criticallyLowReadiness = readinessScore < 25;
+  if (extremeRisk && criticallyLowReadiness) return 'PASS';
 
-  // Check for structural missing SOR position — the core thesis is absent
-  const a1 = readinessFactors.find(f => f.factor_id === 'A1');
-  const a10 = readinessFactors.find(f => f.factor_id === 'A10');
-  const missingSOR = (a1?.raw_score ?? 50) < 30 && (a10?.raw_score ?? 50) < 30;
-  if (missingSOR) return 'NO-GO'; // No SOR = no PE thesis
+  // ADVANCE: strong signal — move to full diligence now
+  // EXECUTE or RACE_MODE with solid readiness foundation and no extreme risk
+  if (quadrant === 'EXECUTE' && criticalGaps.length <= 2) return 'ADVANCE';
+  if (quadrant === 'RACE_MODE' && stage >= 2 && criticalGaps.length <= 2 && threatLevel !== 'CRITICAL') return 'ADVANCE';
+  if (quadrant === 'BUILD_MODE' && stage >= 2 && criticalGaps.length <= 2) return 'ADVANCE';
 
-  // EXECUTE: low risk + high readiness
-  if (quadrant === 'EXECUTE') {
-    if (criticalGaps.length === 0) {
-      return confidenceOverall === 'L' ? 'MAYBE' : 'GO';
-    }
-    return 'MAYBE';
-  }
-
-  // RACE_MODE: high risk + high readiness — strong but time-pressured
-  if (quadrant === 'RACE_MODE') {
-    if (criticalGaps.length === 0 && threatLevel !== 'CRITICAL') {
-      return confidenceOverall === 'L' ? 'MAYBE' : 'GO';
-    }
-    if (criticalGaps.length >= 3) return 'MAYBE';
-    return 'MAYBE';
-  }
-
-  // BUILD_MODE: low risk + readiness gaps — this is a patient opportunity
-  // NEVER NO-GO. The question is whether gaps can be closed in the hold period.
-  if (quadrant === 'BUILD_MODE') {
-    if (stage >= 2 && criticalGaps.length <= 2) return 'GO'; // BUILD with conviction
-    if (stage >= 1 && criticalGaps.length <= 4) return 'MAYBE'; // BUILD with conditions
-    return 'MAYBE'; // BUILD with significant work ahead
-  }
-
-  return 'MAYBE';
+  // Everything else: DILIGENCE — there's a thesis here, here's what to resolve
+  // DANGER_ZONE, high gap counts, low confidence, CRITICAL threat — all go to DILIGENCE not PASS
+  return 'DILIGENCE';
 }
 
 /**
@@ -459,7 +440,8 @@ export function computeScoreBundle(
   // ─── Quadrant & Disposition ───────────────────────────────────────────────
   const quadrant = getQuadrant(riskScore, readinessScore);
   const disposition = getDisposition(
-    quadrant, threatLevel, readinessStage, criticalGaps, readinessFactorScores, confidenceOverall
+    quadrant, threatLevel, readinessStage, criticalGaps, readinessFactorScores, confidenceOverall,
+    riskScore, readinessScore
   );
 
   const leanInReasons = getLeanInReasons(factorScores, riskFactorScores, readinessFactorScores);

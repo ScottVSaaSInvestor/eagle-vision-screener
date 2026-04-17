@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EagleIcon } from '@/components/brand/EagleIcon';
 import { useAuthStore } from '@/store/authStore';
+
+// Eagle image hosted on Genspark
+const EAGLE_IMG = 'https://www.genspark.ai/api/files/s/Ntlkg11C';
 
 export function LoginPage() {
   const [passcode, setPasscode] = useState('');
@@ -31,107 +33,188 @@ export function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'linear-gradient(135deg, #001A2E 0%, #002B49 50%, #003A63 100%)' }}
+      className="min-h-screen flex"
+      style={{ background: 'var(--navy)', fontFamily: 'var(--font-display)' }}
     >
-      {/* Background eagle watermark */}
-      <div className="fixed inset-0 flex items-center justify-center opacity-5 pointer-events-none">
-        <EagleIcon size={500} color="#C5A572" />
-      </div>
-
+      {/* ── LEFT PANEL — Hero / Brand ── */}
       <div
-        className="w-full max-w-md relative"
-        style={{
-          background: '#001A2E',
-          border: '1px solid rgba(197,165,114,0.3)',
-          borderRadius: '20px',
-          padding: '48px',
-          boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
-        }}
+        className="hidden lg:flex flex-col justify-between w-[55%] relative overflow-hidden"
+        style={{ background: 'linear-gradient(160deg, #020F1A 0%, #041828 40%, #051E35 100%)' }}
       >
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-4 mb-10">
-          <EagleIcon size={64} />
-          <div className="text-center">
-            <div
-              className="text-2xl font-bold tracking-wider"
-              style={{ fontFamily: 'Montserrat', color: '#ffffff', letterSpacing: '0.1em' }}
+        {/* Teal edge glow */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse 80% 70% at 60% 50%, rgba(0,200,220,0.07) 0%, transparent 70%)',
+          }}
+        />
+
+        {/* Eagle image — centred, large */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <img
+            src={EAGLE_IMG}
+            alt="Perch — AI Investment Screener"
+            className="w-[480px] max-w-[80%] opacity-90"
+            style={{ filter: 'drop-shadow(0 0 60px rgba(0,200,220,0.35))' }}
+          />
+        </div>
+
+        {/* Top wordmark */}
+        <div className="relative z-10 p-10">
+          <div className="flex items-baseline gap-2">
+            <span
+              className="text-3xl font-bold tracking-tight"
+              style={{ color: '#00C8DC', letterSpacing: '-0.04em' }}
             >
-              AQL GROWTH
-            </div>
-            <div
-              className="text-sm tracking-widest mt-1"
-              style={{ fontFamily: 'Montserrat', color: '#C5A572', letterSpacing: '0.25em', fontWeight: 600 }}
+              PERCH
+            </span>
+            <span
+              className="text-xs font-medium tracking-widest"
+              style={{ color: 'rgba(0,200,220,0.5)', letterSpacing: '0.2em' }}
             >
-              EAGLE VISION SCREENER
-            </div>
-          </div>
-          <div
-            className="text-xs text-center max-w-xs"
-            style={{ color: '#64748B', fontFamily: 'Inter', lineHeight: 1.6 }}
-          >
-            AI-powered investment screening for vertical SaaS
+              BY AQL GROWTH
+            </span>
           </div>
         </div>
 
-        {/* Gold divider */}
-        <div className="h-px mb-8" style={{ background: 'linear-gradient(90deg, transparent, #C5A572, transparent)' }} />
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label
-              className="block text-xs font-semibold mb-2 tracking-widest uppercase"
-              style={{ fontFamily: 'Montserrat', color: '#C5A572' }}
-            >
-              Access Passcode
-            </label>
-            <input
-              type="password"
-              value={passcode}
-              onChange={(e) => setPasscode(e.target.value)}
-              placeholder="Enter your secure passcode"
-              className="w-full px-4 py-3 rounded-lg text-white placeholder-gray-600 outline-none transition-all"
-              style={{
-                background: 'rgba(0,58,99,0.5)',
-                border: `1px solid ${error ? '#D32F2F' : 'rgba(197,165,114,0.3)'}`,
-                fontFamily: 'JetBrains Mono',
-                fontSize: '0.9rem',
-              }}
-              autoFocus
-              onFocus={(e) => (e.target.style.borderColor = error ? '#D32F2F' : '#C5A572')}
-              onBlur={(e) => (e.target.style.borderColor = error ? '#D32F2F' : 'rgba(197,165,114,0.3)')}
-            />
-            {error && (
-              <p className="mt-2 text-xs" style={{ color: '#D32F2F', fontFamily: 'Inter' }}>
-                {error}
-              </p>
-            )}
+        {/* Bottom tagline + feature bullets */}
+        <div className="relative z-10 p-10 pb-12">
+          <h1
+            className="text-4xl font-bold leading-tight mb-4"
+            style={{ color: '#F0F4F8', letterSpacing: '-0.03em' }}
+          >
+            See further.<br />
+            Decide faster.<br />
+            <span style={{ color: '#00C8DC' }}>Invest smarter.</span>
+          </h1>
+          <p className="text-sm mb-8" style={{ color: '#7A90A4', lineHeight: 1.7 }}>
+            Perch is an AI-powered investment screening platform for vertical SaaS.<br />
+            In under 50 minutes, get an ADVANCE / DILIGENCE signal backed by
+            live web research, 7 structured data packs, and a 16-factor
+            AI Risk &amp; Readiness scorecard.
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { icon: '🔍', label: '5-Pass Research', sub: '84+ search queries' },
+              { icon: '🧠', label: '7 AI Data Packs', sub: 'Claude Opus 4.7' },
+              { icon: '📊', label: '16-Factor Score', sub: 'Deterministic engine' },
+            ].map(f => (
+              <div
+                key={f.label}
+                className="rounded-xl p-3"
+                style={{
+                  background: 'rgba(0,200,220,0.05)',
+                  border: '1px solid rgba(0,200,220,0.12)',
+                }}
+              >
+                <div className="text-lg mb-1">{f.icon}</div>
+                <div className="text-xs font-semibold text-white">{f.label}</div>
+                <div className="text-xs mt-0.5" style={{ color: '#3D5166' }}>{f.sub}</div>
+              </div>
+            ))}
           </div>
+        </div>
+      </div>
 
-          <button
-            type="submit"
-            disabled={loading || !passcode.trim()}
-            className="w-full py-3.5 rounded-lg font-bold text-sm tracking-wider transition-all active:scale-98 disabled:opacity-50"
+      {/* ── RIGHT PANEL — Login form ── */}
+      <div
+        className="flex-1 flex flex-col items-center justify-center p-8 relative"
+        style={{ background: 'var(--navy-mid)' }}
+      >
+        {/* Mobile logo */}
+        <div className="lg:hidden mb-10 text-center">
+          <div className="text-4xl font-bold" style={{ color: '#00C8DC', letterSpacing: '-0.04em' }}>
+            PERCH
+          </div>
+          <div className="text-xs tracking-widest mt-1" style={{ color: '#3D5166', letterSpacing: '0.2em' }}>
+            BY AQL GROWTH
+          </div>
+        </div>
+
+        <div className="w-full max-w-sm">
+          {/* Card */}
+          <div
+            className="rounded-2xl p-8"
             style={{
-              background: passcode.trim() ? '#CFFF04' : '#1a3a1a',
-              color: '#002B49',
-              fontFamily: 'Montserrat',
-              letterSpacing: '0.1em',
+              background: 'var(--navy-card)',
+              border: '1px solid rgba(0,200,220,0.18)',
+              boxShadow: '0 30px 80px rgba(0,0,0,0.5), 0 0 40px rgba(0,200,220,0.06)',
             }}
           >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="w-4 h-4 border-2 border-[#002B49] border-t-transparent rounded-full animate-spin" />
-                Authenticating...
-              </span>
-            ) : 'Access Eagle Vision →'}
-          </button>
-        </form>
+            {/* Header */}
+            <div className="mb-8">
+              <div className="text-xs font-medium tracking-widest mb-3" style={{ color: '#00C8DC', letterSpacing: '0.2em' }}>
+                PARTNER ACCESS
+              </div>
+              <h2 className="text-2xl font-bold text-white" style={{ letterSpacing: '-0.03em' }}>
+                Sign in to Perch
+              </h2>
+              <p className="text-sm mt-1" style={{ color: '#7A90A4' }}>
+                Internal use — AQL Growth Partners
+              </p>
+            </div>
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-xs" style={{ color: '#334155', fontFamily: 'Inter' }}>
-          Internal use only — AQL Growth Partners
+            {/* Divider */}
+            <div className="h-px mb-8" style={{ background: 'linear-gradient(90deg, transparent, rgba(0,200,220,0.3), transparent)' }} />
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label
+                  className="block text-xs font-semibold mb-2 tracking-widest uppercase"
+                  style={{ color: '#00C8DC', letterSpacing: '0.15em' }}
+                >
+                  Passcode
+                </label>
+                <input
+                  type="password"
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  placeholder="Enter your secure passcode"
+                  className="w-full px-4 py-3 rounded-xl text-white placeholder-[#3D5166] outline-none transition-all"
+                  style={{
+                    background: 'rgba(0,200,220,0.04)',
+                    border: `1px solid ${error ? '#E53935' : 'rgba(0,200,220,0.2)'}`,
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.875rem',
+                    letterSpacing: '0.1em',
+                  }}
+                  autoFocus
+                  onFocus={e => (e.target.style.borderColor = error ? '#E53935' : 'rgba(0,200,220,0.5)')}
+                  onBlur={e => (e.target.style.borderColor = error ? '#E53935' : 'rgba(0,200,220,0.2)')}
+                />
+                {error && (
+                  <p className="mt-2 text-xs" style={{ color: '#E53935' }}>{error}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !passcode.trim()}
+                className="w-full py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all disabled:opacity-40"
+                style={{
+                  background: passcode.trim()
+                    ? 'linear-gradient(135deg, #00B8CC, #00C8DC)'
+                    : 'rgba(0,200,220,0.08)',
+                  color: passcode.trim() ? '#020F1A' : '#3D5166',
+                  boxShadow: passcode.trim() ? '0 0 24px rgba(0,200,220,0.3)' : 'none',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-[#020F1A] border-t-transparent rounded-full animate-spin" />
+                    Authenticating...
+                  </span>
+                ) : 'Access Perch →'}
+              </button>
+            </form>
+          </div>
+
+          {/* Footer note */}
+          <p className="mt-6 text-center text-xs" style={{ color: '#3D5166' }}>
+            Perch v16 · Powered by Claude Opus 4.7 &amp; Tavily
+          </p>
         </div>
       </div>
     </div>

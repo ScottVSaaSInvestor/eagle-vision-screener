@@ -166,12 +166,12 @@ export function ReportPage() {
                   {sb.confidence_overall} CONFIDENCE
                 </span>
               )}
-              {/* Quick verdict badge in header */}
+              {/* Quick disposition badge in header */}
               {sb && (
                 <span className="text-xs font-bold px-2 py-0.5 rounded" style={{
-                  background: sb.disposition === 'GO' ? 'rgba(29,185,84,0.15)' : sb.disposition === 'NO-GO' ? 'rgba(211,47,47,0.15)' : 'rgba(255,179,0,0.15)',
-                  color: sb.disposition === 'GO' ? '#1DB954' : sb.disposition === 'NO-GO' ? '#D32F2F' : '#FFB300',
-                  border: `1px solid ${sb.disposition === 'GO' ? 'rgba(29,185,84,0.3)' : sb.disposition === 'NO-GO' ? 'rgba(211,47,47,0.3)' : 'rgba(255,179,0,0.3)'}`,
+                  background: sb.disposition === 'ADVANCE' ? 'rgba(29,185,84,0.15)' : sb.disposition === 'PASS' ? 'rgba(211,47,47,0.15)' : 'rgba(0,200,220,0.15)',
+                  color: sb.disposition === 'ADVANCE' ? '#1DB954' : sb.disposition === 'PASS' ? '#D32F2F' : '#00C8DC',
+                  border: `1px solid ${sb.disposition === 'ADVANCE' ? 'rgba(29,185,84,0.3)' : sb.disposition === 'PASS' ? 'rgba(211,47,47,0.3)' : 'rgba(0,200,220,0.3)'}`,
                   fontFamily: 'Montserrat',
                 }}>
                   {sb.disposition}
@@ -398,29 +398,30 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
 
             {/* Disposition */}
             <div
-              className="text-3xl font-black mt-2 mb-4"
+              className="text-3xl font-black mt-2 mb-1"
               style={{
-                color: sb.disposition === 'GO' ? '#1DB954' : sb.disposition === 'NO-GO' ? '#D32F2F' : '#FFB300',
+                color: sb.disposition === 'ADVANCE' ? '#1DB954' : sb.disposition === 'PASS' ? '#D32F2F' : '#00C8DC',
                 fontFamily: 'Montserrat',
               }}
             >
               {sb.disposition}
             </div>
 
-            <div className="text-center px-2 text-xs" style={{ fontFamily: 'Inter', lineHeight: 1.7 }}>
-              <p style={{ color: sb.disposition === 'GO' ? '#81C784' : sb.disposition === 'NO-GO' ? '#EF5350' : '#FFD54F' }}>
-                {sb.disposition === 'GO' && sb.quadrant === 'BUILD_MODE' && 'Invest with a clear build plan. Window is open — patient capital + AI operational support unlocks the thesis.'}
-                {sb.disposition === 'GO' && sb.quadrant === 'EXECUTE' && 'Advance to full diligence immediately. Low risk + strong foundation = high-conviction opportunity.'}
-                {sb.disposition === 'GO' && sb.quadrant === 'RACE_MODE' && 'Invest now and move fast. AI roadmap must accelerate post-close — the window is open but competition is building.'}
-                {sb.disposition === 'MAYBE' && 'Conditional advance. Run diligence checklist to resolve the key questions before full conviction.'}
-                {sb.disposition === 'NO-GO' && 'Do not advance. Structural risk or missing SOR position prevents the AI investment thesis from being viable.'}
+            <div className="text-center px-2 text-xs mb-3" style={{ fontFamily: 'Inter', lineHeight: 1.7 }}>
+              <p style={{ color: sb.disposition === 'ADVANCE' ? '#81C784' : sb.disposition === 'PASS' ? '#EF5350' : '#7DD3E8' }}>
+                {sb.disposition === 'ADVANCE' && sb.quadrant === 'BUILD_MODE' && 'Strong foundation. Open window. Take to diligence with a clear build plan.'}
+                {sb.disposition === 'ADVANCE' && sb.quadrant === 'EXECUTE' && 'Low risk + strong AI foundation. Highest conviction posture — move to full diligence now.'}
+                {sb.disposition === 'ADVANCE' && sb.quadrant === 'RACE_MODE' && 'Strong AI readiness. Competitive pressure is real but manageable. Move fast.'}
+                {sb.disposition === 'ADVANCE' && sb.quadrant === 'DANGER_ZONE' && 'Meaningful foundation despite elevated risk. Pursue with focused diligence plan.'}
+                {sb.disposition === 'DILIGENCE' && 'Real opportunity with open questions. Use the diligence plan below to build conviction.'}
+                {sb.disposition === 'PASS' && 'AI disruption risk is extreme and the foundation is insufficient to recover within a hold period. Do not advance.'}
               </p>
             </div>
 
             {sb.critical_gaps.length > 0 && (
-              <div className="mt-3 px-3 py-2 rounded-lg w-full" style={{ background: 'rgba(245,124,0,0.08)', border: '1px solid rgba(245,124,0,0.3)' }}>
+              <div className="px-3 py-2 rounded-lg w-full" style={{ background: 'rgba(245,124,0,0.08)', border: '1px solid rgba(245,124,0,0.3)' }}>
                 <div className="text-xs font-semibold text-center" style={{ color: '#F57C00', fontFamily: 'Montserrat' }}>
-                  {sb.critical_gaps.length} critical gap{sb.critical_gaps.length > 1 ? 's' : ''} to close: {sb.critical_gaps.join(', ')}
+                  {sb.critical_gaps.length} readiness gap{sb.critical_gaps.length > 1 ? 's' : ''} to close on the path to SOA: {sb.critical_gaps.join(', ')}
                 </div>
               </div>
             )}
@@ -516,7 +517,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
               <strong style={{ color: '#00C8DC' }}>Low Risk</strong> means the AI-disruption clock hasn't started yet — incumbents and AI-native entrants haven't captured the market, and the competitive window remains open.{' '}
               <strong style={{ color: '#00C8DC' }}>Low Readiness</strong> doesn't mean the company is weak — it means they own the workflow (System of Record) but haven't yet built the AI layer.{' '}
               That gap is exactly where patient PE capital creates value: <em>buy before the AI premium is priced in, build the AI layer, and exit at a meaningfully higher multiple</em>.{' '}
-              BUILD MODE is never a NO-GO — the investment question is simply: <strong style={{ color: '#E0E0E0' }}>"Can we close the readiness gaps within a 3-5 year hold period?"</strong>
+              BUILD MODE is almost always a DILIGENCE or ADVANCE — the investment question is simply: <strong style={{ color: '#E0E0E0' }}>"Can we close the readiness gaps within a 3-5 year hold period?"</strong>
             </p>
           </div>
         </div>
@@ -1426,15 +1427,15 @@ function DiligenceTab({ record }: { record: ScreeningRecord }) {
             <div className="text-xs font-semibold tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>DILIGENCE FRAMING</div>
           </div>
           <p className="text-sm text-gray-300" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>
-            Eagle Vision is a fast-pass filter. The items below are the highest-priority questions where additional evidence would confirm or require reassessment of the {sb.disposition} disposition.
+            Perch is a 30-50 minute fast-pass screener — not a final verdict. The items below are the highest-priority questions to resolve as you move from screen to full diligence. Every company in this output is on a journey toward System of Action. The question is where they are on that journey and what it takes to get there.
           </p>
           <div className="grid grid-cols-3 gap-4 mt-4">
             <div className="text-center p-3 rounded-lg" style={{ background: 'rgba(0,43,73,0.4)' }}>
               <div className="text-lg font-bold" style={{
-                color: sb.disposition === 'GO' ? '#1DB954' : sb.disposition === 'NO-GO' ? '#D32F2F' : '#FFB300',
+                color: sb.disposition === 'ADVANCE' ? '#1DB954' : sb.disposition === 'PASS' ? '#D32F2F' : '#00C8DC',
                 fontFamily: 'Montserrat',
               }}>{sb.disposition}</div>
-              <div className="text-xs text-gray-500 mt-1">Current Verdict</div>
+              <div className="text-xs text-gray-500 mt-1">Perch Signal</div>
             </div>
             <div className="text-center p-3 rounded-lg" style={{ background: 'rgba(0,43,73,0.4)' }}>
               <div className="text-lg font-bold" style={{ color: THREAT_COLOR[sb.threat_level ?? 'MODERATE'], fontFamily: 'Montserrat' }}>
@@ -1500,35 +1501,35 @@ function DiligenceTab({ record }: { record: ScreeningRecord }) {
       {conditions && (
         <div>
           <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
-            DISPOSITION CHANGE CONDITIONS
+            DILIGENCE ROADMAP
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card variant="navy" padding="sm">
-              <div className="text-xs font-bold mb-3 tracking-widest" style={{ color: '#1DB954', fontFamily: 'Montserrat' }}>↑ UPGRADE TO GO</div>
+              <div className="text-xs font-bold mb-3 tracking-widest" style={{ color: '#1DB954', fontFamily: 'Montserrat' }}>✓ SIGNALS THAT BUILD CONVICTION</div>
               <ul className="space-y-3">
-                {conditions.upgrade_to_go.map((c, i) => (
+                {conditions.advance_signals.map((c, i) => (
                   <li key={i} className="text-xs text-gray-400 flex gap-2" style={{ fontFamily: 'Inter', lineHeight: 1.6 }}>
-                    <span style={{ color: '#1DB954', flexShrink: 0 }}>✓</span>{c}
+                    <span style={{ color: '#1DB954', flexShrink: 0 }}>→</span>{c}
                   </li>
                 ))}
               </ul>
             </Card>
             <Card variant="navy" padding="sm">
-              <div className="text-xs font-bold mb-3 tracking-widest" style={{ color: '#FFB300', fontFamily: 'Montserrat' }}>~ KEEPS MAYBE</div>
+              <div className="text-xs font-bold mb-3 tracking-widest" style={{ color: '#00C8DC', fontFamily: 'Montserrat' }}>? KEY QUESTIONS TO RESOLVE</div>
               <ul className="space-y-3">
-                {conditions.keep_maybe.map((c, i) => (
+                {conditions.key_questions.map((c, i) => (
                   <li key={i} className="text-xs text-gray-400 flex gap-2" style={{ fontFamily: 'Inter', lineHeight: 1.6 }}>
-                    <span style={{ color: '#FFB300', flexShrink: 0 }}>~</span>{c}
+                    <span style={{ color: '#00C8DC', flexShrink: 0 }}>→</span>{c}
                   </li>
                 ))}
               </ul>
             </Card>
             <Card variant="navy" padding="sm">
-              <div className="text-xs font-bold mb-3 tracking-widest" style={{ color: '#D32F2F', fontFamily: 'Montserrat' }}>↓ DROP TO NO-GO</div>
+              <div className="text-xs font-bold mb-3 tracking-widest" style={{ color: '#FFB300', fontFamily: 'Montserrat' }}>⚠ WATCH LIST</div>
               <ul className="space-y-3">
-                {conditions.drop_to_nogo.map((c, i) => (
+                {conditions.watch_list.map((c, i) => (
                   <li key={i} className="text-xs text-gray-400 flex gap-2" style={{ fontFamily: 'Inter', lineHeight: 1.6 }}>
-                    <span style={{ color: '#D32F2F', flexShrink: 0 }}>✕</span>{c}
+                    <span style={{ color: '#FFB300', flexShrink: 0 }}>→</span>{c}
                   </li>
                 ))}
               </ul>
@@ -1539,9 +1540,9 @@ function DiligenceTab({ record }: { record: ScreeningRecord }) {
 
       <Card variant="elevated" className="text-center py-8">
         <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>NEXT STEP</div>
-        <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Montserrat' }}>Advance to Full Diligence</h3>
+        <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Montserrat' }}>Take This to the Next Stage</h3>
         <p className="text-sm text-gray-400 mb-6 max-w-lg mx-auto" style={{ fontFamily: 'Inter', lineHeight: 1.7 }}>
-          Eagle Vision is a 30-50 minute fast-pass filter. Full Bridge diligence takes 2-3 weeks requiring management access, customer reference calls, and data room review.
+          Perch is a 30-50 minute fast-pass screener. The diligence questions above are designed to focus your management meeting, data room request, and customer reference calls. Full conviction requires 2-3 weeks of structured diligence.
         </p>
         <div className="flex justify-center gap-3 flex-wrap">
           <button onClick={() => exportToPDF()} className="px-6 py-2.5 rounded-lg font-bold text-sm" style={{ background: '#CFFF04', color: '#002B49', fontFamily: 'Montserrat' }}>
