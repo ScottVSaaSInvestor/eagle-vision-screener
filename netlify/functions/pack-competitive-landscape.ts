@@ -66,7 +66,7 @@ const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'company_name required' }) };
     }
 
-    const model = process.env.ANTHROPIC_MODEL || 'claude-opus-4-5';
+    const model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929';
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const hintStr = Array.isArray(competitor_hints) && competitor_hints.length > 0
       ? `\nKNOWN COMPETITORS/PEERS (analyst-provided): ${competitor_hints.join(', ')}`
@@ -242,23 +242,34 @@ SIGNAL STRENGTH CALIBRATION — BE PRECISE, NOT MIDDLE:
 - R4: For most vertical SaaS, horizontal AI threat is moderate (0.3-0.5). Score 0.7+ only if operators are actively using ChatGPT instead of the SaaS.
 - A8: Most vertical SaaS has some flywheel potential (0.3-0.6). Score 0.8+ only if there's clear evidence of data network effects.`;
 
+    // TIMEOUT STRATEGY:
+    // Netlify hard timeout = 26s. Claude Sonnet on ~4K-char synthesis brief:
+    //   Attempt 1 (Sonnet, full prompt): ~10-15s — fits within 26s
+    //   Attempt 2 (Sonnet, shorter prompt): ~6-10s — ultra-reliable
+    //   Attempt 3 (Haiku, minimal prompt): ~2-4s — guaranteed completion
+    // Never wait between retries — we're racing the 26s clock.
+    const PACK_FALLBACK_MODEL = 'claude-haiku-3-5';
     let attempts = 0;
     while (attempts < 3) {
       attempts++;
       try {
+        const attemptModel = attempts >= 3 ? PACK_FALLBACK_MODEL : model;
+        const promptToUse = attempts === 1 ? userPrompt : userPrompt.slice(0, Math.floor(userPrompt.length / attempts));
+        const elapsed = Date.now() - startTime;
+        console.log(`[pack] attempt ${attempts}/3: model=${attemptModel}, prompt=${Math.round(promptToUse.length/1000)}K chars, elapsed=${elapsed}ms`);
         const response = await client.messages.create({
-          model,
-          max_tokens: 8192,
+          model: attemptModel,
+          max_tokens: 4096,  // Structured JSON output — 4K tokens sufficient, faster than 8K
           system: systemPrompt,
-          messages: [{ role: 'user', content: userPrompt }],
+          messages: [{ role: 'user', content: promptToUse }],
         });
         const text = response.content[0].type === 'text' ? response.content[0].text : '';
-        console.log(`[pack] attempt ${attempts}: response length ${text.length} chars`);
+        console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now()-startTime}ms`);
 
         // Extract JSON — handle markdown fences if Claude includes them
         const parsed = extractJSONObject(text);
         if (parsed) {
-          console.log(`[pack] JSON extracted successfully`);
+          console.log(`[pack] JSON extracted successfully on attempt ${attempts}`);
           return {
             statusCode: 200,
             headers: { 'Content-Type': 'application/json' },
@@ -270,7 +281,7 @@ SIGNAL STRENGTH CALIBRATION — BE PRECISE, NOT MIDDLE:
       } catch (e: any) {
         console.error(`Attempt ${attempts} failed:`, e?.message);
         if (attempts >= 3) break;
-        await new Promise(r => setTimeout(r, 500));
+        // No sleep between retries — racing the 26s Netlify hard timeout
       }
     }
 

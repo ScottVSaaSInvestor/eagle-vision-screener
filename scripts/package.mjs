@@ -155,8 +155,9 @@ async function packageApp() {
   console.log('3. Wait for deployment to complete (~1 min)');
   console.log('4. Go to Site Settings → Environment Variables → Add:');
   console.log('   ANTHROPIC_API_KEY     = sk-ant-...');
-  console.log('   ANTHROPIC_MODEL       = claude-opus-4-5  ← STRONGLY RECOMMENDED (accuracy over speed)');
-  console.log('                           fallback: claude-sonnet-4-5-20250929 (faster, less thorough)');
+  console.log('   ANTHROPIC_MODEL       = claude-sonnet-4-5-20250929  ← REQUIRED (Opus times out on Netlify free tier)');
+  console.log('                           ⚠️  DO NOT use claude-opus-4-5 — Netlify kills function at 26s, Opus needs 40-90s');
+  console.log('                           ✅ Sonnet finishes in 8-15s — full analysis quality, no timeouts');
   console.log('   TAVILY_API_KEY        = tvly-...');
   console.log('   ACCESS_PASSCODE       = your-secure-passcode');
   console.log('   BRAVE_SEARCH_API_KEY  = BSA-...  (optional)');

@@ -10117,7 +10117,7 @@ var handler = async (event) => {
     if (!company_name) {
       return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
     }
-    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
+    const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929";
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const hasRichEvidence = evidenceContext.length > 1e3;
     const systemPrompt = `You are a senior technical due diligence analyst at a PE/growth equity firm specializing in AI-ready vertical SaaS. You evaluate data foundation quality, outcome-labeled training data assets, and architecture readiness for AI deployment.
@@ -10273,21 +10273,27 @@ A7 (Architecture Readiness):
 0.8 = Modern ML stack \u2014 MLOps, feature stores, model serving
 0.9 = AI-native architecture, purpose-built for ML deployment
 1.0 = Best-in-class ML infrastructure, production AI at scale`;
+    const PACK_FALLBACK_MODEL = "claude-haiku-3-5";
     let attempts = 0;
     while (attempts < 3) {
       attempts++;
       try {
+        const attemptModel = attempts >= 3 ? PACK_FALLBACK_MODEL : model;
+        const promptToUse = attempts === 1 ? userPrompt : userPrompt.slice(0, Math.floor(userPrompt.length / attempts));
+        const elapsed = Date.now() - startTime;
+        console.log(`[pack] attempt ${attempts}/3: model=${attemptModel}, prompt=${Math.round(promptToUse.length / 1e3)}K chars, elapsed=${elapsed}ms`);
         const response = await client.messages.create({
-          model,
-          max_tokens: 8192,
+          model: attemptModel,
+          max_tokens: 4096,
+          // Structured JSON output — 4K tokens sufficient, faster than 8K
           system: systemPrompt,
-          messages: [{ role: "user", content: userPrompt }]
+          messages: [{ role: "user", content: promptToUse }]
         });
         const text = response.content[0].type === "text" ? response.content[0].text : "";
-        console.log(`[pack] attempt ${attempts}: response length ${text.length} chars`);
+        console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now() - startTime}ms`);
         const parsed = extractJSONObject(text);
         if (parsed) {
-          console.log(`[pack] JSON extracted successfully`);
+          console.log(`[pack] JSON extracted successfully on attempt ${attempts}`);
           return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
@@ -10299,7 +10305,6 @@ A7 (Architecture Readiness):
       } catch (e2) {
         console.error(`Attempt ${attempts} failed:`, e2?.message);
         if (attempts >= 3) break;
-        await new Promise((r2) => setTimeout(r2, 500));
       }
     }
     return {

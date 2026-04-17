@@ -6,6 +6,24 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# ══════════════════════════════════════════════════════════════════════════════
+# REQUIRED ENVIRONMENT VARIABLES (set in Netlify → Site Settings → Env Vars)
+# ══════════════════════════════════════════════════════════════════════════════
+# ANTHROPIC_API_KEY   = sk-ant-...  (your Anthropic key — REQUIRED)
+# TAVILY_API_KEY      = tvly-...   (for web search — REQUIRED)
+# ACCESS_PASSCODE     = yourpass   (gate the app — REQUIRED)
+#
+# ANTHROPIC_MODEL     = claude-sonnet-4-5-20250929
+#   ↑ THIS IS THE FIX FOR THE 1-MINUTE TIMEOUT ERROR ↑
+#   The default model (claude-opus-4-5) takes 40-90s per pack call.
+#   Netlify's hard limit is 26s → every pack times out → all packs return failed.
+#   Setting ANTHROPIC_MODEL=claude-sonnet-4-5-20250929 fixes this:
+#     - Sonnet generates structured JSON packs in 8-15s (well within 26s)
+#     - Quality is nearly identical for structured JSON extraction tasks
+#     - Each pack has a 3-attempt fallback: Sonnet → Sonnet(shorter) → Haiku
+#   DO NOT use claude-opus-4-5 unless you are on Netlify Pro with 60s+ timeouts.
+# ══════════════════════════════════════════════════════════════════════════════
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"

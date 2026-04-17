@@ -64,7 +64,7 @@ const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'company_name required' }) };
     }
 
-    const model = process.env.ANTHROPIC_MODEL || 'claude-opus-4-5';
+    const model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929';
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const docContext = document_text
       ? `\n\nUPLOADED DOCUMENT EXCERPT:\n${document_text.slice(0, 6000)}`
@@ -196,21 +196,32 @@ A5 SIGNAL STRENGTH (Pricing Flexibility):
 0.9 = Full pricing flexibility — can charge for AI-delivered value, usage spikes, outcomes
 1.0 = Best-in-class pricing with full AI value capture mechanisms`;
 
+    // TIMEOUT STRATEGY:
+    // Netlify hard timeout = 26s. Claude Sonnet on ~4K-char synthesis brief:
+    //   Attempt 1 (Sonnet, full prompt): ~10-15s — fits within 26s
+    //   Attempt 2 (Sonnet, shorter prompt): ~6-10s — ultra-reliable
+    //   Attempt 3 (Haiku, minimal prompt): ~2-4s — guaranteed completion
+    // Never wait between retries — we're racing the 26s clock.
+    const PACK_FALLBACK_MODEL = 'claude-haiku-3-5';
     let attempts = 0;
     while (attempts < 3) {
       attempts++;
       try {
+        const attemptModel = attempts >= 3 ? PACK_FALLBACK_MODEL : model;
+        const promptToUse = attempts === 1 ? userPrompt : userPrompt.slice(0, Math.floor(userPrompt.length / attempts));
+        const elapsed = Date.now() - startTime;
+        console.log(`[pack] attempt ${attempts}/3: model=${attemptModel}, prompt=${Math.round(promptToUse.length/1000)}K chars, elapsed=${elapsed}ms`);
         const response = await client.messages.create({
-          model,
-          max_tokens: 8192,
+          model: attemptModel,
+          max_tokens: 4096,  // Structured JSON output — 4K tokens sufficient, faster than 8K
           system: systemPrompt,
-          messages: [{ role: 'user', content: userPrompt }],
+          messages: [{ role: 'user', content: promptToUse }],
         });
         const text = response.content[0].type === 'text' ? response.content[0].text : '';
-        console.log(`[pack] attempt ${attempts}: response length ${text.length} chars`);
+        console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now()-startTime}ms`);
         const parsed = extractJSONObject(text);
         if (parsed) {
-          console.log(`[pack] JSON extracted successfully`);
+          console.log(`[pack] JSON extracted successfully on attempt ${attempts}`);
           return {
             statusCode: 200,
             headers: { 'Content-Type': 'application/json' },
@@ -222,7 +233,7 @@ A5 SIGNAL STRENGTH (Pricing Flexibility):
       } catch (e: any) {
         console.error(`Attempt ${attempts} failed:`, e?.message);
         if (attempts >= 3) break;
-        await new Promise(r => setTimeout(r, 1500));
+        // No sleep between retries — racing the 26s Netlify hard timeout
       }
     }
 
