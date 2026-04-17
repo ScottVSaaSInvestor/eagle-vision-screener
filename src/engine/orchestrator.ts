@@ -15,8 +15,8 @@
  * Expected runtime: 25-50 minutes for a thorough company. That is the point.
  * A real analyst would spend 2 days. We spend 40 minutes and sacrifice nothing on accuracy.
  *
- * Timeout budget: Netlify Pro = 26s per function call.
- * The orchestrator runs in the BROWSER — no timeout. Only individual Netlify calls are bounded.
+ * Timeout budget: Vercel = 300s (5 min) per function call.
+ * The orchestrator runs in the BROWSER — no timeout. Only individual Vercel function calls are bounded.
  */
 
 import type {
@@ -52,7 +52,7 @@ const CFG = {
   // Synthesis: 50K chars per dimension
   // On Vercel Pro (300s timeout) we can feed full evidence to Sonnet comfortably.
   // Sonnet on 50K chars: ~15-25s. Well within 300s budget.
-  // On Netlify (26s): the synthesize function's own retry ladder caps at 30K/15K/8K.
+  // On Vercel (300s): synthesis can handle up to 50K chars per call comfortably.
   SYNTH_MAX_CHARS: 20000,  // Kept low so browser fetch completes in <15s (50K was causing browser abort)
   // Pack call timeout — Vercel Pro allows 300s. Opus on 8K input tokens: ~60-90s.
   // Set to 180s to allow Opus to fully reason through complex evidence.
