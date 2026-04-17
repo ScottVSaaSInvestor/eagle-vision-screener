@@ -29,7 +29,7 @@ const STATUS_CONFIG = {
   stubbed: { dot: '#C5A572', label: 'V2 Stub', bg: 'rgba(197,165,114,0.08)' },
 };
 
-const STAGES = ['Profile', 'Research', 'Scoring', 'Report'];
+const STAGES = ['Broad Search (84q)', 'Deep Crawl (~75p)', 'Gap Fill ×2', 'Synthesize (7 dims)', 'Pack Analysis', 'Score'];
 
 export function ProgressPage() {
   const { jobId } = useParams<{ jobId: string }>();
@@ -85,7 +85,19 @@ export function ProgressPage() {
   const elapsed = store.elapsedSeconds;
   const elapsedStr = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
   const completedPacks = Object.values(store.packStatuses).filter(s => s === 'complete' || s === 'stubbed').length;
-  const stageIndex = completedPacks === 0 ? 0 : completedPacks <= 1 ? 1 : completedPacks <= 6 ? 2 : 3;
+  // Derive stage from progress log content for the multi-phase research pipeline
+  const stageIndex = (() => {
+    const log = store.progressLog.map(e => e.message).join('\n');
+    if (log.includes('PHASE 7') || log.includes('SOAR Score')) return 5;
+    if (log.includes('PHASE 6') || log.includes('AI Pack Analysis') || log.includes('Running 7 investment')) return 4;
+    if (log.includes('PHASE 6') || log.includes('Evidence Synthesis') || log.includes('synthesis briefs complete') || log.includes('Synthesizing')) return 3;
+    if (log.includes('PHASE 5') || log.includes('Second Gap-Fill') || log.includes('PHASE 4') || log.includes('Gap-Fill Search')) return 2;
+    if (log.includes('PHASE 3') || log.includes('Gap Analysis')) return 2;
+    if (log.includes('PHASE 2') || log.includes('Deep Web Crawl')) return 1;
+    if (log.includes('PHASE 1') || log.includes('Broad Search')) return 0;
+    if (completedPacks >= 7) return 5;
+    return 0;
+  })();
 
   return (
     <AppShell>

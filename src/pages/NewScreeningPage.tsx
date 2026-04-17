@@ -5,9 +5,18 @@ import { useScreeningStore } from '@/store/screeningStore';
 import type { ScreeningInputs, UploadedDocument } from '@/engine/types';
 
 const VERTICALS = [
-  'Restaurant Tech', 'Healthcare IT', 'Legal Tech', 'HR Tech', 'FinTech', 'PropTech',
-  'InsurTech', 'EdTech', 'AgTech', 'Construction Tech', 'Supply Chain', 'Retail Tech',
-  'Field Service', 'Logistics', 'Cybersecurity', 'Marketing Tech', 'Sales Tech', 'Other',
+  // Healthcare
+  'Home Health Software', 'Hospice Software', 'Home Care / Private Duty', 'Behavioral Health EHR',
+  'Dental Practice Management', 'Physical Therapy Software', 'Veterinary Practice Management',
+  'Healthcare IT / Health Systems', 'Revenue Cycle Management', 'Pharmacy Software',
+  // Field Services
+  'Field Service Management', 'HVAC / Plumbing / Electrical', 'Pest Control Software',
+  'Landscaping Software', 'Cleaning / Janitorial', 'Property Management',
+  // Business Verticals
+  'Restaurant Tech', 'Legal Tech', 'HR Tech / Workforce Management', 'FinTech / Lending',
+  'InsurTech', 'EdTech', 'AgTech', 'Construction Tech', 'Retail Tech', 'Childcare Software',
+  'Fitness / Studio Management', 'Non-Profit Software', 'Supply Chain / Logistics',
+  'Cybersecurity', 'Marketing Tech', 'Sales Tech / CRM', 'Other',
 ];
 
 function isValidUrl(url: string): boolean {
@@ -309,8 +318,12 @@ export function NewScreeningPage() {
                     </div>
                   )}
                   <div className="flex justify-between">
+                    <span className="text-gray-400">Research depth</span>
+                    <span style={{ color: '#CFFF04' }}>Investment-grade (4-pass)</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-gray-400">Estimated time</span>
-                    <span style={{ color: '#CFFF04' }}>≈ 2–3 minutes</span>
+                    <span style={{ color: '#FFB300' }}>≈ 30–50 minutes</span>
                   </div>
                 </div>
               </div>

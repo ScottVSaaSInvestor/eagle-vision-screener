@@ -70,9 +70,79 @@ async function packageApp() {
     console.log('   ⚠ pdf-parse not found — PDF parsing will use fallback');
   }
 
-  // Step 6: Copy netlify.toml
-  console.log('6. Copying netlify.toml...');
-  await copyFile(join(ROOT, 'netlify.toml'), join(DEPLOY_DIR, 'netlify.toml'));
+  // Step 6: Write deploy-specific netlify.toml (NOT the root dev version)
+  // IMPORTANT: deploy netlify.toml must have command="" and publish="."
+  // because the site is pre-built — Netlify should NOT run a build command
+  console.log('6. Writing deploy netlify.toml (pre-built, no build command)...');
+  const deployToml = `[build]
+  command = ""
+  publish = "."
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["pdf-parse"]
+
+# ── AI Pack Functions (heavy Claude calls — 26s max) ─────────────────────────
+[functions."pack-company-profile"]
+  timeout = 26
+
+[functions."pack-competitive-landscape"]
+  timeout = 26
+
+[functions."pack-team-capability"]
+  timeout = 26
+
+[functions."pack-regulatory-moat"]
+  timeout = 26
+
+[functions."pack-workflow-product"]
+  timeout = 26
+
+[functions."pack-data-architecture"]
+  timeout = 26
+
+[functions."pack-market-timing"]
+  timeout = 26
+
+# ── Research Functions ────────────────────────────────────────────────────────
+[functions."research-search"]
+  timeout = 26
+
+[functions."research-crawl"]
+  timeout = 26
+
+[functions."research-gap-fill"]
+  timeout = 26
+
+[functions."research-synthesize"]
+  timeout = 26
+
+# ── Supporting Functions ──────────────────────────────────────────────────────
+[functions."auth-check"]
+  timeout = 10
+
+[functions."document-parse"]
+  timeout = 26
+
+[functions."diagnose"]
+  timeout = 26
+`;
+  const { writeFile } = await import('fs/promises');
+  await writeFile(join(DEPLOY_DIR, 'netlify.toml'), deployToml, 'utf8');
 
   // Done
   console.log('\n✅ Package complete!\n');
@@ -85,7 +155,8 @@ async function packageApp() {
   console.log('3. Wait for deployment to complete (~1 min)');
   console.log('4. Go to Site Settings → Environment Variables → Add:');
   console.log('   ANTHROPIC_API_KEY     = sk-ant-...');
-  console.log('   ANTHROPIC_MODEL       = claude-sonnet-4-5-20250929');
+  console.log('   ANTHROPIC_MODEL       = claude-opus-4-5  ← STRONGLY RECOMMENDED (accuracy over speed)');
+  console.log('                           fallback: claude-sonnet-4-5-20250929 (faster, less thorough)');
   console.log('   TAVILY_API_KEY        = tvly-...');
   console.log('   ACCESS_PASSCODE       = your-secure-passcode');
   console.log('   BRAVE_SEARCH_API_KEY  = BSA-...  (optional)');

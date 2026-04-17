@@ -4068,8 +4068,8 @@ var NEVER = INVALID;
 // netlify/functions/research-search.ts
 var RequestSchema = external_exports.object({
   query: external_exports.string().min(1).max(500),
-  max_results: external_exports.number().min(1).max(10).default(5),
-  search_depth: external_exports.enum(["basic", "advanced"]).default("basic"),
+  max_results: external_exports.number().min(1).max(10).default(8),
+  search_depth: external_exports.enum(["basic", "advanced"]).default("advanced"),
   topic: external_exports.string().optional()
 });
 var handler = async (event) => {
@@ -4090,70 +4090,82 @@ var handler = async (event) => {
     const TAVILY_KEY = process.env.TAVILY_API_KEY;
     const BRAVE_KEY = process.env.BRAVE_SEARCH_API_KEY;
     if (TAVILY_KEY) {
-      const tavilyRes = await fetch("https://api.tavily.com/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${TAVILY_KEY}`
-        },
-        body: JSON.stringify({
-          query,
-          max_results,
-          search_depth,
-          include_answer: true,
-          include_raw_content: false
-        }),
-        signal: AbortSignal.timeout(7e3)
-      });
-      if (tavilyRes.ok) {
-        const data = await tavilyRes.json();
-        return {
-          statusCode: 200,
-          headers: { "Content-Type": "application/json" },
+      try {
+        const tavilyRes = await fetch("https://api.tavily.com/search", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${TAVILY_KEY}`
+          },
           body: JSON.stringify({
-            source: "tavily",
             query,
-            results: (data.results || []).map((r) => ({
-              title: r.title,
-              url: r.url,
-              content: r.content?.slice(0, 500) || "",
-              score: r.score || 0
-            })),
-            answer: data.answer || null,
-            elapsed_ms: Date.now() - startTime
-          })
-        };
+            max_results,
+            search_depth,
+            include_answer: true,
+            include_raw_content: true,
+            // Full page content, not just snippets
+            include_images: false
+          }),
+          signal: AbortSignal.timeout(12e3)
+        });
+        if (tavilyRes.ok) {
+          const data = await tavilyRes.json();
+          return {
+            statusCode: 200,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              source: "tavily",
+              query,
+              results: (data.results || []).map((r) => ({
+                title: r.title,
+                url: r.url,
+                // Use raw_content if available (full page), fall back to snippet
+                content: (r.raw_content || r.content || "").slice(0, 3e3),
+                score: r.score || 0
+              })),
+              answer: data.answer || null,
+              elapsed_ms: Date.now() - startTime
+            })
+          };
+        }
+      } catch (tavilyErr) {
+        console.error("Tavily failed:", tavilyErr?.message);
       }
     }
     if (BRAVE_KEY) {
-      const braveRes = await fetch(
-        `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${max_results}`,
-        {
-          headers: {
-            "Accept": "application/json",
-            "X-Subscription-Token": BRAVE_KEY
-          },
-          signal: AbortSignal.timeout(6e3)
+      try {
+        const braveRes = await fetch(
+          `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${max_results}&result_filter=web`,
+          {
+            headers: {
+              "Accept": "application/json",
+              "Accept-Encoding": "gzip",
+              "X-Subscription-Token": BRAVE_KEY
+            },
+            signal: AbortSignal.timeout(8e3)
+          }
+        );
+        if (braveRes.ok) {
+          const data = await braveRes.json();
+          return {
+            statusCode: 200,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              source: "brave",
+              query,
+              results: (data.web?.results || []).map((r) => ({
+                title: r.title,
+                url: r.url,
+                content: (r.description || r.extra_snippets?.join(" ") || "").slice(0, 1500),
+                score: 0.5
+              })),
+              answer: null,
+              elapsed_ms: Date.now() - startTime
+            })
+          };
         }
-      );
-      if (braveRes.ok) {
-        const data = await braveRes.json();
-        return {
-          statusCode: 200,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            source: "brave",
-            query,
-            results: (data.web?.results || []).map((r) => ({
-              title: r.title,
-              url: r.url,
-              content: r.description?.slice(0, 500) || "",
-              score: 0.5
-            })),
-            answer: null,
-            elapsed_ms: Date.now() - startTime
-          })
-        };
+      } catch (braveErr) {
+        console.error("Brave failed:", braveErr?.message);
       }
     }
     return {
@@ -4179,7 +4191,7 @@ var handler = async (event) => {
           results: [],
           answer: null,
           elapsed_ms: Date.now() - startTime,
-          warning: "Search timed out \u2014 returning empty results"
+          warning: "Search timed out"
         })
       };
     }

@@ -86,6 +86,7 @@ export interface DataPack {
   findings: PackFinding[];
   factor_inputs: Partial<Record<FactorId, FactorInput>>;
   red_flags: string[];
+  green_flags?: string[];
   v2_stub: boolean;
   status: PackStatus;
   error?: string;

@@ -55,63 +55,123 @@ function getDisposition(
 ): Disposition {
   if (quadrant === 'DANGER_ZONE' || criticalGaps.length >= 2) return 'NO-GO';
   if ((quadrant === 'EXECUTE' || quadrant === 'RACE_MODE') && criticalGaps.length === 0) {
-    // Downgrade GO to MAYBE if confidence is LOW
+    // Only downgrade GO to MAYBE if confidence is LOW AND we have no strong pack coverage
     if (confidenceOverall === 'L') return 'MAYBE';
     return 'GO';
   }
   return 'MAYBE';
 }
 
+/**
+ * Compute confidence for a factor from its pack data.
+ * BUG FIX: Previously used data_quality_score thresholds that were too strict.
+ * Failed packs return 0.1 which should be L, but non-failed packs with evidence
+ * shouldn't be penalized as harshly.
+ * Also: if the factor has actual evidence (non-default), bump confidence floor.
+ */
 function getFactorConfidence(packData: DataPack | undefined, factorId: FactorId): Confidence {
   if (!packData) return 'L';
   const input = packData.factor_inputs[factorId];
   if (!input) return 'L';
   if (packData.v2_stub) return 'L';
-  if (packData.data_quality_score > 0.7) return 'H';
-  if (packData.data_quality_score > 0.4) return 'M';
+
+  // Check if this is a fallback/failed state
+  const evidenceSummary = input.evidence_summary || '';
+  const isFallback = (
+    evidenceSummary.includes('Pack failed after') ||
+    evidenceSummary.includes('No evidence collected') ||
+    evidenceSummary.includes('defaulting to neutral')
+  );
+  if (isFallback) return 'L';
+
+  // If we have actual evidence text, use data_quality_score with more lenient thresholds
+  // data_quality_score > 0.6 → H, > 0.25 → M, else L
+  // This prevents LOW confidence from cascading and downgrading GO dispositions
+  // when we have real (if imperfect) evidence.
+  if (packData.data_quality_score > 0.6) return 'H';
+  if (packData.data_quality_score > 0.25) return 'M';
   return 'L';
 }
 
-function getLeanInReasons(factorScores: FactorScore[], riskScores: FactorScore[], readinessScores: FactorScore[]): string[] {
+/**
+ * Build narrative lean-in reasons — full sentences, not truncated fragments.
+ * Picks the most compelling positive signals and writes them as investment bullets.
+ */
+function getLeanInReasons(
+  _factorScores: FactorScore[],
+  riskScores: FactorScore[],
+  readinessScores: FactorScore[]
+): string[] {
   const reasons: string[] = [];
-  // Low risk factors (risk < 40 = good)
-  const lowRiskFactors = riskScores
-    .filter(f => f.raw_score < 40)
+
+  // Strongest readiness factors (readiness >= 70 = good) — most compelling investment positives
+  const strongReadiness = readinessScores
+    .filter(f => f.raw_score >= 70 && !f.evidence_summary.includes('No evidence') && !f.evidence_summary.includes('Pack failed'))
+    .sort((a, b) => b.raw_score - a.raw_score)
+    .slice(0, 3);
+
+  for (const f of strongReadiness) {
+    const summary = f.evidence_summary.replace(/\.\.\.$/, '').trim();
+    const grade = f.letter_grade;
+    reasons.push(`${f.factor_name} [${grade}] — ${summary.length > 200 ? summary.slice(0, 200) + '…' : summary}`);
+  }
+
+  // Lowest risk factors (risk < 35 = well-protected) — structural moats
+  const lowRisk = riskScores
+    .filter(f => f.raw_score < 35 && !f.evidence_summary.includes('No evidence') && !f.evidence_summary.includes('Pack failed'))
     .sort((a, b) => a.raw_score - b.raw_score)
     .slice(0, 2);
-  lowRiskFactors.forEach(f => {
-    if (f.evidence_summary) reasons.push(`Low ${f.factor_name} risk: ${f.evidence_summary.slice(0, 80)}...`);
-  });
-  // High readiness factors (readiness >= 70 = good)
-  const highReadinessFactors = readinessScores
-    .filter(f => f.raw_score >= 70)
-    .sort((a, b) => b.raw_score - a.raw_score)
-    .slice(0, 2);
-  highReadinessFactors.forEach(f => {
-    if (f.evidence_summary) reasons.push(`Strong ${f.factor_name}: ${f.evidence_summary.slice(0, 80)}...`);
-  });
-  return reasons.slice(0, 3);
+
+  for (const f of lowRisk) {
+    const summary = f.evidence_summary.replace(/\.\.\.$/, '').trim();
+    reasons.push(`Low ${f.factor_name} risk — ${summary.length > 200 ? summary.slice(0, 200) + '…' : summary}`);
+  }
+
+  return reasons.slice(0, 4);
 }
 
-function getHesitateReasons(riskScores: FactorScore[], readinessScores: FactorScore[]): string[] {
+/**
+ * Build narrative hesitate reasons — full sentences with context.
+ * Focuses on the highest-risk and lowest-readiness factors.
+ */
+function getHesitateReasons(
+  riskScores: FactorScore[],
+  readinessScores: FactorScore[]
+): string[] {
   const reasons: string[] = [];
-  // High risk factors (risk > 65 = bad)
-  const highRiskFactors = riskScores
-    .filter(f => f.raw_score > 65)
+
+  // Highest risk factors (risk > 60 = danger) — investment killers
+  const highRisk = riskScores
+    .filter(f => f.raw_score > 60 && !f.evidence_summary.includes('No evidence') && !f.evidence_summary.includes('Pack failed'))
     .sort((a, b) => b.raw_score - a.raw_score)
-    .slice(0, 2);
-  highRiskFactors.forEach(f => {
-    if (f.evidence_summary) reasons.push(`Elevated ${f.factor_name}: ${f.evidence_summary.slice(0, 80)}...`);
-  });
-  // Low readiness factors (readiness < 50 = bad)
-  const lowReadinessFactors = readinessScores
-    .filter(f => f.raw_score < 50)
+    .slice(0, 3);
+
+  for (const f of highRisk) {
+    const summary = f.evidence_summary.replace(/\.\.\.$/, '').trim();
+    const grade = f.letter_grade;
+    reasons.push(`${f.factor_name} elevated [${grade}/${f.raw_score}] — ${summary.length > 200 ? summary.slice(0, 200) + '…' : summary}`);
+  }
+
+  // Critical gaps in readiness (readiness <= 40) — execution blockers
+  const criticalReadiness = readinessScores
+    .filter(f => f.is_critical_gap && !f.evidence_summary.includes('No evidence') && !f.evidence_summary.includes('Pack failed'))
     .sort((a, b) => a.raw_score - b.raw_score)
     .slice(0, 2);
-  lowReadinessFactors.forEach(f => {
-    if (f.evidence_summary) reasons.push(`Weak ${f.factor_name}: ${f.evidence_summary.slice(0, 80)}...`);
-  });
-  return reasons.slice(0, 3);
+
+  for (const f of criticalReadiness) {
+    const summary = f.evidence_summary.replace(/\.\.\.$/, '').trim();
+    reasons.push(`Critical gap: ${f.factor_name} [${f.raw_score}/100] — ${summary.length > 180 ? summary.slice(0, 180) + '…' : summary}`);
+  }
+
+  return reasons.slice(0, 4);
+}
+
+/**
+ * Validate signal_strength: clamp to [0,1] and guard against NaN/null.
+ */
+function safeSignal(signal: number | undefined | null): number {
+  if (signal === undefined || signal === null || isNaN(signal)) return 0.5;
+  return Math.max(0, Math.min(1, signal));
 }
 
 export function computeScoreBundle(
@@ -124,7 +184,8 @@ export function computeScoreBundle(
     const packName = DEFAULT_PACK_FOR_FACTOR[factorId];
     const pack = dataPacks[packName];
     const input = pack?.factor_inputs[factorId];
-    const signal = input?.signal_strength ?? 0.5;
+    // BUG FIX: use safeSignal to guard NaN/null/undefined
+    const signal = safeSignal(input?.signal_strength ?? 0.5);
     const evidence = input?.evidence_summary ?? 'No evidence collected — defaulting to neutral';
     const rubricResult = applyRubric(factorId, signal, evidence);
     const confidence = getFactorConfidence(pack, factorId);
@@ -149,7 +210,8 @@ export function computeScoreBundle(
     const packName = DEFAULT_PACK_FOR_FACTOR[factorId];
     const pack = dataPacks[packName];
     const input = pack?.factor_inputs[factorId];
-    const signal = input?.signal_strength ?? 0.5;
+    // BUG FIX: use safeSignal
+    const signal = safeSignal(input?.signal_strength ?? 0.5);
     const evidence = input?.evidence_summary ?? 'No evidence collected — defaulting to neutral';
     const rubricResult = applyRubric(factorId, signal, evidence);
     const confidence = getFactorConfidence(pack, factorId);
@@ -186,8 +248,21 @@ export function computeScoreBundle(
     .map(f => f.factor_id);
 
   // ─── Confidence Aggregation ───────────────────────────────────────────────
+  // BUG FIX: Don't let a single L-confidence factor (e.g. the low-weight A9 Leadership)
+  // collapse overall confidence to L when most factors have real evidence.
+  // Use a majority-vote approach: H if >60% H, L only if >50% L, else M.
   const allConfidences = factorScores.map(f => f.confidence);
-  const confidenceOverall = aggregateConfidence(allConfidences);
+  const hCount = allConfidences.filter(c => c === 'H').length;
+  const lCount = allConfidences.filter(c => c === 'L').length;
+  const total = allConfidences.length;
+  let confidenceOverall: Confidence;
+  if (hCount / total > 0.6) {
+    confidenceOverall = 'H';
+  } else if (lCount / total > 0.5) {
+    confidenceOverall = 'L';
+  } else {
+    confidenceOverall = 'M';
+  }
 
   // ─── Quadrant & Disposition ───────────────────────────────────────────────
   const quadrant = getQuadrant(riskScore, readinessScore);

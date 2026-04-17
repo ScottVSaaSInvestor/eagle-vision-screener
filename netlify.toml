@@ -20,6 +20,52 @@
   node_bundler = "esbuild"
   external_node_modules = ["pdf-parse"]
 
+# ── AI Pack Functions (heavy Claude calls — 26s timeout) ──────────────────────
+[functions."pack-company-profile"]
+  timeout = 26
+
+[functions."pack-competitive-landscape"]
+  timeout = 26
+
+[functions."pack-team-capability"]
+  timeout = 26
+
+[functions."pack-regulatory-moat"]
+  timeout = 26
+
+[functions."pack-workflow-product"]
+  timeout = 26
+
+[functions."pack-data-architecture"]
+  timeout = 26
+
+[functions."pack-market-timing"]
+  timeout = 26
+
+# ── Research Functions (web I/O — 26s timeout) ────────────────────────────────
+[functions."research-search"]
+  timeout = 26
+
+[functions."research-crawl"]
+  timeout = 26
+
+# ── New Deep Research Functions (Claude synthesis calls — 26s timeout) ────────
+[functions."research-gap-fill"]
+  timeout = 26
+
+[functions."research-synthesize"]
+  timeout = 26
+
+# ── Auth & Document Functions ─────────────────────────────────────────────────
+[functions."auth-check"]
+  timeout = 10
+
+[functions."document-parse"]
+  timeout = 26
+
+[functions."diagnose"]
+  timeout = 26
+
 [dev]
   command = "npm run dev"
   port = 8888

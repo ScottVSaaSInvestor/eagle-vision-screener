@@ -10042,7 +10042,70 @@ var { HUMAN_PROMPT, AI_PROMPT } = Anthropic;
 var sdk_default = Anthropic;
 
 // netlify/functions/pack-regulatory-moat.ts
+function extractJSONObject(text) {
+  if (!text || text.length < 2) return null;
+  try {
+    const t2 = text.trim();
+    if (t2.startsWith("{")) return JSON.parse(t2);
+  } catch {
+  }
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]+?)\s*```/);
+  if (fenceMatch) {
+    try {
+      return JSON.parse(fenceMatch[1]);
+    } catch {
+    }
+  }
+  const firstBrace = text.indexOf("{");
+  if (firstBrace === -1) return null;
+  let depth = 0, inString = false, escape = false, end = -1;
+  for (let i2 = firstBrace; i2 < text.length; i2++) {
+    const ch = text[i2];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (inString && ch === "\\") {
+      escape = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        end = i2;
+        break;
+      }
+    }
+  }
+  if (end > firstBrace) {
+    try {
+      return JSON.parse(text.slice(firstBrace, end + 1));
+    } catch {
+    }
+  }
+  return null;
+}
 var client = new sdk_default({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
+function buildEvidenceContext(evidenceTexts, maxChars = 5e4) {
+  if (!Array.isArray(evidenceTexts)) return "";
+  let combined = "";
+  for (const chunk of evidenceTexts) {
+    if (!chunk) continue;
+    if (combined.length + chunk.length > maxChars) {
+      const remaining = maxChars - combined.length;
+      if (remaining > 200) combined += "\n\n---\n\n" + chunk.slice(0, remaining);
+      break;
+    }
+    combined += (combined ? "\n\n---\n\n" : "") + chunk;
+  }
+  return combined;
+}
 var handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
@@ -10050,67 +10113,103 @@ var handler = async (event) => {
   const startTime = Date.now();
   try {
     const body = JSON.parse(event.body || "{}");
-    const { company_name, company_url, vertical, evidence_texts } = body;
+    const { company_name, company_url, vertical, evidence_texts, use_knowledge_fallback } = body;
     if (!company_name) {
       return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
     }
-    const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929";
-    const evidenceContext = Array.isArray(evidence_texts) ? evidence_texts.slice(0, 4).join("\n\n---\n\n") : "";
-    const prompt = `You are a regulatory and competitive moat analyst for a vertical SaaS investment fund.
+    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
+    const evidenceContext = buildEvidenceContext(evidence_texts || []);
+    const hasRichEvidence = evidenceContext.length > 1e3;
+    const systemPrompt = `You are a senior regulatory and competitive moat analyst at a vertical SaaS PE/growth equity firm. You deeply understand regulatory compliance requirements across healthcare, financial services, field services, and other regulated industries where vertical SaaS operates. You can accurately assess switching costs, data lock-in, and moat durability.
+
+CRITICAL INSTRUCTIONS:
+1. For well-known verticals (home health, healthcare, fintech, etc.) you have deep knowledge of regulations \u2014 use it
+2. Switching costs in vertical SaaS are often underestimated \u2014 consider: data migration, compliance history, staff retraining, integration complexity, workflow disruption
+3. Regulatory moats are real and durable in many verticals \u2014 be specific about which regulations matter
+4. Be specific: name the actual regulations (HIPAA, OASIS, EVV, SOC2, etc.) and explain their impact
+5. A high switching propensity (R5 high) is BAD for investment. A strong regulatory moat (R6 high) is GOOD.`;
+    const userPrompt = `Assess the regulatory environment, switching costs, and moat durability for this vertical SaaS company.
 
 COMPANY: ${company_name}
 URL: ${company_url || "Not provided"}
-VERTICAL: ${vertical || "Unknown \u2014 infer from evidence"}
+VERTICAL: ${vertical || "Infer from evidence and knowledge"}
 
-RESEARCH EVIDENCE:
-${evidenceContext || "No evidence \u2014 use general industry knowledge with LOW confidence."}
+${!hasRichEvidence && use_knowledge_fallback ? `KNOWLEDGE FALLBACK: Limited web evidence. CRITICAL: Use your training knowledge about ${company_name} and the ${vertical || "vertical SaaS"} market. You know the regulatory frameworks for this industry, the switching costs involved, and the competitive dynamics. Provide a substantive analysis. Mark confidence 'L' but give real, specific answers.` : `Use evidence below plus your knowledge to provide the most accurate assessment.`}
 
-Assess the regulatory environment, compliance requirements, and moat durability. Return ONLY valid JSON:
+RESEARCH EVIDENCE (${evidenceContext.length} chars):
+${evidenceContext || "Limited web evidence \u2014 use training knowledge as instructed."}
+
+Return ONLY valid JSON with NO markdown fences:
 
 {
   "pack_name": "regulatory_moat",
-  "pack_version": "1.0",
+  "pack_version": "2.0",
   "generated_at": "${(/* @__PURE__ */ new Date()).toISOString()}",
   "data_quality_score": <0.0-1.0>,
   "findings": [
     {
-      "key": "regulatory_frameworks",
-      "value": ["<e.g. HIPAA, SOC2, PCI-DSS, FCA, FDA, FINRA, etc. or None identified>"],
+      "key": "regulatory_landscape",
+      "value": {
+        "primary_frameworks": ["<list actual regulations: HIPAA, OASIS, EVV, SOC2, PCI-DSS, FCA, FINRA, etc.>"],
+        "enforcement_level": "HIGH"|"MEDIUM"|"LOW",
+        "trend": "TIGHTENING"|"STABLE"|"LOOSENING",
+        "ai_regulation_impact": "<how AI regulation (EU AI Act, state AI laws, etc.) affects this vertical>",
+        "key_regulatory_bodies": ["<agencies/bodies that regulate this vertical>"]
+      },
       "confidence": "H"|"M"|"L",
-      "sources": ["<url>"],
+      "sources": ["<url or 'Analyst knowledge'>"],
       "unknowns": []
     },
     {
       "key": "compliance_certifications",
-      "value": ["<certifications held, e.g. SOC2 Type II, ISO 27001, or Unknown>"],
+      "value": {
+        "confirmed_certifications": ["<certifications the company is known to hold: SOC2 Type II, HIPAA BAA, ISO 27001, HITRUST, etc.>"],
+        "likely_certifications": ["<certifications likely required/held but not explicitly confirmed>"],
+        "compliance_as_moat": "<does compliance certification create a moat? How hard is it for a competitor to achieve the same?>",
+        "assessment": "<overall compliance posture>"
+      },
       "confidence": "H"|"M"|"L",
       "sources": ["<url>"],
       "unknowns": []
     },
     {
-      "key": "switching_friction_score",
-      "value": "<HIGH|MEDIUM|LOW \u2014 how hard is it for customers to switch away>",
+      "key": "switching_cost_analysis",
+      "value": {
+        "switching_cost_level": "VERY_HIGH"|"HIGH"|"MEDIUM"|"LOW"|"VERY_LOW",
+        "cost_drivers": [
+          "<specific switching cost factor \u2014 e.g. 'Patient/customer data migration requires months of reconciliation'>",
+          "<factor 2>",
+          "<factor 3>"
+        ],
+        "data_portability": "<how easy is it to export data? Is it in standard formats?>",
+        "integration_complexity": "<how many integrations does this software have that would need to be replicated?>",
+        "historical_churn_signal": "<any evidence of actual customer retention rates, NPS, or churn behavior?>",
+        "typical_contract_terms": "<what are typical contract lengths and exit provisions?>"
+      },
+      "confidence": "H"|"M"|"L",
+      "sources": ["<url or 'Analyst knowledge'>"],
+      "unknowns": []
+    },
+    {
+      "key": "data_moat",
+      "value": {
+        "proprietary_data_description": "<what proprietary data does this company accumulate that competitors don't have?>",
+        "data_moat_strength": "STRONG"|"MODERATE"|"WEAK"|"NONE",
+        "network_effect": "<does the data improve with more users/customers? Network effect present?>",
+        "ai_advantage": "<how does this data advantage translate to better AI models/features?>"
+      },
       "confidence": "H"|"M"|"L",
       "sources": [],
       "unknowns": []
     },
     {
-      "key": "data_moat_strength",
-      "value": "<description of proprietary data advantages or None>",
-      "confidence": "H"|"M"|"L",
-      "sources": ["<url>"],
-      "unknowns": []
-    },
-    {
-      "key": "regulatory_risk_trend",
-      "value": "<INCREASING_PROTECTION|STABLE|DECREASING \u2014 trend for this vertical>",
-      "confidence": "H"|"M"|"L",
-      "sources": [],
-      "unknowns": []
-    },
-    {
-      "key": "ai_regulation_exposure",
-      "value": "<description of how AI regulation affects this vertical>",
+      "key": "competitive_moat_summary",
+      "value": {
+        "overall_moat_rating": "EXCEPTIONAL"|"STRONG"|"MODERATE"|"WEAK"|"MINIMAL",
+        "moat_durability": "<how long can this moat be expected to hold? 1yr/3yr/5yr/10yr+?>",
+        "moat_components": ["<list the specific moat components in order of strength>"],
+        "key_vulnerabilities": ["<what could erode this moat?>"]
+      },
       "confidence": "H"|"M"|"L",
       "sources": [],
       "unknowns": []
@@ -10118,44 +10217,69 @@ Assess the regulatory environment, compliance requirements, and moat durability.
   ],
   "factor_inputs": {
     "R5": {
-      "evidence_summary": "<customer switching propensity evidence>",
-      "signal_strength": <0.0-1.0>
+      "evidence_summary": "<3-4 sentences: How easy is it for a customer to switch away from this software? What are the specific friction points? Data migration, compliance history, integrations, workflow disruption? What does retention/churn data suggest?>",
+      "signal_strength": <0.0-1.0, where 0.0=virtually impossible to switch/maximum lock-in, 1.0=trivially easy to switch/no lock-in>
     },
     "R6": {
-      "evidence_summary": "<regulatory moat durability evidence>",
-      "signal_strength": <0.0-1.0>
+      "evidence_summary": "<3-4 sentences: How strong and durable is the regulatory moat? Name specific regulations that create barriers. Is this vertical getting MORE regulated over time? Does compliance certification create meaningful competitive advantage?>",
+      "signal_strength": <0.0-1.0, where 0.0=no regulatory protection at all, 1.0=exceptional regulatory moat highly durable>
     }
   },
-  "red_flags": ["<string if there are material regulatory risks or no moat>"],
+  "red_flags": ["<Real concerns: e.g. 'No data export friction \u2014 customers can leave in days', 'Vertical being deregulated'>"],
+  "green_flags": ["<Positive moat signals: e.g. 'HIPAA BAA with historical compliance record creates massive switching friction'>"],
   "v2_stub": false
 }
 
-SIGNAL STRENGTH:
-- R5 (Customer Switching Propensity): 0=locked in/high friction, 1=trivial to switch
-- R6 (Regulatory Moat Durability): 0=no reg protection, 1=strong durable regulatory moat (NOTE: HIGH signal here = GOOD moat = LOW risk \u2014 scoring engine inverts this)
+SIGNAL STRENGTH CALIBRATION:
+R5 (Customer Switching Propensity) \u2014 LOWER IS BETTER FOR INVESTMENT:
+0.1 = Essentially impossible to switch \u2014 multi-year compliance history locked in, massive data migration
+0.2 = Very high switching cost \u2014 significant workflow disruption, compliance re-certification required
+0.3 = High switching cost \u2014 data migration complex, staff retraining significant
+0.4 = Moderate-high switching cost \u2014 takes months and meaningful budget
+0.5 = Moderate switching cost \u2014 feasible but painful
+0.6 = Low-moderate \u2014 could switch in weeks with effort
+0.7 = Low \u2014 competitors offer easy migration tools
+0.8 = Very low \u2014 data in standard formats, easy to migrate
+0.9 = Trivial \u2014 customers switch routinely, no meaningful lock-in
 
-Return ONLY the JSON object.`;
+R6 (Regulatory Moat Durability) \u2014 HIGHER IS BETTER FOR INVESTMENT:
+0.1 = No regulatory protection, unregulated vertical
+0.2 = Very light regulation, easily overcome by new entrants
+0.3 = Some compliance requirements but not differentiating
+0.4 = Moderate compliance requirements \u2014 some barrier but manageable
+0.5 = Meaningful compliance requirements \u2014 takes time and money
+0.6 = Significant regulatory compliance \u2014 SOC2/HIPAA creates real moat
+0.7 = Strong regulatory moat \u2014 multiple certifications + compliance track record
+0.8 = Very strong moat \u2014 regulators actively favor established compliant vendors
+0.9 = Exceptional moat \u2014 regulatory framework essentially requires long-term vendor relationships
+1.0 = Maximum regulatory protection \u2014 switching away requires regulatory re-approval`;
     let attempts = 0;
-    while (attempts < 2) {
+    while (attempts < 3) {
       attempts++;
       try {
         const response = await client.messages.create({
           model,
-          max_tokens: 2e3,
-          messages: [{ role: "user", content: prompt }]
+          max_tokens: 8192,
+          system: systemPrompt,
+          messages: [{ role: "user", content: userPrompt }]
         });
         const text = response.content[0].type === "text" ? response.content[0].text : "";
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
+        console.log(`[pack] attempt ${attempts}: response length ${text.length} chars`);
+        const parsed = extractJSONObject(text);
+        if (parsed) {
+          console.log(`[pack] JSON extracted successfully`);
           return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ...parsed, elapsed_ms: Date.now() - startTime })
           };
+        } else {
+          console.error(`[pack] JSON extraction failed on attempt ${attempts}. Text preview: ${text.slice(0, 300)}`);
         }
-      } catch {
-        if (attempts >= 2) break;
+      } catch (e2) {
+        console.error(`Attempt ${attempts} failed:`, e2?.message);
+        if (attempts >= 3) break;
+        await new Promise((r2) => setTimeout(r2, 500));
       }
     }
     return {
@@ -10163,13 +10287,13 @@ Return ONLY the JSON object.`;
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         pack_name: "regulatory_moat",
-        pack_version: "1.0",
+        pack_version: "2.0",
         generated_at: (/* @__PURE__ */ new Date()).toISOString(),
         data_quality_score: 0.1,
         findings: [],
         factor_inputs: {
-          R5: { evidence_summary: "Pack failed", signal_strength: 0.5 },
-          R6: { evidence_summary: "Pack failed", signal_strength: 0.5 }
+          R5: { evidence_summary: "Pack failed after retries", signal_strength: 0.5 },
+          R6: { evidence_summary: "Pack failed after retries", signal_strength: 0.5 }
         },
         red_flags: ["Regulatory Moat pack failed"],
         v2_stub: false,

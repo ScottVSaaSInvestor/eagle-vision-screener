@@ -35,6 +35,7 @@ export function createWorkflowProductStub(companyName: string): DataPack {
       },
     },
     red_flags: [],
+    green_flags: [],
     v2_stub: true,
     status: 'stubbed',
   };
@@ -70,6 +71,7 @@ export function createDataArchitectureStub(companyName: string): DataPack {
       },
     },
     red_flags: [],
+    green_flags: [],
     v2_stub: true,
     status: 'stubbed',
   };
@@ -97,6 +99,7 @@ export function createMarketTimingStub(companyName: string): DataPack {
       },
     },
     red_flags: [],
+    green_flags: [],
     v2_stub: true,
     status: 'stubbed',
   };
