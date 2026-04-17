@@ -340,18 +340,18 @@ export async function runScreening(
 
   const competitorQueryExtras = hints.flatMap(h => [
     `"${h}" software funding traction customers`,
-    `"${h}" AI features product 2024 2025`,
+    `"${h}" AI features product 2025 2026`,
   ]);
 
   // COMPANY PROFILE dimension — 12 queries
   log({ message: `📡 Searching: Company Profile (12 queries)...`, level: 'info' });
   const profileResults1 = await searchSequential([
     `"${co}" software company overview history founded headquarters`,
-    `"${co}" annual recurring revenue ARR growth 2023 2024 2025`,
+    `"${co}" annual recurring revenue ARR growth 2024 2025 2026`,
     `"${co}" funding investors venture capital private equity raise`,
     `"${co}" crunchbase pitchbook funding rounds total raised employees headcount`,
     `"${co}" customers client list case studies testimonials logos`,
-    `"${co}" press release news announcement 2024 2025`,
+    `"${co}" press release news announcement 2025 2026`,
     `"${co}" G2 Capterra Trustpilot review rating score NPS`,
     `"${co}" pricing model cost per seat subscription plans`,
     `"${co}" CEO interview founder story origin mission`,
@@ -364,15 +364,15 @@ export async function runScreening(
   // COMPETITIVE dimension — 12 queries
   log({ message: `📡 Searching: Competitive Landscape (12 queries)...`, level: 'info' });
   const compResults1 = await searchSequential([
-    `"${co}" competitors alternatives vs comparison 2024 2025`,
-    `${v} software top companies market leaders 2024 2025`,
-    `${v} AI startup funding Series A B C 2023 2024 2025`,
+    `"${co}" competitors alternatives vs comparison 2025 2026`,
+    `${v} software top companies market leaders 2025 2026`,
+    `${v} AI startup funding Series A B C 2024 2025 2026`,
     `${v} artificial intelligence software disruption threat`,
-    `${v} private equity investment acquisition deal 2023 2024 2025`,
+    `${v} private equity investment acquisition deal 2024 2025 2026`,
     `${v} market share competitive analysis landscape`,
     `${v} ChatGPT OpenAI Microsoft Copilot automation threat impact`,
     `${v} incumbent player existing vendor platform consolidation`,
-    `${v} new entrant venture-backed startup disruption 2023 2024`,
+    `${v} new entrant venture-backed startup disruption 2024 2025 2026`,
     `${v} competitive moat defensibility differentiation`,
     `"${co}" win rate vs competitors customer wins losses`,
     ...competitorQueryExtras.slice(0, 2),
@@ -388,7 +388,7 @@ export async function runScreening(
     `"${co}" artificial intelligence machine learning team hires PhD`,
     `"${co}" job posting engineer data scientist ML AI open roles`,
     `"${co}" CEO interview podcast vision strategy AI transformation`,
-    `"${co}" product roadmap artificial intelligence 2024 2025 launch`,
+    `"${co}" product roadmap artificial intelligence 2025 2026 launch`,
     `"${co}" engineering blog technology architecture open source`,
     `"${co}" VP Product CPO chief product officer background`,
     `"${co}" team culture glassdoor review employee experience`,
@@ -403,13 +403,13 @@ export async function runScreening(
     `"${co}" HIPAA SOC2 compliance certification security audit`,
     `"${co}" integration EHR EMR API partners ecosystem connectors`,
     `"${co}" customer switching cost retention churn contract`,
-    `${v} regulatory compliance requirements HIPAA OASIS EVV 2024 2025`,
+    `${v} regulatory compliance requirements HIPAA OASIS EVV 2025 2026`,
     `${v} SOC2 HITRUST certification barriers to entry compliance cost`,
     `${v} switching costs lock-in customer retention data migration`,
     `${v} regulatory moat data privacy requirements government mandate`,
     `"${co}" customer contract length multi-year terms SLA agreement`,
     `"${co}" data portability export migration interoperability`,
-    `${v} compliance penalty enforcement action regulatory risk 2024`,
+    `${v} compliance penalty enforcement action regulatory risk 2025 2026`,
     `"${co}" integration depth API workflow embedded sticky`,
     `${v} proprietary data advantage network effect accumulation`,
   ], CFG.SEARCH_RESULTS_PER_QUERY, log);
@@ -426,7 +426,7 @@ export async function runScreening(
     `"${co}" net promoter score NPS customer satisfaction rating`,
     `"${co}" product demo features tour overview video`,
     `"${co}" customer testimonial quote review success story`,
-    `"${co}" product update release notes changelog 2024 2025`,
+    `"${co}" product update release notes changelog 2025 2026`,
     `"${co}" mobile app iOS Android field worker clinician`,
     `"${co}" workflow automation time savings productivity gain`,
     `"${co}" customer expansion upsell cross-sell module`,
@@ -441,7 +441,7 @@ export async function runScreening(
     `"${co}" API integration technology stack developer`,
     `"${co}" predictive analytics outcomes intelligence reporting benchmark`,
     `"${co}" data network effect proprietary dataset benchmark training`,
-    `"${co}" artificial intelligence product launch announcement 2024 2025`,
+    `"${co}" artificial intelligence product launch announcement 2025 2026`,
     `"${co}" cloud native microservices engineering platform`,
     `"${co}" outcomes data longitudinal patient visit record historizing`,
     `"${co}" machine learning model training dataset quality`,
@@ -454,17 +454,17 @@ export async function runScreening(
   // MARKET TIMING dimension — 12 queries
   log({ message: `📡 Searching: Market Timing (12 queries)...`, level: 'info' });
   const marketResults1 = await searchSequential([
-    `${v} market size TAM total addressable market 2024 2025 estimate`,
-    `${v} market growth rate CAGR forecast 2025 2030`,
-    `${v} private equity deal volume activity count 2023 2024 2025`,
+    `${v} market size TAM total addressable market 2025 2026 estimate`,
+    `${v} market growth rate CAGR forecast 2026 2031`,
+    `${v} private equity deal volume activity count 2024 2025 2026`,
     `${v} AI adoption survey operator usage statistics research`,
-    `${v} investment banker technology report outlook 2025`,
+    `${v} investment banker technology report outlook 2026`,
     `${v} macro trend demographic labor shortage reimbursement regulation`,
-    `${v} venture capital funding trends activity 2024 2025`,
+    `${v} venture capital funding trends activity 2025 2026`,
     `${v} M&A merger acquisition comparable transaction multiple`,
     `${v} EV EBITDA revenue multiple valuation software deal`,
     `${v} consolidation platform vendor market structure dynamics`,
-    `${v} buyer survey willingness-to-pay software budget 2025`,
+    `${v} buyer survey willingness-to-pay software budget 2026`,
     `${v} recession sensitivity budget cycle software spending trend`,
   ], CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };

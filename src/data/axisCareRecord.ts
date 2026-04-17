@@ -298,7 +298,7 @@ const marketTimingPack = makePack(
   },
   [
     'Non-medical home care market growing at ~12% CAGR through 2030 (aging population + Medicaid HCBS expansion)',
-    'PE deal activity in home care SaaS is active — multiple platform investments in 2023-2025 validate the vertical',
+    'PE deal activity in home care SaaS is active — multiple platform investments in 2024-2026 validate the vertical',
     'PDGM and HCBS waiver expansion create favorable regulatory tailwinds for technology adoption',
   ],
   [],
