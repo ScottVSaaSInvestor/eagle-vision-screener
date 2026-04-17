@@ -35,7 +35,8 @@ async function adapt(handler, req, res) {
 }
 
 
-// Bundled function: pack-market-timing
+// Bundled function: research-gap-fill
+let _netlifyExports = {};
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -65,7 +66,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
+  // "default" to the CommonJS "_netlifyExports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
@@ -6471,12 +6472,12 @@ var init_fileFromPath = __esm({
   }
 });
 
-// netlify/functions/pack-market-timing.ts
-var pack_market_timing_exports = {};
-__export(pack_market_timing_exports, {
+// netlify/functions/research-gap-fill.ts
+var research_gap_fill_exports = {};
+__export(research_gap_fill_exports, {
   handler: () => handler
 });
-module.exports = __toCommonJS(pack_market_timing_exports);
+_netlifyExports = __toCommonJS(research_gap_fill_exports);
 
 // node_modules/@anthropic-ai/sdk/version.mjs
 var VERSION = "0.40.1";
@@ -10079,7 +10080,8 @@ Anthropic.Beta = Beta;
 var { HUMAN_PROMPT, AI_PROMPT } = Anthropic;
 var sdk_default = Anthropic;
 
-// netlify/functions/pack-market-timing.ts
+// netlify/functions/research-gap-fill.ts
+var client = new sdk_default({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
 function extractJSONObject(text) {
   if (!text || text.length < 2) return null;
   try {
@@ -10129,21 +10131,62 @@ function extractJSONObject(text) {
   }
   return null;
 }
-var client = new sdk_default({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
-function buildEvidenceContext(evidenceTexts, maxChars = 5e4) {
-  if (!Array.isArray(evidenceTexts)) return "";
-  let combined = "";
-  for (const chunk of evidenceTexts) {
-    if (!chunk) continue;
-    if (combined.length + chunk.length > maxChars) {
-      const remaining = maxChars - combined.length;
-      if (remaining > 200) combined += "\n\n---\n\n" + chunk.slice(0, remaining);
-      break;
-    }
-    combined += (combined ? "\n\n---\n\n" : "") + chunk;
-  }
-  return combined;
-}
+var DIMENSION_CONTEXT = {
+  company_profile: `You are identifying gaps in company profile research. Critical unknowns that need gap-fill include:
+- Exact ARR or revenue range (look for press releases, job postings with pay ranges that imply scale, customer count \xD7 ASP estimates)
+- Funding round details (exact amounts, lead investors, dates)
+- Employee count and growth trajectory (LinkedIn, job boards)
+- Customer logos and case studies (press releases, award submissions)
+- G2/Capterra review scores and volume
+- Founding team background and prior exits`,
+  competitive_landscape: `You are identifying gaps in competitive landscape research. Critical unknowns that need gap-fill include:
+- Specific AI-native entrants: name, funding, traction, differentiator
+- Incumbent AI roadmaps: what specific features have incumbents shipped vs announced?
+- Recent funding rounds in the vertical (last 12 months)
+- Acquisition activity in the vertical (who is buying whom?)
+- Horizontal AI tools (ChatGPT, Copilot) adoption in this vertical among operators
+- Head-to-head comparison articles or analyst reports`,
+  team_capability: `You are identifying gaps in team capability research. Critical unknowns that need gap-fill include:
+- CEO and CTO names, backgrounds, prior companies
+- Head of AI/ML role if exists \u2014 who holds it?
+- Specific AI features that have been shipped to production
+- Job postings for AI/ML roles (signal of AI investment)
+- Engineering blog posts or technical talks
+- CEO public statements on AI strategy (podcasts, press interviews)
+- LinkedIn profiles of key technical leaders`,
+  workflow_product: `You are identifying gaps in workflow/product research. Critical unknowns that need gap-fill include:
+- Specific product modules and what workflows they own
+- Whether it is genuinely a system of record vs an add-on tool
+- Customer ROI metrics, time-savings, revenue impact quantification
+- Specific case studies with named customers and measurable outcomes
+- Daily active use evidence (users describe daily workflow)
+- Integration depth: how many integrations, with what systems?
+- G2/Capterra reviews that describe actual day-to-day product usage`,
+  data_architecture: `You are identifying gaps in data architecture research. Critical unknowns that need gap-fill include:
+- Technology stack: cloud provider, database choices, API architecture
+- Specific AI/ML features already in production (not roadmap)
+- Data volume: how many records, customers, longitudinal years of data
+- Outcome labeling: does the software capture what happened after the service/product was delivered?
+- Engineering blog posts describing AI/ML systems
+- Whether they are building AI internally or wrapping third-party APIs
+- Architecture readiness: cloud-native, microservices, data lake, ML pipeline`,
+  regulatory_moat: `You are identifying gaps in regulatory moat research. Critical unknowns that need gap-fill include:
+- Specific compliance certifications held (SOC2 Type II, HIPAA BAA, HITRUST, ISO 27001)
+- Regulatory framework details for this vertical (specific agencies, requirements)
+- Customer switching cost evidence (migration complexity, compliance history, integration complexity)
+- Data portability and export capabilities
+- Contract term lengths and exit provisions
+- Evidence of actual customer longevity (multi-year case studies, customer anniversary announcements)
+- New or emerging regulations that strengthen the moat`,
+  market_timing: `You are identifying gaps in market timing research. Critical unknowns that need gap-fill include:
+- Specific market size estimates with source and methodology
+- Recent PE/VC deal flow in this vertical (last 12-18 months)
+- AI adoption statistics for this vertical (survey data, operator reports)
+- Comparable transaction multiples and recent M&A deals
+- Macro tailwinds: demographic trends, reimbursement changes, labor shortages
+- Industry analyst reports (Gartner, Forrester, CB Insights, Pitchbook) on this vertical
+- Conference keynote themes from vertical-specific conferences`
+};
 var handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
@@ -10151,210 +10194,115 @@ var handler = async (event) => {
   const startTime = Date.now();
   try {
     const body = JSON.parse(event.body || "{}");
-    const { company_name, company_url, vertical, evidence_texts, use_knowledge_fallback } = body;
-    if (!company_name) {
-      return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
+    const {
+      dimension,
+      company_name,
+      vertical,
+      raw_evidence,
+      num_queries = 5
+    } = body;
+    if (!dimension || !company_name) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "dimension and company_name required" })
+      };
     }
-    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
-    const evidenceContext = buildEvidenceContext(evidence_texts || []);
-    const hasRichEvidence = evidenceContext.length > 1e3;
-    const systemPrompt = `You are a senior market analyst at a PE/growth equity firm specializing in vertical SaaS AI investments. You have deep knowledge of vertical SaaS market sizes, growth rates, PE deal activity, and AI adoption curves across industries.
+    const model = "claude-sonnet-4-5";
+    const dimensionContext = DIMENSION_CONTEXT[dimension] || `You are identifying research gaps for ${dimension} analysis.`;
+    const systemPrompt = `You are a senior investment research analyst at a PE/growth equity firm. Your job is to analyze partial research evidence and identify the most critical gaps that prevent a thorough investment-grade assessment.
 
-You evaluate market timing risk \u2014 the risk that an investment is either too early (no market yet) or too late (market already consolidated with AI-native winners emerging). The ideal window is when AI adoption is beginning but before consolidation.
+${dimensionContext}
 
-CRITICAL INSTRUCTIONS:
-1. You have extensive knowledge of market sizes and PE deal activity through early 2025 \u2014 use it
-2. For well-known verticals (home health, dental, HVAC, legal, restaurant, etc.) you know the TAM, CAGR, and investment activity
-3. "Window open" means: AI adoption just beginning, clear market growth, PE deals active, no dominant AI-native winner yet
-4. "Window closing" means: major AI-native Series C+ companies emerging, market consolidating
-5. Be specific about TAM numbers, CAGR estimates, and recent deals you know about
-6. Today is April 2026 \u2014 your knowledge extends to early 2025, so factor in 1-year time progression`;
-    const userPrompt = `Assess market timing risk for an AI investment in this vertical SaaS company's market.
+RULES:
+1. Generate SPECIFIC, searchable queries \u2014 not vague ones
+2. Each query should target a specific unknown that would materially change the investment assessment
+3. Prioritize queries most likely to yield investable signal
+4. Queries should be Google-searchable (include company name, specific terms)
+5. Vary query structure: include some with quotes for exact phrases, some without
+6. Do NOT generate queries for things already well-covered in the evidence`;
+    const evidenceLen = (raw_evidence || "").length;
+    const userPrompt = `Analyze this research evidence for ${company_name} (${vertical || "vertical SaaS"}) in the "${dimension}" dimension.
 
-COMPANY: ${company_name}
-URL: ${company_url || "Not provided"}
-VERTICAL: ${vertical || "Infer from evidence and knowledge"}
+EVIDENCE COLLECTED SO FAR (${Math.round(evidenceLen / 1e3)}K chars from multi-pass deep research):
+${(raw_evidence || "").slice(0, 2e4)}
+${evidenceLen > 2e4 ? `
+[... ${Math.round((evidenceLen - 2e4) / 1e3)}K more chars truncated for gap analysis focus ...]` : ""}
 
-${!hasRichEvidence && use_knowledge_fallback ? `KNOWLEDGE FALLBACK: Limited web evidence. CRITICAL: Use your training knowledge about the ${vertical || "vertical SaaS"} market. You likely know this vertical's TAM, growth rate, key PE deals, and AI adoption stage. Provide specific numbers and named deals. Mark confidence 'L' but give real analysis.` : `Use evidence below plus your knowledge for the most accurate market assessment.`}
+Based on this evidence, identify the MOST CRITICAL GAPS that prevent an investment-grade assessment of this dimension. Focus on:
+1. Missing financial metrics that affect valuation (ARR, growth rate, churn, NRR)
+2. Missing competitive intelligence that affects risk assessment
+3. Missing technical/product facts that affect readiness scoring
+4. Missing people/team facts that affect conviction
+5. Missing market/timing data that affects entry attractiveness
 
-RESEARCH EVIDENCE (${evidenceContext.length} chars):
-${evidenceContext || "Limited web evidence \u2014 use training knowledge as instructed."}
-
-Return ONLY valid JSON with NO markdown fences:
-
+Return ONLY valid JSON (no markdown, no extra text):
 {
-  "pack_name": "market_timing",
-  "pack_version": "2.0",
-  "generated_at": "${(/* @__PURE__ */ new Date()).toISOString()}",
-  "data_quality_score": <0.0-1.0>,
-  "findings": [
-    {
-      "key": "market_size_and_growth",
-      "value": {
-        "tam_estimate": "<specific dollar figure with basis \u2014 e.g. '$2.1B US home health software market (Mordor Intelligence 2024)'>",
-        "sam_estimate": "<serviceable addressable market \u2014 the target company's realistic addressable portion>",
-        "cagr_estimate": "<CAGR % for this vertical software market>",
-        "growth_drivers": ["<specific factors driving market growth>"],
-        "growth_headwinds": ["<factors that could slow or reverse growth>"],
-        "market_maturity": "NASCENT"|"EARLY_GROWTH"|"HIGH_GROWTH"|"MATURING"|"MATURE"|"DECLINING"
-      },
-      "confidence": "H"|"M"|"L",
-      "sources": ["<url or 'Analyst knowledge'>"],
-      "unknowns": []
-    },
-    {
-      "key": "ai_adoption_curve_position",
-      "value": {
-        "current_stage": "AWARENESS"|"EARLY_ADOPTION"|"EARLY_MAJORITY"|"LATE_MAJORITY"|"SATURATION",
-        "ai_adoption_estimate_pct": "<estimated % of operators using any AI tools in their workflows>",
-        "leading_edge_users": "<description of early adopters \u2014 who's already using AI and for what?>",
-        "lagging_segment": "<who is resisting AI adoption and why?>",
-        "inflection_point": "<assessment of whether the inflection point has passed, is now, or is coming>",
-        "adoption_barriers": ["<specific barriers to AI adoption in this vertical>"]
-      },
-      "confidence": "H"|"M"|"L",
-      "sources": [],
-      "unknowns": []
-    },
-    {
-      "key": "pe_vc_deal_activity",
-      "value": {
-        "deal_activity_level": "VERY_ACTIVE"|"ACTIVE"|"MODERATE"|"LIGHT"|"MINIMAL",
-        "recent_notable_deals": [
-          {
-            "company": "<company name>",
-            "deal_type": "PE_BUYOUT"|"GROWTH_EQUITY"|"VC_FUNDING"|"ACQUISITION"|"IPO",
-            "approximate_size": "<$xM or Unknown>",
-            "investor": "<investor name if known>",
-            "date": "<YYYY-MM or approximate year>",
-            "significance": "<why this deal matters for timing>"
-          }
-        ],
-        "deal_multiples_trend": "<are deal multiples rising, stable, or falling in this vertical?>",
-        "investor_sentiment": "<overall PE/growth equity sentiment toward this vertical>"
-      },
-      "confidence": "H"|"M"|"L",
-      "sources": ["<url or 'Analyst knowledge'>"],
-      "unknowns": []
-    },
-    {
-      "key": "macro_environment",
-      "value": {
-        "tailwinds": [
-          "<specific macro tailwind \u2014 e.g. 'CMS mandating electronic visit verification', 'aging population driving home health demand'>",
-          "<tailwind 2>",
-          "<tailwind 3>"
-        ],
-        "headwinds": [
-          "<specific macro headwind \u2014 e.g. 'reimbursement rate pressure', 'labor cost inflation'>",
-          "<headwind 2>"
-        ],
-        "regulatory_catalysts": "<any upcoming regulatory changes that would accelerate or decelerate adoption?>",
-        "macro_assessment": "<1-2 sentence overall macro environment assessment>"
-      },
-      "confidence": "H"|"M"|"L",
-      "sources": [],
-      "unknowns": []
-    },
-    {
-      "key": "timing_window_assessment",
-      "value": {
-        "window_status": "WIDE_OPEN"|"OPEN"|"OPTIMAL"|"NARROWING"|"NARROW"|"CLOSING"|"CLOSED",
-        "optimal_investment_window": "<timeframe when this vertical's AI-enabled SaaS investments were/are ideally positioned>",
-        "too_early_risks": ["<risks if investing now is too early>"],
-        "too_late_risks": ["<risks if the window is already closing>"],
-        "window_rationale": "<2-3 sentences explaining the timing assessment>",
-        "years_of_runway": <estimated years of investment window remaining, or null>
-      },
-      "confidence": "H"|"M"|"L",
-      "sources": [],
-      "unknowns": []
-    }
+  "gaps_identified": [
+    "<specific gap 1 - what we don't know, why it materially affects the investment decision>",
+    "<specific gap 2>",
+    "<specific gap 3>"
   ],
-  "factor_inputs": {
-    "R7": {
-      "evidence_summary": "<4-5 sentences: Is this the right time to invest in AI for this vertical? Describe the TAM, growth rate, current AI adoption stage, PE deal activity, and whether the window is open or closing. Reference specific data points and deals you know about. This is the single most important summary for the risk score.>",
-      "signal_strength": <0.0-1.0>
-    }
-  },
-  "red_flags": ["<Real timing red flags: e.g. 'Market already has 3 AI-native Series C companies competing for same TAM', 'Macro reimbursement cuts reducing operators' technology budgets'>"],
-  "green_flags": ["<Positive timing signals: e.g. 'Federal EVV mandate creating regulatory tailwind for technology adoption', 'Market growing 15% CAGR with PE activity ramping'>"],
-  "v2_stub": false
+  "queries": [
+    "<targeted search query 1 - specific, searchable, designed to fill gap>",
+    "<targeted search query 2>",
+    "<targeted search query 3>",
+    "<targeted search query 4>",
+    "<targeted search query 5>",
+    "<targeted search query 6>",
+    "<targeted search query 7>",
+    "<targeted search query 8>"
+  ]
 }
 
-R7 SIGNAL STRENGTH CALIBRATION (Market Timing Risk):
-0.1 = Perfect timing \u2014 TAM large and growing, AI adoption just beginning, no AI-native consolidators yet, strong PE interest
-0.2 = Very good timing \u2014 favorable window with clear opportunity for 3-5 years
-0.3 = Good timing \u2014 solid window but some early competition emerging
-0.4 = Decent timing \u2014 reasonable window, manageable competition
-0.5 = Neutral \u2014 timing OK, balanced opportunities and risks
-0.6 = Concerning \u2014 window narrowing, AI-native competitors raising large rounds
-0.7 = Late \u2014 market starting to consolidate, AI adoption accelerating
-0.8 = Very late \u2014 multiple well-funded AI-native companies with traction, window mostly closed
-0.9 = Poor timing \u2014 either market already consolidated OR market is too nascent/tiny
-1.0 = Worst timing \u2014 market declining OR AI-native winner has clearly emerged`;
-    const PACK_FALLBACK_MODEL = "claude-haiku-3-5";
-    let attempts = 0;
-    while (attempts < 3) {
-      attempts++;
-      try {
-        const attemptModel = attempts >= 3 ? PACK_FALLBACK_MODEL : model;
-        const promptToUse = attempts === 1 ? userPrompt : userPrompt.slice(0, Math.floor(userPrompt.length / attempts));
-        const elapsed = Date.now() - startTime;
-        console.log(`[pack] attempt ${attempts}/3: model=${attemptModel}, prompt=${Math.round(promptToUse.length / 1e3)}K chars, elapsed=${elapsed}ms`);
-        const response = await client.messages.create({
-          model: attemptModel,
-          max_tokens: 4096,
-          // Structured JSON output — 4K tokens sufficient, faster than 8K
-          system: systemPrompt,
-          messages: [{ role: "user", content: promptToUse }]
-        });
-        const text = response.content[0].type === "text" ? response.content[0].text : "";
-        console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now() - startTime}ms`);
-        const parsed = extractJSONObject(text);
-        if (parsed) {
-          console.log(`[pack] JSON extracted successfully on attempt ${attempts}`);
-          return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...parsed, elapsed_ms: Date.now() - startTime })
-          };
-        } else {
-          console.error(`[pack] JSON extraction failed on attempt ${attempts}. Text preview: ${text.slice(0, 300)}`);
-        }
-      } catch (e2) {
-        console.error(`Attempt ${attempts} failed:`, e2?.message);
-        if (attempts >= 3) break;
+Generate exactly ${num_queries} queries in the "queries" array. Make them:
+- Specific and concrete (include company name, exact search terms)
+- Varied in approach (news, LinkedIn, job boards, G2, analyst reports, Crunchbase)
+- Targeted at the most investment-critical gaps first
+- NOT duplicating queries already answered by the evidence above`;
+    try {
+      const response = await client.messages.create({
+        model,
+        max_tokens: 2048,
+        // Larger budget for richer gap analysis and more queries
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }]
+      });
+      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const parsed = extractJSONObject(text);
+      if (parsed) {
+        return {
+          statusCode: 200,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            queries: Array.isArray(parsed.queries) ? parsed.queries : [],
+            gaps_identified: Array.isArray(parsed.gaps_identified) ? parsed.gaps_identified : [],
+            dimension,
+            elapsed_ms: Date.now() - startTime
+          })
+        };
       }
+    } catch (e2) {
+      console.error("Gap fill generation failed:", e2?.message);
     }
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        pack_name: "market_timing",
-        pack_version: "2.0",
-        generated_at: (/* @__PURE__ */ new Date()).toISOString(),
-        data_quality_score: 0.1,
-        findings: [],
-        factor_inputs: {
-          R7: { evidence_summary: "Pack failed after retries", signal_strength: 0.4 }
-        },
-        red_flags: ["Market Timing pack failed"],
-        green_flags: [],
-        v2_stub: false,
-        status: "failed",
+        queries: [],
+        gaps_identified: ["Gap analysis failed \u2014 proceeding with available evidence"],
+        dimension,
         elapsed_ms: Date.now() - startTime
       })
     };
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err?.message })
+      body: JSON.stringify({ error: err?.message || "Gap fill failed" })
     };
   }
 };
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+0 && (_netlifyExports = {
   handler
 });
 /*! Bundled license information:
@@ -10384,8 +10332,14 @@ node-domexception/index.js:
 */
 
 
+const _netlifyHandler = (_netlifyExports && (_netlifyExports.handler || _netlifyExports.default)) || null;
+
 // Vercel API route export
-module.exports = async function handler(req, res) {
-  await adapt(exports.handler, req, res);
+module.exports = async function vercelHandler(req, res) {
+  if (!_netlifyHandler) {
+    res.status(500).json({ error: 'Handler not found in bundle', bundle: 'research-gap-fill' });
+    return;
+  }
+  await adapt(_netlifyHandler, req, res);
 };
 module.exports.config = { maxDuration: 300 };

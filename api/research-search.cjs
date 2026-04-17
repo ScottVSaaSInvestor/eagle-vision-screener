@@ -36,6 +36,7 @@ async function adapt(handler, req, res) {
 
 
 // Bundled function: research-search
+let _netlifyExports = {};
 "use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -60,7 +61,7 @@ var research_search_exports = {};
 __export(research_search_exports, {
   handler: () => handler
 });
-module.exports = __toCommonJS(research_search_exports);
+_netlifyExports = __toCommonJS(research_search_exports);
 
 // node_modules/zod/v3/external.js
 var external_exports = {};
@@ -4240,13 +4241,19 @@ var handler = async (event) => {
   }
 };
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+0 && (_netlifyExports = {
   handler
 });
 
 
+const _netlifyHandler = (_netlifyExports && (_netlifyExports.handler || _netlifyExports.default)) || null;
+
 // Vercel API route export
-module.exports = async function handler(req, res) {
-  await adapt(exports.handler, req, res);
+module.exports = async function vercelHandler(req, res) {
+  if (!_netlifyHandler) {
+    res.status(500).json({ error: 'Handler not found in bundle', bundle: 'research-search' });
+    return;
+  }
+  await adapt(_netlifyHandler, req, res);
 };
 module.exports.config = { maxDuration: 300 };

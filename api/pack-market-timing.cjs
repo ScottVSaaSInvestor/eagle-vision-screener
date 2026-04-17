@@ -35,7 +35,8 @@ async function adapt(handler, req, res) {
 }
 
 
-// Bundled function: pack-company-profile
+// Bundled function: pack-market-timing
+let _netlifyExports = {};
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -65,7 +66,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
+  // "default" to the CommonJS "_netlifyExports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
@@ -6471,12 +6472,12 @@ var init_fileFromPath = __esm({
   }
 });
 
-// netlify/functions/pack-company-profile.ts
-var pack_company_profile_exports = {};
-__export(pack_company_profile_exports, {
+// netlify/functions/pack-market-timing.ts
+var pack_market_timing_exports = {};
+__export(pack_market_timing_exports, {
   handler: () => handler
 });
-module.exports = __toCommonJS(pack_company_profile_exports);
+_netlifyExports = __toCommonJS(pack_market_timing_exports);
 
 // node_modules/@anthropic-ai/sdk/version.mjs
 var VERSION = "0.40.1";
@@ -10079,7 +10080,7 @@ Anthropic.Beta = Beta;
 var { HUMAN_PROMPT, AI_PROMPT } = Anthropic;
 var sdk_default = Anthropic;
 
-// netlify/functions/pack-company-profile.ts
+// netlify/functions/pack-market-timing.ts
 function extractJSONObject(text) {
   if (!text || text.length < 2) return null;
   try {
@@ -10151,138 +10152,148 @@ var handler = async (event) => {
   const startTime = Date.now();
   try {
     const body = JSON.parse(event.body || "{}");
-    const { company_name, company_url, evidence_texts, document_text, use_knowledge_fallback } = body;
+    const { company_name, company_url, vertical, evidence_texts, use_knowledge_fallback } = body;
     if (!company_name) {
       return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
     }
     const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
-    const docContext = document_text ? `
-
-UPLOADED DOCUMENT EXCERPT:
-${document_text.slice(0, 6e3)}` : "";
     const hasRichEvidence = evidenceContext.length > 1e3;
-    const systemPrompt = `You are a senior investment analyst building a structured company profile for a PE/growth equity investment committee. You are highly resourceful \u2014 if web evidence is limited, you draw on your extensive training knowledge about vertical SaaS companies.
+    const systemPrompt = `You are a senior market analyst at a PE/growth equity firm specializing in vertical SaaS AI investments. You have deep knowledge of vertical SaaS market sizes, growth rates, PE deal activity, and AI adoption curves across industries.
+
+You evaluate market timing risk \u2014 the risk that an investment is either too early (no market yet) or too late (market already consolidated with AI-native winners emerging). The ideal window is when AI adoption is beginning but before consolidation.
 
 CRITICAL INSTRUCTIONS:
-1. For well-known companies (even small/mid-market), you likely have training knowledge \u2014 use it
-2. Never use "Unknown" when you can make a reasonable inference \u2014 use "Est." or provide a range
-3. For funding stage, infer from company age, size, and any known investors
-4. Be specific about pricing models \u2014 seat-based, per-patient, per-visit, usage-based, etc.
-5. Pricing flexibility (A5) is critical \u2014 can they charge outcome-based or AI-usage-based fees?
-6. Red flags should be material investment risks, not minor data gaps`;
-    const userPrompt = `Build a structured company profile for Eagle Vision investment screening.
+1. You have extensive knowledge of market sizes and PE deal activity through early 2025 \u2014 use it
+2. For well-known verticals (home health, dental, HVAC, legal, restaurant, etc.) you know the TAM, CAGR, and investment activity
+3. "Window open" means: AI adoption just beginning, clear market growth, PE deals active, no dominant AI-native winner yet
+4. "Window closing" means: major AI-native Series C+ companies emerging, market consolidating
+5. Be specific about TAM numbers, CAGR estimates, and recent deals you know about
+6. Today is April 2026 \u2014 your knowledge extends to early 2025, so factor in 1-year time progression`;
+    const userPrompt = `Assess market timing risk for an AI investment in this vertical SaaS company's market.
 
 COMPANY: ${company_name}
 URL: ${company_url || "Not provided"}
+VERTICAL: ${vertical || "Infer from evidence and knowledge"}
 
-${!hasRichEvidence && use_knowledge_fallback ? `KNOWLEDGE FALLBACK: Limited web evidence returned. CRITICAL: Use your training knowledge about ${company_name}. Provide specific, substantive answers for all fields. For fields you genuinely don't know, use informed ranges or "Unknown" \u2014 but try to know. Mark data_quality_score 0.3 to flag reliance on training knowledge.` : `Use the research evidence below as primary source, supplemented by your knowledge.`}
+${!hasRichEvidence && use_knowledge_fallback ? `KNOWLEDGE FALLBACK: Limited web evidence. CRITICAL: Use your training knowledge about the ${vertical || "vertical SaaS"} market. You likely know this vertical's TAM, growth rate, key PE deals, and AI adoption stage. Provide specific numbers and named deals. Mark confidence 'L' but give real analysis.` : `Use evidence below plus your knowledge for the most accurate market assessment.`}
 
 RESEARCH EVIDENCE (${evidenceContext.length} chars):
-${evidenceContext || "Limited web evidence \u2014 rely on training knowledge."}
-${docContext}
+${evidenceContext || "Limited web evidence \u2014 use training knowledge as instructed."}
 
 Return ONLY valid JSON with NO markdown fences:
 
 {
-  "pack_name": "company_profile",
+  "pack_name": "market_timing",
   "pack_version": "2.0",
   "generated_at": "${(/* @__PURE__ */ new Date()).toISOString()}",
-  "data_quality_score": <0.0-1.0, be honest about evidence quality>,
+  "data_quality_score": <0.0-1.0>,
   "findings": [
     {
-      "key": "company_overview",
+      "key": "market_size_and_growth",
       "value": {
-        "company_name": "<official name>",
-        "founded_year": <year or null>,
-        "headquarters": "<city, state or country>",
-        "website": "<url>",
-        "description": "<2-3 sentence description of what the company does and who it serves>",
-        "vertical": "<specific industry vertical \u2014 e.g. 'Home Health Software', 'Dental Practice Management', 'HVAC Field Service'>",
-        "target_customer": "<specific customer segment \u2014 e.g. 'Home health agencies with 10-500 caregivers'>"
+        "tam_estimate": "<specific dollar figure with basis \u2014 e.g. '$2.1B US home health software market (Mordor Intelligence 2024)'>",
+        "sam_estimate": "<serviceable addressable market \u2014 the target company's realistic addressable portion>",
+        "cagr_estimate": "<CAGR % for this vertical software market>",
+        "growth_drivers": ["<specific factors driving market growth>"],
+        "growth_headwinds": ["<factors that could slow or reverse growth>"],
+        "market_maturity": "NASCENT"|"EARLY_GROWTH"|"HIGH_GROWTH"|"MATURING"|"MATURE"|"DECLINING"
       },
       "confidence": "H"|"M"|"L",
       "sources": ["<url or 'Analyst knowledge'>"],
       "unknowns": []
     },
     {
-      "key": "financials_and_scale",
+      "key": "ai_adoption_curve_position",
       "value": {
-        "estimated_arr_range": "<e.g. '$10M-$25M', '$25M-$50M', '$50M-$100M', '$100M+', 'Unknown' \u2014 never 'Unknown' if you can estimate>",
-        "arr_basis": "<how was this estimated? Known funding, headcount, customer count, public statements?>",
-        "funding_stage": "<Bootstrap/Seed/Series A/Series B/Series C/PE-backed/Public/Unknown>",
-        "total_funding_raised": "<$XM or Unknown>",
-        "known_investors": ["<investor names if known>"],
-        "last_funding_date": "<YYYY-MM or Unknown>",
-        "employee_count_range": "<e.g. '50-100', '100-250', '250-500', '500-1000', '1000+', 'Unknown'>",
-        "customer_count_estimate": "<e.g. '200+ agencies', '1000+ practices', 'Unknown'>"
+        "current_stage": "AWARENESS"|"EARLY_ADOPTION"|"EARLY_MAJORITY"|"LATE_MAJORITY"|"SATURATION",
+        "ai_adoption_estimate_pct": "<estimated % of operators using any AI tools in their workflows>",
+        "leading_edge_users": "<description of early adopters \u2014 who's already using AI and for what?>",
+        "lagging_segment": "<who is resisting AI adoption and why?>",
+        "inflection_point": "<assessment of whether the inflection point has passed, is now, or is coming>",
+        "adoption_barriers": ["<specific barriers to AI adoption in this vertical>"]
+      },
+      "confidence": "H"|"M"|"L",
+      "sources": [],
+      "unknowns": []
+    },
+    {
+      "key": "pe_vc_deal_activity",
+      "value": {
+        "deal_activity_level": "VERY_ACTIVE"|"ACTIVE"|"MODERATE"|"LIGHT"|"MINIMAL",
+        "recent_notable_deals": [
+          {
+            "company": "<company name>",
+            "deal_type": "PE_BUYOUT"|"GROWTH_EQUITY"|"VC_FUNDING"|"ACQUISITION"|"IPO",
+            "approximate_size": "<$xM or Unknown>",
+            "investor": "<investor name if known>",
+            "date": "<YYYY-MM or approximate year>",
+            "significance": "<why this deal matters for timing>"
+          }
+        ],
+        "deal_multiples_trend": "<are deal multiples rising, stable, or falling in this vertical?>",
+        "investor_sentiment": "<overall PE/growth equity sentiment toward this vertical>"
       },
       "confidence": "H"|"M"|"L",
       "sources": ["<url or 'Analyst knowledge'>"],
       "unknowns": []
     },
     {
-      "key": "product_and_pricing",
+      "key": "macro_environment",
       "value": {
-        "primary_product": "<description of core product>",
-        "product_modules": ["<list of major product modules>"],
-        "pricing_model": "<per-seat/per-user/per-patient/per-visit/usage-based/outcome-based/flat-fee/combination>",
-        "pricing_flexibility_level": "HIGH"|"MEDIUM"|"LOW",
-        "pricing_flexibility_rationale": "<can they charge more when delivering more value? Can they capture AI value creation through pricing?>",
-        "contract_structure": "<typical contract length and terms if known>",
-        "expansion_model": "<how do customers expand spend? More users, more volume, more modules?>"
+        "tailwinds": [
+          "<specific macro tailwind \u2014 e.g. 'CMS mandating electronic visit verification', 'aging population driving home health demand'>",
+          "<tailwind 2>",
+          "<tailwind 3>"
+        ],
+        "headwinds": [
+          "<specific macro headwind \u2014 e.g. 'reimbursement rate pressure', 'labor cost inflation'>",
+          "<headwind 2>"
+        ],
+        "regulatory_catalysts": "<any upcoming regulatory changes that would accelerate or decelerate adoption?>",
+        "macro_assessment": "<1-2 sentence overall macro environment assessment>"
       },
       "confidence": "H"|"M"|"L",
-      "sources": ["<url>"],
+      "sources": [],
       "unknowns": []
     },
     {
-      "key": "market_position",
+      "key": "timing_window_assessment",
       "value": {
-        "market_position": "LEADER"|"STRONG_CHALLENGER"|"CHALLENGER"|"NICHE"|"NEW_ENTRANT"|"UNKNOWN",
-        "estimated_market_share": "<% or 'Unknown'>",
-        "differentiators": ["<key competitive differentiators cited by company or customers>"],
-        "known_competitors": ["<main competitors \u2014 name them>"],
-        "g2_or_review_score": "<G2/Capterra rating if known, or 'Not available'>"
+        "window_status": "WIDE_OPEN"|"OPEN"|"OPTIMAL"|"NARROWING"|"NARROW"|"CLOSING"|"CLOSED",
+        "optimal_investment_window": "<timeframe when this vertical's AI-enabled SaaS investments were/are ideally positioned>",
+        "too_early_risks": ["<risks if investing now is too early>"],
+        "too_late_risks": ["<risks if the window is already closing>"],
+        "window_rationale": "<2-3 sentences explaining the timing assessment>",
+        "years_of_runway": <estimated years of investment window remaining, or null>
       },
       "confidence": "H"|"M"|"L",
-      "sources": ["<url>"],
-      "unknowns": []
-    },
-    {
-      "key": "growth_and_momentum",
-      "value": {
-        "growth_signals": ["<any evidence of growth \u2014 new customers, revenue announcements, headcount growth>"],
-        "recent_milestones": ["<product launches, partnerships, expansions, awards in last 2 years>"],
-        "press_coverage": ["<notable press, analyst coverage, or awards>"]
-      },
-      "confidence": "H"|"M"|"L",
-      "sources": ["<url>"],
+      "sources": [],
       "unknowns": []
     }
   ],
   "factor_inputs": {
-    "A5": {
-      "evidence_summary": "<3-4 sentences: What is the pricing model? Is it flexible enough to charge for AI-delivered value? Can they move to outcome-based or usage-based pricing as AI features are added? What's the expansion revenue potential from AI upsell?>",
+    "R7": {
+      "evidence_summary": "<4-5 sentences: Is this the right time to invest in AI for this vertical? Describe the TAM, growth rate, current AI adoption stage, PE deal activity, and whether the window is open or closing. Reference specific data points and deals you know about. This is the single most important summary for the risk score.>",
       "signal_strength": <0.0-1.0>
     }
   },
-  "red_flags": ["<Material investment-level concerns, not minor data gaps>"],
-  "green_flags": ["<Notable positive investment signals>"],
+  "red_flags": ["<Real timing red flags: e.g. 'Market already has 3 AI-native Series C companies competing for same TAM', 'Macro reimbursement cuts reducing operators' technology budgets'>"],
+  "green_flags": ["<Positive timing signals: e.g. 'Federal EVV mandate creating regulatory tailwind for technology adoption', 'Market growing 15% CAGR with PE activity ramping'>"],
   "v2_stub": false
 }
 
-A5 SIGNAL STRENGTH (Pricing Flexibility):
-0.1 = Rigid per-seat only, no usage or outcome dimension, no AI pricing path
-0.2 = Very limited flexibility \u2014 locked into annual seat contracts
-0.3 = Some tier flexibility but fundamentally seat-based
-0.4 = Multiple tiers, some module-based expansion available
-0.5 = Reasonable flexibility \u2014 per-patient or per-unit model with module expansion
-0.6 = Usage-based component available, outcome metrics tracked
-0.7 = Can price on outcomes, flexible contract structures available
-0.8 = Outcome-based pricing available, AI features priced separately
-0.9 = Full pricing flexibility \u2014 can charge for AI-delivered value, usage spikes, outcomes
-1.0 = Best-in-class pricing with full AI value capture mechanisms`;
+R7 SIGNAL STRENGTH CALIBRATION (Market Timing Risk):
+0.1 = Perfect timing \u2014 TAM large and growing, AI adoption just beginning, no AI-native consolidators yet, strong PE interest
+0.2 = Very good timing \u2014 favorable window with clear opportunity for 3-5 years
+0.3 = Good timing \u2014 solid window but some early competition emerging
+0.4 = Decent timing \u2014 reasonable window, manageable competition
+0.5 = Neutral \u2014 timing OK, balanced opportunities and risks
+0.6 = Concerning \u2014 window narrowing, AI-native competitors raising large rounds
+0.7 = Late \u2014 market starting to consolidate, AI adoption accelerating
+0.8 = Very late \u2014 multiple well-funded AI-native companies with traction, window mostly closed
+0.9 = Poor timing \u2014 either market already consolidated OR market is too nascent/tiny
+1.0 = Worst timing \u2014 market declining OR AI-native winner has clearly emerged`;
     const PACK_FALLBACK_MODEL = "claude-haiku-3-5";
     let attempts = 0;
     while (attempts < 3) {
@@ -10321,13 +10332,15 @@ A5 SIGNAL STRENGTH (Pricing Flexibility):
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        pack_name: "company_profile",
+        pack_name: "market_timing",
         pack_version: "2.0",
         generated_at: (/* @__PURE__ */ new Date()).toISOString(),
         data_quality_score: 0.1,
-        findings: [{ key: "company_name", value: company_name, confidence: "L", sources: [], unknowns: ["All data"] }],
-        factor_inputs: { A5: { evidence_summary: "Pack failed after retries", signal_strength: 0.4 } },
-        red_flags: ["Company Profile pack failed after 3 retries"],
+        findings: [],
+        factor_inputs: {
+          R7: { evidence_summary: "Pack failed after retries", signal_strength: 0.4 }
+        },
+        red_flags: ["Market Timing pack failed"],
         green_flags: [],
         v2_stub: false,
         status: "failed",
@@ -10337,12 +10350,12 @@ A5 SIGNAL STRENGTH (Pricing Flexibility):
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err?.message || "Pack failed" })
+      body: JSON.stringify({ error: err?.message })
     };
   }
 };
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+0 && (_netlifyExports = {
   handler
 });
 /*! Bundled license information:
@@ -10372,8 +10385,14 @@ node-domexception/index.js:
 */
 
 
+const _netlifyHandler = (_netlifyExports && (_netlifyExports.handler || _netlifyExports.default)) || null;
+
 // Vercel API route export
-module.exports = async function handler(req, res) {
-  await adapt(exports.handler, req, res);
+module.exports = async function vercelHandler(req, res) {
+  if (!_netlifyHandler) {
+    res.status(500).json({ error: 'Handler not found in bundle', bundle: 'pack-market-timing' });
+    return;
+  }
+  await adapt(_netlifyHandler, req, res);
 };
 module.exports.config = { maxDuration: 300 };

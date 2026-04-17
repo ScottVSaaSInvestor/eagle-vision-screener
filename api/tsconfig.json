@@ -6,12 +6,8 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": false,
-    "skipLibCheck": true,
-    "outDir": ".vercel/output",
-    "baseUrl": "..",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "skipLibCheck": true
   },
-  "include": ["./**/*.ts", "../netlify/functions/**/*.ts"]
+  "include": [],
+  "exclude": ["**/*"]
 }

@@ -35,7 +35,8 @@ async function adapt(handler, req, res) {
 }
 
 
-// Bundled function: research-gap-fill
+// Bundled function: pack-competitive-landscape
+let _netlifyExports = {};
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -65,7 +66,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
+  // "default" to the CommonJS "_netlifyExports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
@@ -6471,12 +6472,12 @@ var init_fileFromPath = __esm({
   }
 });
 
-// netlify/functions/research-gap-fill.ts
-var research_gap_fill_exports = {};
-__export(research_gap_fill_exports, {
+// netlify/functions/pack-competitive-landscape.ts
+var pack_competitive_landscape_exports = {};
+__export(pack_competitive_landscape_exports, {
   handler: () => handler
 });
-module.exports = __toCommonJS(research_gap_fill_exports);
+_netlifyExports = __toCommonJS(pack_competitive_landscape_exports);
 
 // node_modules/@anthropic-ai/sdk/version.mjs
 var VERSION = "0.40.1";
@@ -10079,8 +10080,7 @@ Anthropic.Beta = Beta;
 var { HUMAN_PROMPT, AI_PROMPT } = Anthropic;
 var sdk_default = Anthropic;
 
-// netlify/functions/research-gap-fill.ts
-var client = new sdk_default({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
+// netlify/functions/pack-competitive-landscape.ts
 function extractJSONObject(text) {
   if (!text || text.length < 2) return null;
   try {
@@ -10130,62 +10130,21 @@ function extractJSONObject(text) {
   }
   return null;
 }
-var DIMENSION_CONTEXT = {
-  company_profile: `You are identifying gaps in company profile research. Critical unknowns that need gap-fill include:
-- Exact ARR or revenue range (look for press releases, job postings with pay ranges that imply scale, customer count \xD7 ASP estimates)
-- Funding round details (exact amounts, lead investors, dates)
-- Employee count and growth trajectory (LinkedIn, job boards)
-- Customer logos and case studies (press releases, award submissions)
-- G2/Capterra review scores and volume
-- Founding team background and prior exits`,
-  competitive_landscape: `You are identifying gaps in competitive landscape research. Critical unknowns that need gap-fill include:
-- Specific AI-native entrants: name, funding, traction, differentiator
-- Incumbent AI roadmaps: what specific features have incumbents shipped vs announced?
-- Recent funding rounds in the vertical (last 12 months)
-- Acquisition activity in the vertical (who is buying whom?)
-- Horizontal AI tools (ChatGPT, Copilot) adoption in this vertical among operators
-- Head-to-head comparison articles or analyst reports`,
-  team_capability: `You are identifying gaps in team capability research. Critical unknowns that need gap-fill include:
-- CEO and CTO names, backgrounds, prior companies
-- Head of AI/ML role if exists \u2014 who holds it?
-- Specific AI features that have been shipped to production
-- Job postings for AI/ML roles (signal of AI investment)
-- Engineering blog posts or technical talks
-- CEO public statements on AI strategy (podcasts, press interviews)
-- LinkedIn profiles of key technical leaders`,
-  workflow_product: `You are identifying gaps in workflow/product research. Critical unknowns that need gap-fill include:
-- Specific product modules and what workflows they own
-- Whether it is genuinely a system of record vs an add-on tool
-- Customer ROI metrics, time-savings, revenue impact quantification
-- Specific case studies with named customers and measurable outcomes
-- Daily active use evidence (users describe daily workflow)
-- Integration depth: how many integrations, with what systems?
-- G2/Capterra reviews that describe actual day-to-day product usage`,
-  data_architecture: `You are identifying gaps in data architecture research. Critical unknowns that need gap-fill include:
-- Technology stack: cloud provider, database choices, API architecture
-- Specific AI/ML features already in production (not roadmap)
-- Data volume: how many records, customers, longitudinal years of data
-- Outcome labeling: does the software capture what happened after the service/product was delivered?
-- Engineering blog posts describing AI/ML systems
-- Whether they are building AI internally or wrapping third-party APIs
-- Architecture readiness: cloud-native, microservices, data lake, ML pipeline`,
-  regulatory_moat: `You are identifying gaps in regulatory moat research. Critical unknowns that need gap-fill include:
-- Specific compliance certifications held (SOC2 Type II, HIPAA BAA, HITRUST, ISO 27001)
-- Regulatory framework details for this vertical (specific agencies, requirements)
-- Customer switching cost evidence (migration complexity, compliance history, integration complexity)
-- Data portability and export capabilities
-- Contract term lengths and exit provisions
-- Evidence of actual customer longevity (multi-year case studies, customer anniversary announcements)
-- New or emerging regulations that strengthen the moat`,
-  market_timing: `You are identifying gaps in market timing research. Critical unknowns that need gap-fill include:
-- Specific market size estimates with source and methodology
-- Recent PE/VC deal flow in this vertical (last 12-18 months)
-- AI adoption statistics for this vertical (survey data, operator reports)
-- Comparable transaction multiples and recent M&A deals
-- Macro tailwinds: demographic trends, reimbursement changes, labor shortages
-- Industry analyst reports (Gartner, Forrester, CB Insights, Pitchbook) on this vertical
-- Conference keynote themes from vertical-specific conferences`
-};
+var client = new sdk_default({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
+function buildEvidenceContext(evidenceTexts, maxChars = 5e4) {
+  if (!Array.isArray(evidenceTexts)) return "";
+  let combined = "";
+  for (const chunk of evidenceTexts) {
+    if (!chunk) continue;
+    if (combined.length + chunk.length > maxChars) {
+      const remaining = maxChars - combined.length;
+      if (remaining > 200) combined += "\n\n---\n\n" + chunk.slice(0, remaining);
+      break;
+    }
+    combined += (combined ? "\n\n---\n\n" : "") + chunk;
+  }
+  return combined;
+}
 var handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
@@ -10193,115 +10152,245 @@ var handler = async (event) => {
   const startTime = Date.now();
   try {
     const body = JSON.parse(event.body || "{}");
-    const {
-      dimension,
-      company_name,
-      vertical,
-      raw_evidence,
-      num_queries = 5
-    } = body;
-    if (!dimension || !company_name) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "dimension and company_name required" })
-      };
+    const { company_name, company_url, vertical, competitor_hints, evidence_texts, use_knowledge_fallback } = body;
+    if (!company_name) {
+      return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
     }
-    const model = "claude-sonnet-4-5";
-    const dimensionContext = DIMENSION_CONTEXT[dimension] || `You are identifying research gaps for ${dimension} analysis.`;
-    const systemPrompt = `You are a senior investment research analyst at a PE/growth equity firm. Your job is to analyze partial research evidence and identify the most critical gaps that prevent a thorough investment-grade assessment.
+    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
+    const evidenceContext = buildEvidenceContext(evidence_texts || []);
+    const hintStr = Array.isArray(competitor_hints) && competitor_hints.length > 0 ? `
+KNOWN COMPETITORS/PEERS (analyst-provided): ${competitor_hints.join(", ")}` : "";
+    const hasRichEvidence = evidenceContext.length > 1e3;
+    const systemPrompt = `You are a senior competitive intelligence analyst at a top-tier PE/growth equity firm specializing in vertical SaaS AI investments. You have deep expertise in the B2B software competitive landscape and AI disruption patterns. Your job is to produce a professional-grade competitive analysis that an investment committee would rely on.
 
-${dimensionContext}
+CRITICAL INSTRUCTIONS:
+1. If web evidence is provided, extract and cite specific facts from it
+2. If web evidence is limited, ALWAYS use your training knowledge \u2014 you have extensive knowledge of vertical SaaS companies, competitive landscapes, and AI investment trends through early 2025
+3. NEVER return empty findings or neutral 0.5 defaults just because evidence is thin
+4. Mark confidence honestly (H/M/L) but always provide substantive analysis
+5. When naming competitors, use real company names you know \u2014 do not make up companies
+6. Be specific about funding amounts, founding dates, and traction when you know them`;
+    const userPrompt = `Analyze the AI competitive landscape for this vertical SaaS company.
 
-RULES:
-1. Generate SPECIFIC, searchable queries \u2014 not vague ones
-2. Each query should target a specific unknown that would materially change the investment assessment
-3. Prioritize queries most likely to yield investable signal
-4. Queries should be Google-searchable (include company name, specific terms)
-5. Vary query structure: include some with quotes for exact phrases, some without
-6. Do NOT generate queries for things already well-covered in the evidence`;
-    const evidenceLen = (raw_evidence || "").length;
-    const userPrompt = `Analyze this research evidence for ${company_name} (${vertical || "vertical SaaS"}) in the "${dimension}" dimension.
+COMPANY: ${company_name}
+URL: ${company_url || "Not provided"}
+VERTICAL: ${vertical || "Unknown \u2014 infer from evidence and your knowledge"}
+${hintStr}
 
-EVIDENCE COLLECTED SO FAR (${Math.round(evidenceLen / 1e3)}K chars from multi-pass deep research):
-${(raw_evidence || "").slice(0, 2e4)}
-${evidenceLen > 2e4 ? `
-[... ${Math.round((evidenceLen - 2e4) / 1e3)}K more chars truncated for gap analysis focus ...]` : ""}
+KNOWLEDGE FALLBACK INSTRUCTION: ${!hasRichEvidence && use_knowledge_fallback ? `Web research returned limited results. CRITICAL: Use your training knowledge about ${company_name} and the ${vertical || "vertical SaaS"} market. You likely know this company, its competitors, and the AI investment landscape in this space. Draw on everything you know. Mark confidence 'L' but provide REAL analysis \u2014 not empty findings.` : `Use the research evidence below plus your own knowledge to provide the most accurate assessment possible.`}
 
-Based on this evidence, identify the MOST CRITICAL GAPS that prevent an investment-grade assessment of this dimension. Focus on:
-1. Missing financial metrics that affect valuation (ARR, growth rate, churn, NRR)
-2. Missing competitive intelligence that affects risk assessment
-3. Missing technical/product facts that affect readiness scoring
-4. Missing people/team facts that affect conviction
-5. Missing market/timing data that affects entry attractiveness
+RESEARCH EVIDENCE (${evidenceContext.length} chars):
+${evidenceContext || "Limited web evidence \u2014 use training knowledge as instructed above."}
 
-Return ONLY valid JSON (no markdown, no extra text):
+Return ONLY valid JSON with NO markdown fences:
+
 {
-  "gaps_identified": [
-    "<specific gap 1 - what we don't know, why it materially affects the investment decision>",
-    "<specific gap 2>",
-    "<specific gap 3>"
+  "pack_name": "competitive_landscape",
+  "pack_version": "2.0",
+  "generated_at": "${(/* @__PURE__ */ new Date()).toISOString()}",
+  "data_quality_score": <0.0-1.0, based on evidence richness>,
+  "findings": [
+    {
+      "key": "vertical_heat_index",
+      "value": {
+        "score": <0-100, where 100=extremely hot/competitive>,
+        "grade": "A"|"B"|"C"|"D"|"F",
+        "summary": "<2-3 sentence assessment of competitive heat in this vertical>",
+        "key_drivers": ["<driver1>", "<driver2>", "<driver3>"]
+      },
+      "confidence": "H"|"M"|"L",
+      "sources": ["<url or 'Analyst knowledge'>"],
+      "unknowns": []
+    },
+    {
+      "key": "ai_native_entrants",
+      "value": [
+        {
+          "company": "<real company name>",
+          "founded": <year or null>,
+          "stage": "<Seed/Pre-Seed/Series A/Series B/Series C/PE-backed>",
+          "last_raise": "<$xM or Unknown>",
+          "last_raise_date": "<YYYY-MM or Unknown>",
+          "key_investors": ["<investor names>"],
+          "traction_signal": "<specific evidence of traction \u2014 customers, revenue, growth>",
+          "threat_level": "HIGH"|"MEDIUM"|"LOW",
+          "threat_rationale": "<why this is or isn't a threat to the target company>",
+          "url": "<string or null>"
+        }
+      ],
+      "confidence": "H"|"M"|"L",
+      "sources": ["<url>"],
+      "unknowns": []
+    },
+    {
+      "key": "incumbent_postures",
+      "value": [
+        {
+          "company": "<incumbent name>",
+          "market_position": "<leader/challenger/niche>",
+          "status": "GA_WITH_TRACTION"|"LAUNCHED"|"BETA"|"ROADMAP"|"SIGNALING"|"SILENT",
+          "ai_products": "<specific AI features/products if known>",
+          "evidence": "<specific evidence of AI posture>",
+          "threat_to_target": "<HIGH/MEDIUM/LOW and why>",
+          "url": "<string or null>"
+        }
+      ],
+      "confidence": "H"|"M"|"L",
+      "sources": ["<url>"],
+      "unknowns": []
+    },
+    {
+      "key": "horizontal_ai_threat",
+      "value": {
+        "overall_level": "HIGH"|"MEDIUM"|"LOW",
+        "threat_actors": ["<e.g. OpenAI, Microsoft Copilot, Salesforce Einstein, Google>"],
+        "use_cases_at_risk": ["<specific workflows that horizontal AI could replace>"],
+        "use_cases_protected": ["<workflows that require vertical-specific data/integration>"],
+        "assessment": "<2-3 sentence nuanced assessment>"
+      },
+      "confidence": "H"|"M"|"L",
+      "sources": [],
+      "unknowns": []
+    },
+    {
+      "key": "recent_vertical_news",
+      "value": [
+        {
+          "headline": "<specific headline>",
+          "date": "<YYYY-MM or Unknown>",
+          "url": "<string>",
+          "significance": "<why this matters for the investment thesis>",
+          "category": "FUNDING"|"ACQUISITION"|"PRODUCT_LAUNCH"|"PARTNERSHIP"|"REGULATORY"|"OTHER"
+        }
+      ],
+      "confidence": "H"|"M"|"L",
+      "sources": ["<url>"],
+      "unknowns": []
+    },
+    {
+      "key": "competitive_window",
+      "value": {
+        "months_estimate": <number or null>,
+        "assessment": "OPEN"|"NARROWING"|"NARROW"|"CLOSED",
+        "rationale": "<specific reasoning for window assessment>",
+        "key_risks": ["<what could close the window>"]
+      },
+      "confidence": "H"|"M"|"L",
+      "sources": [],
+      "unknowns": []
+    },
+    {
+      "key": "compounding_loop_assessment",
+      "value": {
+        "has_flywheel": <boolean>,
+        "flywheel_description": "<describe the data/network flywheel if it exists, or why it doesn't>",
+        "strength": "STRONG"|"MODERATE"|"WEAK"|"NONE",
+        "evidence": "<specific evidence>"
+      },
+      "confidence": "H"|"M"|"L",
+      "sources": [],
+      "unknowns": []
+    }
   ],
-  "queries": [
-    "<targeted search query 1 - specific, searchable, designed to fill gap>",
-    "<targeted search query 2>",
-    "<targeted search query 3>",
-    "<targeted search query 4>",
-    "<targeted search query 5>",
-    "<targeted search query 6>",
-    "<targeted search query 7>",
-    "<targeted search query 8>"
-  ]
+  "factor_inputs": {
+    "R1": {
+      "evidence_summary": "<2-3 sentences on competitive window. How long before AI-native competitors or incumbents close the window? Cite specific companies and timelines.>",
+      "signal_strength": <0.0-1.0, where 0=window fully open 3+ years, 1=window already closed>
+    },
+    "R2": {
+      "evidence_summary": "<2-3 sentences on AI-native entrant threat. Name specific companies, their funding, traction, and threat level.>",
+      "signal_strength": <0.0-1.0, where 0=no entrants, 1=multiple well-funded entrants with real traction>
+    },
+    "R3": {
+      "evidence_summary": "<2-3 sentences on incumbent AI posture. What are the 2-3 largest incumbents doing with AI? Have they shipped? Do customers use it?>",
+      "signal_strength": <0.0-1.0, where 0=incumbents completely silent on AI, 1=incumbents have shipped GA AI features with traction>
+    },
+    "R4": {
+      "evidence_summary": "<2-3 sentences on horizontal AI encroachment. Is ChatGPT/Copilot/etc. being used by this vertical's operators instead of purpose-built software?>",
+      "signal_strength": <0.0-1.0, where 0=no horizontal threat, 1=widespread horizontal adoption displacing vertical SaaS>
+    },
+    "A8": {
+      "evidence_summary": "<2-3 sentences on compounding loop potential. Does more data = better product = more customers? Is there a data flywheel?>",
+      "signal_strength": <0.0-1.0, where 0=no flywheel at all, 1=proven strong compounding data network effects>
+    }
+  },
+  "red_flags": ["<specific red flags \u2014 e.g. 'Well-funded AI-native competitor X raised $50M Series B targeting exact same buyers'>"],
+  "green_flags": ["<specific positive signals \u2014 e.g. 'Incumbents are legacy on-prem with no credible AI roadmap'>"],
+  "v2_stub": false
 }
 
-Generate exactly ${num_queries} queries in the "queries" array. Make them:
-- Specific and concrete (include company name, exact search terms)
-- Varied in approach (news, LinkedIn, job boards, G2, analyst reports, Crunchbase)
-- Targeted at the most investment-critical gaps first
-- NOT duplicating queries already answered by the evidence above`;
-    try {
-      const response = await client.messages.create({
-        model,
-        max_tokens: 2048,
-        // Larger budget for richer gap analysis and more queries
-        system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }]
-      });
-      const text = response.content[0].type === "text" ? response.content[0].text : "";
-      const parsed = extractJSONObject(text);
-      if (parsed) {
-        return {
-          statusCode: 200,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            queries: Array.isArray(parsed.queries) ? parsed.queries : [],
-            gaps_identified: Array.isArray(parsed.gaps_identified) ? parsed.gaps_identified : [],
-            dimension,
-            elapsed_ms: Date.now() - startTime
-          })
-        };
+SIGNAL STRENGTH CALIBRATION \u2014 BE PRECISE, NOT MIDDLE:
+- R1: Most vertical SaaS windows are narrowing (0.3-0.5). Only score 0.1 if truly no competition.
+- R2: If you know of 2+ funded AI-native entrants, score 0.6+. If none known, score 0.1-0.2.
+- R3: If incumbents have shipped AI features, score 0.5+. If only roadmap, 0.3-0.4.
+- R4: For most vertical SaaS, horizontal AI threat is moderate (0.3-0.5). Score 0.7+ only if operators are actively using ChatGPT instead of the SaaS.
+- A8: Most vertical SaaS has some flywheel potential (0.3-0.6). Score 0.8+ only if there's clear evidence of data network effects.`;
+    const PACK_FALLBACK_MODEL = "claude-haiku-3-5";
+    let attempts = 0;
+    while (attempts < 3) {
+      attempts++;
+      try {
+        const attemptModel = attempts >= 3 ? PACK_FALLBACK_MODEL : model;
+        const promptToUse = attempts === 1 ? userPrompt : userPrompt.slice(0, Math.floor(userPrompt.length / attempts));
+        const elapsed = Date.now() - startTime;
+        console.log(`[pack] attempt ${attempts}/3: model=${attemptModel}, prompt=${Math.round(promptToUse.length / 1e3)}K chars, elapsed=${elapsed}ms`);
+        const response = await client.messages.create({
+          model: attemptModel,
+          max_tokens: 4096,
+          // Structured JSON output — 4K tokens sufficient, faster than 8K
+          system: systemPrompt,
+          messages: [{ role: "user", content: promptToUse }]
+        });
+        const text = response.content[0].type === "text" ? response.content[0].text : "";
+        console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now() - startTime}ms`);
+        const parsed = extractJSONObject(text);
+        if (parsed) {
+          console.log(`[pack] JSON extracted successfully on attempt ${attempts}`);
+          return {
+            statusCode: 200,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...parsed, elapsed_ms: Date.now() - startTime })
+          };
+        } else {
+          console.error(`[pack] JSON extraction failed on attempt ${attempts}. Text preview: ${text.slice(0, 300)}`);
+        }
+      } catch (e2) {
+        console.error(`Attempt ${attempts} failed:`, e2?.message);
+        if (attempts >= 3) break;
       }
-    } catch (e2) {
-      console.error("Gap fill generation failed:", e2?.message);
     }
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        queries: [],
-        gaps_identified: ["Gap analysis failed \u2014 proceeding with available evidence"],
-        dimension,
+        pack_name: "competitive_landscape",
+        pack_version: "2.0",
+        generated_at: (/* @__PURE__ */ new Date()).toISOString(),
+        data_quality_score: 0.1,
+        findings: [],
+        factor_inputs: {
+          R1: { evidence_summary: "Pack failed after 3 retries", signal_strength: 0.4 },
+          R2: { evidence_summary: "Pack failed after 3 retries", signal_strength: 0.3 },
+          R3: { evidence_summary: "Pack failed after 3 retries", signal_strength: 0.4 },
+          R4: { evidence_summary: "Pack failed after 3 retries", signal_strength: 0.3 },
+          A8: { evidence_summary: "Pack failed after 3 retries", signal_strength: 0.4 }
+        },
+        red_flags: ["Competitive Landscape pack failed \u2014 LLM returned malformed output after 3 retries"],
+        green_flags: [],
+        v2_stub: false,
+        status: "failed",
         elapsed_ms: Date.now() - startTime
       })
     };
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err?.message || "Gap fill failed" })
+      body: JSON.stringify({ error: err?.message || "Pack failed" })
     };
   }
 };
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+0 && (_netlifyExports = {
   handler
 });
 /*! Bundled license information:
@@ -10331,8 +10420,14 @@ node-domexception/index.js:
 */
 
 
+const _netlifyHandler = (_netlifyExports && (_netlifyExports.handler || _netlifyExports.default)) || null;
+
 // Vercel API route export
-module.exports = async function handler(req, res) {
-  await adapt(exports.handler, req, res);
+module.exports = async function vercelHandler(req, res) {
+  if (!_netlifyHandler) {
+    res.status(500).json({ error: 'Handler not found in bundle', bundle: 'pack-competitive-landscape' });
+    return;
+  }
+  await adapt(_netlifyHandler, req, res);
 };
 module.exports.config = { maxDuration: 300 };

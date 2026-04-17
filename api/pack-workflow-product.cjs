@@ -36,6 +36,7 @@ async function adapt(handler, req, res) {
 
 
 // Bundled function: pack-workflow-product
+let _netlifyExports = {};
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -65,7 +66,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
+  // "default" to the CommonJS "_netlifyExports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
@@ -6476,7 +6477,7 @@ var pack_workflow_product_exports = {};
 __export(pack_workflow_product_exports, {
   handler: () => handler
 });
-module.exports = __toCommonJS(pack_workflow_product_exports);
+_netlifyExports = __toCommonJS(pack_workflow_product_exports);
 
 // node_modules/@anthropic-ai/sdk/version.mjs
 var VERSION = "0.40.1";
@@ -10364,7 +10365,7 @@ R5 (Customer Switching Propensity) \u2014 LOWER IS BETTER:
   }
 };
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+0 && (_netlifyExports = {
   handler
 });
 /*! Bundled license information:
@@ -10394,8 +10395,14 @@ node-domexception/index.js:
 */
 
 
+const _netlifyHandler = (_netlifyExports && (_netlifyExports.handler || _netlifyExports.default)) || null;
+
 // Vercel API route export
-module.exports = async function handler(req, res) {
-  await adapt(exports.handler, req, res);
+module.exports = async function vercelHandler(req, res) {
+  if (!_netlifyHandler) {
+    res.status(500).json({ error: 'Handler not found in bundle', bundle: 'pack-workflow-product' });
+    return;
+  }
+  await adapt(_netlifyHandler, req, res);
 };
 module.exports.config = { maxDuration: 300 };

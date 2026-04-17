@@ -9,6 +9,8 @@ import { join } from 'path';
 
 const functionsDir = 'netlify/functions';
 const apiDir = 'api';
+// Use .cjs extension so Node.js treats files as CommonJS even in "type": "module" projects
+const outExt = '.cjs';
 
 // Get all function files
 const files = (await readdir(functionsDir)).filter(f => f.endsWith('.ts'));
@@ -56,7 +58,7 @@ async function adapt(handler, req, res) {
 for (const file of files) {
   const name = file.replace('.ts', '');
   const inputPath = join(functionsDir, file);
-  const outputPath = join(apiDir, `${name}.js`);
+  const outputPath = join(apiDir, `${name}${outExt}`);
 
   try {
     // Bundle the netlify function with esbuild
@@ -74,21 +76,35 @@ for (const file of files) {
 
     const bundledCode = result.outputFiles[0].text;
 
+    // Fix: esbuild CJS output ends with `module.exports = __toCommonJS(...)`.
+    // We rename `module.exports` in the bundle to `_netlifyExports` so it doesn't
+    // clobber the outer module.exports that Vercel reads.
+    const patchedBundle = bundledCode
+      .replace(/\bmodule\.exports\s*=/g, '_netlifyExports =')
+      .replace(/\bmodule\.exports\b/g, '_netlifyExports');
+
     // Write the Vercel API route — wraps the bundled handler
     const vercelRoute = `${adapterCode}
 
 // Bundled function: ${name}
-${bundledCode}
+let _netlifyExports = {};
+${patchedBundle}
+
+const _netlifyHandler = (_netlifyExports && (_netlifyExports.handler || _netlifyExports.default)) || null;
 
 // Vercel API route export
-module.exports = async function handler(req, res) {
-  await adapt(exports.handler, req, res);
+module.exports = async function vercelHandler(req, res) {
+  if (!_netlifyHandler) {
+    res.status(500).json({ error: 'Handler not found in bundle', bundle: '${name}' });
+    return;
+  }
+  await adapt(_netlifyHandler, req, res);
 };
 module.exports.config = { maxDuration: 300 };
 `;
 
     await writeFile(outputPath, vercelRoute);
-    console.log(`  ✅ ${name}.js`);
+    console.log(`  ✅ ${name}${outExt}`);
   } catch (err) {
     console.error(`  ❌ ${name}: ${err.message}`);
   }

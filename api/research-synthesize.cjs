@@ -35,7 +35,8 @@ async function adapt(handler, req, res) {
 }
 
 
-// Bundled function: pack-competitive-landscape
+// Bundled function: research-synthesize
+let _netlifyExports = {};
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -65,7 +66,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
+  // "default" to the CommonJS "_netlifyExports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
@@ -6471,12 +6472,12 @@ var init_fileFromPath = __esm({
   }
 });
 
-// netlify/functions/pack-competitive-landscape.ts
-var pack_competitive_landscape_exports = {};
-__export(pack_competitive_landscape_exports, {
+// netlify/functions/research-synthesize.ts
+var research_synthesize_exports = {};
+__export(research_synthesize_exports, {
   handler: () => handler
 });
-module.exports = __toCommonJS(pack_competitive_landscape_exports);
+_netlifyExports = __toCommonJS(research_synthesize_exports);
 
 // node_modules/@anthropic-ai/sdk/version.mjs
 var VERSION = "0.40.1";
@@ -10079,71 +10080,68 @@ Anthropic.Beta = Beta;
 var { HUMAN_PROMPT, AI_PROMPT } = Anthropic;
 var sdk_default = Anthropic;
 
-// netlify/functions/pack-competitive-landscape.ts
-function extractJSONObject(text) {
-  if (!text || text.length < 2) return null;
-  try {
-    const t2 = text.trim();
-    if (t2.startsWith("{")) return JSON.parse(t2);
-  } catch {
-  }
-  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]+?)\s*```/);
-  if (fenceMatch) {
-    try {
-      return JSON.parse(fenceMatch[1]);
-    } catch {
-    }
-  }
-  const firstBrace = text.indexOf("{");
-  if (firstBrace === -1) return null;
-  let depth = 0, inString = false, escape = false, end = -1;
-  for (let i2 = firstBrace; i2 < text.length; i2++) {
-    const ch = text[i2];
-    if (escape) {
-      escape = false;
-      continue;
-    }
-    if (inString && ch === "\\") {
-      escape = true;
-      continue;
-    }
-    if (ch === '"') {
-      inString = !inString;
-      continue;
-    }
-    if (inString) continue;
-    if (ch === "{") depth++;
-    else if (ch === "}") {
-      depth--;
-      if (depth === 0) {
-        end = i2;
-        break;
-      }
-    }
-  }
-  if (end > firstBrace) {
-    try {
-      return JSON.parse(text.slice(firstBrace, end + 1));
-    } catch {
-    }
-  }
-  return null;
-}
+// netlify/functions/research-synthesize.ts
 var client = new sdk_default({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
-function buildEvidenceContext(evidenceTexts, maxChars = 5e4) {
-  if (!Array.isArray(evidenceTexts)) return "";
-  let combined = "";
-  for (const chunk of evidenceTexts) {
-    if (!chunk) continue;
-    if (combined.length + chunk.length > maxChars) {
-      const remaining = maxChars - combined.length;
-      if (remaining > 200) combined += "\n\n---\n\n" + chunk.slice(0, remaining);
-      break;
-    }
-    combined += (combined ? "\n\n---\n\n" : "") + chunk;
-  }
-  return combined;
-}
+var SYNTHESIS_MODEL = "claude-sonnet-4-5";
+var SYNTHESIS_FALLBACK_MODEL = "claude-haiku-3-5";
+var EVIDENCE_CAPS = [5e4, 25e3, 1e4];
+var SYNTHESIS_FOCUS = {
+  company_profile: `Extract and structure the following:
+1. COMPANY OVERVIEW: Official name, founded, HQ, description, vertical/industry, target customer segment
+2. FINANCIALS & SCALE: ARR estimates (with basis), funding stage, total raised, investors, last round date, employee count, customer count
+3. PRODUCT & PRICING: Core product, modules, pricing model (per-seat/per-patient/per-visit/etc.), pricing flexibility, contract structure, expansion mechanics
+4. MARKET POSITION: Leader/Challenger/Niche status, estimated market share, key differentiators, main competitors, G2/Capterra scores
+5. GROWTH MOMENTUM: Growth signals, recent milestones (last 2 years), press coverage, awards
+6. PRICING FLEXIBILITY (A5): Can they charge for AI-delivered value? Can they move to usage-based or outcome-based pricing?`,
+  competitive_landscape: `Extract and structure the following:
+1. VERTICAL HEAT: How competitive is this vertical? What's driving competition? Score 0-100.
+2. AI-NATIVE ENTRANTS: For each startup \u2014 name, founded, funding, last raise ($, date, investors), traction, threat level
+3. INCUMBENT AI POSTURE: For each major incumbent \u2014 AI shipped (GA), announced (roadmap), customer response
+4. HORIZONTAL AI THREAT: Is OpenAI/Microsoft/Google disrupting this vertical? What workflows are at risk vs protected?
+5. RECENT NEWS: Key funding, acquisitions, product launches, partnerships, regulatory changes in last 18 months
+6. COMPETITIVE WINDOW: How long does the target company have before the competitive landscape closes in?
+7. COMPOUNDING LOOP: Is there a data/network flywheel? Does more usage = better product = more customers?`,
+  team_capability: `Extract and structure the following:
+1. KEY LEADERS: For CEO, CTO, CPO, Head of AI/ML, VP Engineering \u2014 name, background, prior companies, AI/ML credentials, public AI statements
+2. AI/ML TEAM SIZE: How many dedicated AI/ML staff? Any ML PhDs, ex-FAANG, published researchers?
+3. SHIPPED AI FEATURES: What AI features are currently in production? Not roadmap \u2014 what's live and being used by customers?
+4. HIRING SIGNALS: Job postings for AI/ML roles? What seniority, what skills?
+5. BUILD vs BUY: Building AI models internally or using OpenAI/Azure APIs? Or both?
+6. CEO AI CONVICTION: Specific quotes, commitments, structural actions (AI hires, acquisitions, partnerships) \u2014 not just "we're excited about AI"
+7. TECHNICAL MOAT INDICATORS: Patents, published research, open source contributions, engineering blog depth`,
+  regulatory_moat: `Extract and structure the following:
+1. REGULATORY FRAMEWORK: Specific regulations (HIPAA, OASIS, EVV, SOC2, PCI-DSS, etc.), enforcement level, trend direction
+2. CERTIFICATIONS HELD: Confirmed certifications \u2014 SOC2 Type II, HIPAA BAA, HITRUST, ISO 27001, state licenses
+3. SWITCHING COSTS: Specific friction factors \u2014 data migration complexity, compliance history resets, integration reconstruction, retraining cost
+4. DATA PORTABILITY: Can customers easily export data? What effort to migrate to a competitor?
+5. DATA MOAT: What proprietary data accumulates? Does it become more valuable over time? AI training advantage?
+6. MOAT DURABILITY: How long can this moat hold? What would erode it?
+7. COMPETITIVE BARRIERS: How hard is it for a new entrant to match the compliance posture? Time/cost estimates.`,
+  workflow_product: `Extract and structure the following:
+1. PRODUCT CATEGORY: Is this genuinely a System of Record, operational tool, or analytics/reporting layer?
+2. DAILY WORKFLOWS OWNED: What specific daily tasks do users do in this software?
+3. WORKFLOW EMBEDDEDNESS: How critical is this software? What happens if it goes down for a day?
+4. INTEGRATIONS: What systems is it integrated with? EHR/EMR, billing, payroll, CRM? Number and depth.
+5. VALUE QUANTIFICATION: Specific ROI metrics, case studies, time-savings data, revenue impact numbers
+6. CUSTOMER RETENTION SIGNALS: Known retention/churn rates, NPS, G2 ratings, multi-year relationship evidence
+7. PRICING & EXPANSION: How does revenue grow with a customer? More users, volume, modules? Outcome-based pricing?`,
+  data_architecture: `Extract and structure the following:
+1. TECH STACK: Cloud provider (AWS/Azure/GCP), database architecture, API structure, mobile vs web
+2. DATA VOLUME & DEPTH: Estimated records, years of longitudinal data, breadth per customer record
+3. OUTCOME LABELING: Does the software capture what happened AFTER service delivery? Outcomes, billing accuracy?
+4. AI FEATURES IN PRODUCTION: Specific AI/ML features live in the product \u2014 NLP, predictive analytics, scheduling optimization, documentation automation, risk scoring
+5. AI BUILD vs WRAP: Building proprietary models or wrapping OpenAI/Azure APIs? Long-term data moat strategy?
+6. ARCHITECTURE READINESS: Cloud-native? Microservices? Real-time data pipeline? Modern enough to build AI on?
+7. PROPRIETARY DATA ADVANTAGE: What data do they have that competitors can't replicate?`,
+  market_timing: `Extract and structure the following:
+1. MARKET SIZE: TAM/SAM estimates with source and methodology. Growth rate (CAGR). Confidence in estimates.
+2. PE/VC DEAL FLOW: Specific deals in this vertical in last 18 months \u2014 who raised, how much, at what stage, from whom
+3. M&A ACTIVITY: Acquisitions in the vertical \u2014 who bought whom, at what multiples, strategic rationale
+4. AI ADOPTION RATE: Survey data, operator reports \u2014 what % of operators use AI tools? Adoption trajectory?
+5. MACRO TAILWINDS: Demographics, labor shortages, reimbursement changes, regulatory mandates, consolidation trends
+6. COMPARABLE TRANSACTION MULTIPLES: Relevant PE/M&A comps \u2014 EV/Revenue multiples for similar vertical SaaS
+7. TIMING ASSESSMENT: Is this the right time to invest? Too early? Right timing? Too late? What catalysts ahead?`
+};
 var handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
@@ -10151,245 +10149,115 @@ var handler = async (event) => {
   const startTime = Date.now();
   try {
     const body = JSON.parse(event.body || "{}");
-    const { company_name, company_url, vertical, competitor_hints, evidence_texts, use_knowledge_fallback } = body;
-    if (!company_name) {
-      return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
+    const {
+      dimension,
+      company_name,
+      vertical,
+      raw_evidence
+    } = body;
+    if (!dimension || !company_name) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "dimension and company_name required" })
+      };
     }
-    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
-    const evidenceContext = buildEvidenceContext(evidence_texts || []);
-    const hintStr = Array.isArray(competitor_hints) && competitor_hints.length > 0 ? `
-KNOWN COMPETITORS/PEERS (analyst-provided): ${competitor_hints.join(", ")}` : "";
-    const hasRichEvidence = evidenceContext.length > 1e3;
-    const systemPrompt = `You are a senior competitive intelligence analyst at a top-tier PE/growth equity firm specializing in vertical SaaS AI investments. You have deep expertise in the B2B software competitive landscape and AI disruption patterns. Your job is to produce a professional-grade competitive analysis that an investment committee would rely on.
+    const evidenceLength = (raw_evidence || "").length;
+    const focusInstructions = SYNTHESIS_FOCUS[dimension] || `Extract all investment-relevant facts about ${dimension} for ${company_name}.`;
+    const systemPrompt = `You are a senior investment analyst building a structured research brief for a PE/growth equity investment team. You are the "Research Synthesis Associate" \u2014 your job is to read all evidence and extract the most investment-relevant facts in a structured format.
 
-CRITICAL INSTRUCTIONS:
-1. If web evidence is provided, extract and cite specific facts from it
-2. If web evidence is limited, ALWAYS use your training knowledge \u2014 you have extensive knowledge of vertical SaaS companies, competitive landscapes, and AI investment trends through early 2025
-3. NEVER return empty findings or neutral 0.5 defaults just because evidence is thin
-4. Mark confidence honestly (H/M/L) but always provide substantive analysis
-5. When naming competitors, use real company names you know \u2014 do not make up companies
-6. Be specific about funding amounts, founding dates, and traction when you know them`;
-    const userPrompt = `Analyze the AI competitive landscape for this vertical SaaS company.
+FUNDAMENTAL RULES:
+1. FACTUAL PRECISION \u2014 Label every claim: [CONFIRMED: source] / [INFERRED: reasoning] / [ANALYST KNOWLEDGE] / [UNKNOWN]
+2. SPECIFICITY \u2014 "$4.2M ARR growing 40% YoY" beats "growing revenues". Names, numbers, dates, quotes.
+3. HONEST ABOUT GAPS \u2014 "[UNKNOWN \u2014 not found. Recommend: {specific question to ask management}]" is valuable.
+4. CALIBRATION \u2014 If evidence is sparse, use training knowledge (labeled [ANALYST KNOWLEDGE]) rather than leaving sections empty.
+5. INVESTMENT LENS \u2014 Every fact should connect to: risk, value, competitive position, or AI readiness.
 
-COMPANY: ${company_name}
-URL: ${company_url || "Not provided"}
-VERTICAL: ${vertical || "Unknown \u2014 infer from evidence and your knowledge"}
-${hintStr}
+Follow the numbered sections in the SYNTHESIS FOCUS exactly. Be concise but thorough. Target 800-1200 words.`;
+    let attempt = 0;
+    let lastError = "";
+    while (attempt < 3) {
+      const evidenceCap = EVIDENCE_CAPS[attempt] ?? 1e4;
+      const model = attempt < 2 ? SYNTHESIS_MODEL : SYNTHESIS_FALLBACK_MODEL;
+      const evidenceToSynth = (raw_evidence || "No evidence provided \u2014 use analyst training knowledge").slice(0, evidenceCap);
+      const truncationNote = evidenceLength > evidenceCap ? `
 
-KNOWLEDGE FALLBACK INSTRUCTION: ${!hasRichEvidence && use_knowledge_fallback ? `Web research returned limited results. CRITICAL: Use your training knowledge about ${company_name} and the ${vertical || "vertical SaaS"} market. You likely know this company, its competitors, and the AI investment landscape in this space. Draw on everything you know. Mark confidence 'L' but provide REAL analysis \u2014 not empty findings.` : `Use the research evidence below plus your own knowledge to provide the most accurate assessment possible.`}
+[NOTE: Total evidence was ${Math.round(evidenceLength / 1e3)}K chars. This synthesis shows the first ${Math.round(evidenceCap / 1e3)}K chars.]` : "";
+      const userPrompt = `Synthesize research evidence for ${company_name} (${vertical || "vertical SaaS"}) \u2014 dimension: "${dimension}".
 
-RESEARCH EVIDENCE (${evidenceContext.length} chars):
-${evidenceContext || "Limited web evidence \u2014 use training knowledge as instructed above."}
+Evidence: ${Math.round(Math.min(evidenceLength, evidenceCap) / 1e3)}K chars from ${evidenceLength > evidenceCap ? "first portion of" : ""} 5 research passes.
 
-Return ONLY valid JSON with NO markdown fences:
+RAW EVIDENCE:
+${evidenceToSynth}${truncationNote}
 
-{
-  "pack_name": "competitive_landscape",
-  "pack_version": "2.0",
-  "generated_at": "${(/* @__PURE__ */ new Date()).toISOString()}",
-  "data_quality_score": <0.0-1.0, based on evidence richness>,
-  "findings": [
-    {
-      "key": "vertical_heat_index",
-      "value": {
-        "score": <0-100, where 100=extremely hot/competitive>,
-        "grade": "A"|"B"|"C"|"D"|"F",
-        "summary": "<2-3 sentence assessment of competitive heat in this vertical>",
-        "key_drivers": ["<driver1>", "<driver2>", "<driver3>"]
-      },
-      "confidence": "H"|"M"|"L",
-      "sources": ["<url or 'Analyst knowledge'>"],
-      "unknowns": []
-    },
-    {
-      "key": "ai_native_entrants",
-      "value": [
-        {
-          "company": "<real company name>",
-          "founded": <year or null>,
-          "stage": "<Seed/Pre-Seed/Series A/Series B/Series C/PE-backed>",
-          "last_raise": "<$xM or Unknown>",
-          "last_raise_date": "<YYYY-MM or Unknown>",
-          "key_investors": ["<investor names>"],
-          "traction_signal": "<specific evidence of traction \u2014 customers, revenue, growth>",
-          "threat_level": "HIGH"|"MEDIUM"|"LOW",
-          "threat_rationale": "<why this is or isn't a threat to the target company>",
-          "url": "<string or null>"
-        }
-      ],
-      "confidence": "H"|"M"|"L",
-      "sources": ["<url>"],
-      "unknowns": []
-    },
-    {
-      "key": "incumbent_postures",
-      "value": [
-        {
-          "company": "<incumbent name>",
-          "market_position": "<leader/challenger/niche>",
-          "status": "GA_WITH_TRACTION"|"LAUNCHED"|"BETA"|"ROADMAP"|"SIGNALING"|"SILENT",
-          "ai_products": "<specific AI features/products if known>",
-          "evidence": "<specific evidence of AI posture>",
-          "threat_to_target": "<HIGH/MEDIUM/LOW and why>",
-          "url": "<string or null>"
-        }
-      ],
-      "confidence": "H"|"M"|"L",
-      "sources": ["<url>"],
-      "unknowns": []
-    },
-    {
-      "key": "horizontal_ai_threat",
-      "value": {
-        "overall_level": "HIGH"|"MEDIUM"|"LOW",
-        "threat_actors": ["<e.g. OpenAI, Microsoft Copilot, Salesforce Einstein, Google>"],
-        "use_cases_at_risk": ["<specific workflows that horizontal AI could replace>"],
-        "use_cases_protected": ["<workflows that require vertical-specific data/integration>"],
-        "assessment": "<2-3 sentence nuanced assessment>"
-      },
-      "confidence": "H"|"M"|"L",
-      "sources": [],
-      "unknowns": []
-    },
-    {
-      "key": "recent_vertical_news",
-      "value": [
-        {
-          "headline": "<specific headline>",
-          "date": "<YYYY-MM or Unknown>",
-          "url": "<string>",
-          "significance": "<why this matters for the investment thesis>",
-          "category": "FUNDING"|"ACQUISITION"|"PRODUCT_LAUNCH"|"PARTNERSHIP"|"REGULATORY"|"OTHER"
-        }
-      ],
-      "confidence": "H"|"M"|"L",
-      "sources": ["<url>"],
-      "unknowns": []
-    },
-    {
-      "key": "competitive_window",
-      "value": {
-        "months_estimate": <number or null>,
-        "assessment": "OPEN"|"NARROWING"|"NARROW"|"CLOSED",
-        "rationale": "<specific reasoning for window assessment>",
-        "key_risks": ["<what could close the window>"]
-      },
-      "confidence": "H"|"M"|"L",
-      "sources": [],
-      "unknowns": []
-    },
-    {
-      "key": "compounding_loop_assessment",
-      "value": {
-        "has_flywheel": <boolean>,
-        "flywheel_description": "<describe the data/network flywheel if it exists, or why it doesn't>",
-        "strength": "STRONG"|"MODERATE"|"WEAK"|"NONE",
-        "evidence": "<specific evidence>"
-      },
-      "confidence": "H"|"M"|"L",
-      "sources": [],
-      "unknowns": []
-    }
-  ],
-  "factor_inputs": {
-    "R1": {
-      "evidence_summary": "<2-3 sentences on competitive window. How long before AI-native competitors or incumbents close the window? Cite specific companies and timelines.>",
-      "signal_strength": <0.0-1.0, where 0=window fully open 3+ years, 1=window already closed>
-    },
-    "R2": {
-      "evidence_summary": "<2-3 sentences on AI-native entrant threat. Name specific companies, their funding, traction, and threat level.>",
-      "signal_strength": <0.0-1.0, where 0=no entrants, 1=multiple well-funded entrants with real traction>
-    },
-    "R3": {
-      "evidence_summary": "<2-3 sentences on incumbent AI posture. What are the 2-3 largest incumbents doing with AI? Have they shipped? Do customers use it?>",
-      "signal_strength": <0.0-1.0, where 0=incumbents completely silent on AI, 1=incumbents have shipped GA AI features with traction>
-    },
-    "R4": {
-      "evidence_summary": "<2-3 sentences on horizontal AI encroachment. Is ChatGPT/Copilot/etc. being used by this vertical's operators instead of purpose-built software?>",
-      "signal_strength": <0.0-1.0, where 0=no horizontal threat, 1=widespread horizontal adoption displacing vertical SaaS>
-    },
-    "A8": {
-      "evidence_summary": "<2-3 sentences on compounding loop potential. Does more data = better product = more customers? Is there a data flywheel?>",
-      "signal_strength": <0.0-1.0, where 0=no flywheel at all, 1=proven strong compounding data network effects>
-    }
-  },
-  "red_flags": ["<specific red flags \u2014 e.g. 'Well-funded AI-native competitor X raised $50M Series B targeting exact same buyers'>"],
-  "green_flags": ["<specific positive signals \u2014 e.g. 'Incumbents are legacy on-prem with no credible AI roadmap'>"],
-  "v2_stub": false
-}
+\u2501\u2501\u2501 SYNTHESIS FOCUS \u2501\u2501\u2501
+${focusInstructions}
 
-SIGNAL STRENGTH CALIBRATION \u2014 BE PRECISE, NOT MIDDLE:
-- R1: Most vertical SaaS windows are narrowing (0.3-0.5). Only score 0.1 if truly no competition.
-- R2: If you know of 2+ funded AI-native entrants, score 0.6+. If none known, score 0.1-0.2.
-- R3: If incumbents have shipped AI features, score 0.5+. If only roadmap, 0.3-0.4.
-- R4: For most vertical SaaS, horizontal AI threat is moderate (0.3-0.5). Score 0.7+ only if operators are actively using ChatGPT instead of the SaaS.
-- A8: Most vertical SaaS has some flywheel potential (0.3-0.6). Score 0.8+ only if there's clear evidence of data network effects.`;
-    const PACK_FALLBACK_MODEL = "claude-haiku-3-5";
-    let attempts = 0;
-    while (attempts < 3) {
-      attempts++;
+Write a structured analyst brief following the numbered sections above. Label every fact with [CONFIRMED: source], [INFERRED: reason], [ANALYST KNOWLEDGE], or [UNKNOWN]. Be specific \u2014 name names, give numbers, cite sources.`;
+      attempt++;
       try {
-        const attemptModel = attempts >= 3 ? PACK_FALLBACK_MODEL : model;
-        const promptToUse = attempts === 1 ? userPrompt : userPrompt.slice(0, Math.floor(userPrompt.length / attempts));
-        const elapsed = Date.now() - startTime;
-        console.log(`[pack] attempt ${attempts}/3: model=${attemptModel}, prompt=${Math.round(promptToUse.length / 1e3)}K chars, elapsed=${elapsed}ms`);
+        console.log(`[synthesize] attempt ${attempt}/3: model=${model}, evidence=${Math.round(evidenceCap / 1e3)}K, dimension=${dimension}`);
         const response = await client.messages.create({
-          model: attemptModel,
+          model,
           max_tokens: 4096,
-          // Structured JSON output — 4K tokens sufficient, faster than 8K
+          // Synthesis is notes, not the final report — 4K is sufficient
           system: systemPrompt,
-          messages: [{ role: "user", content: promptToUse }]
+          messages: [{ role: "user", content: userPrompt }]
         });
         const text = response.content[0].type === "text" ? response.content[0].text : "";
-        console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now() - startTime}ms`);
-        const parsed = extractJSONObject(text);
-        if (parsed) {
-          console.log(`[pack] JSON extracted successfully on attempt ${attempts}`);
+        const elapsed = Date.now() - startTime;
+        console.log(`[synthesize] attempt ${attempt} succeeded: ${text.length} chars in ${elapsed}ms`);
+        if (text && text.length > 200) {
           return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...parsed, elapsed_ms: Date.now() - startTime })
+            body: JSON.stringify({
+              synthesis: text,
+              dimension,
+              evidence_input_chars: evidenceLength,
+              evidence_fed_chars: Math.min(evidenceLength, evidenceCap),
+              synthesis_chars: text.length,
+              model_used: model,
+              attempt_number: attempt,
+              elapsed_ms: elapsed
+            })
           };
-        } else {
-          console.error(`[pack] JSON extraction failed on attempt ${attempts}. Text preview: ${text.slice(0, 300)}`);
         }
+        lastError = `Response too short: ${text.length} chars`;
       } catch (e2) {
-        console.error(`Attempt ${attempts} failed:`, e2?.message);
-        if (attempts >= 3) break;
+        lastError = e2?.message || "unknown error";
+        const elapsed = Date.now() - startTime;
+        console.error(`[synthesize] attempt ${attempt}/3 failed for ${dimension} at ${elapsed}ms:`, lastError);
       }
     }
+    console.warn(`[synthesize] All 3 attempts failed for ${dimension}. Returning raw evidence. Last error: ${lastError}`);
+    const fallbackContent = `[SYNTHESIS FAILED \u2014 ${dimension} | Error: ${lastError}]
+
+RAW EVIDENCE FOR PACK ANALYSIS:
+${(raw_evidence || "").slice(0, 25e3)}`;
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        pack_name: "competitive_landscape",
-        pack_version: "2.0",
-        generated_at: (/* @__PURE__ */ new Date()).toISOString(),
-        data_quality_score: 0.1,
-        findings: [],
-        factor_inputs: {
-          R1: { evidence_summary: "Pack failed after 3 retries", signal_strength: 0.4 },
-          R2: { evidence_summary: "Pack failed after 3 retries", signal_strength: 0.3 },
-          R3: { evidence_summary: "Pack failed after 3 retries", signal_strength: 0.4 },
-          R4: { evidence_summary: "Pack failed after 3 retries", signal_strength: 0.3 },
-          A8: { evidence_summary: "Pack failed after 3 retries", signal_strength: 0.4 }
-        },
-        red_flags: ["Competitive Landscape pack failed \u2014 LLM returned malformed output after 3 retries"],
-        green_flags: [],
-        v2_stub: false,
-        status: "failed",
+        synthesis: fallbackContent,
+        dimension,
+        evidence_input_chars: evidenceLength,
+        evidence_fed_chars: 25e3,
+        synthesis_chars: 0,
+        model_used: "fallback",
+        fallback: true,
+        fallback_reason: lastError,
         elapsed_ms: Date.now() - startTime
       })
     };
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err?.message || "Pack failed" })
+      body: JSON.stringify({ error: err?.message || "Synthesis failed" })
     };
   }
 };
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+0 && (_netlifyExports = {
   handler
 });
 /*! Bundled license information:
@@ -10419,8 +10287,14 @@ node-domexception/index.js:
 */
 
 
+const _netlifyHandler = (_netlifyExports && (_netlifyExports.handler || _netlifyExports.default)) || null;
+
 // Vercel API route export
-module.exports = async function handler(req, res) {
-  await adapt(exports.handler, req, res);
+module.exports = async function vercelHandler(req, res) {
+  if (!_netlifyHandler) {
+    res.status(500).json({ error: 'Handler not found in bundle', bundle: 'research-synthesize' });
+    return;
+  }
+  await adapt(_netlifyHandler, req, res);
 };
 module.exports.config = { maxDuration: 300 };

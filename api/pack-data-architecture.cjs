@@ -35,7 +35,8 @@ async function adapt(handler, req, res) {
 }
 
 
-// Bundled function: research-synthesize
+// Bundled function: pack-data-architecture
+let _netlifyExports = {};
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -65,7 +66,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
+  // "default" to the CommonJS "_netlifyExports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
@@ -6471,12 +6472,12 @@ var init_fileFromPath = __esm({
   }
 });
 
-// netlify/functions/research-synthesize.ts
-var research_synthesize_exports = {};
-__export(research_synthesize_exports, {
+// netlify/functions/pack-data-architecture.ts
+var pack_data_architecture_exports = {};
+__export(pack_data_architecture_exports, {
   handler: () => handler
 });
-module.exports = __toCommonJS(research_synthesize_exports);
+_netlifyExports = __toCommonJS(pack_data_architecture_exports);
 
 // node_modules/@anthropic-ai/sdk/version.mjs
 var VERSION = "0.40.1";
@@ -10079,68 +10080,71 @@ Anthropic.Beta = Beta;
 var { HUMAN_PROMPT, AI_PROMPT } = Anthropic;
 var sdk_default = Anthropic;
 
-// netlify/functions/research-synthesize.ts
+// netlify/functions/pack-data-architecture.ts
+function extractJSONObject(text) {
+  if (!text || text.length < 2) return null;
+  try {
+    const t2 = text.trim();
+    if (t2.startsWith("{")) return JSON.parse(t2);
+  } catch {
+  }
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]+?)\s*```/);
+  if (fenceMatch) {
+    try {
+      return JSON.parse(fenceMatch[1]);
+    } catch {
+    }
+  }
+  const firstBrace = text.indexOf("{");
+  if (firstBrace === -1) return null;
+  let depth = 0, inString = false, escape = false, end = -1;
+  for (let i2 = firstBrace; i2 < text.length; i2++) {
+    const ch = text[i2];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (inString && ch === "\\") {
+      escape = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        end = i2;
+        break;
+      }
+    }
+  }
+  if (end > firstBrace) {
+    try {
+      return JSON.parse(text.slice(firstBrace, end + 1));
+    } catch {
+    }
+  }
+  return null;
+}
 var client = new sdk_default({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
-var SYNTHESIS_MODEL = "claude-sonnet-4-5";
-var SYNTHESIS_FALLBACK_MODEL = "claude-haiku-3-5";
-var EVIDENCE_CAPS = [5e4, 25e3, 1e4];
-var SYNTHESIS_FOCUS = {
-  company_profile: `Extract and structure the following:
-1. COMPANY OVERVIEW: Official name, founded, HQ, description, vertical/industry, target customer segment
-2. FINANCIALS & SCALE: ARR estimates (with basis), funding stage, total raised, investors, last round date, employee count, customer count
-3. PRODUCT & PRICING: Core product, modules, pricing model (per-seat/per-patient/per-visit/etc.), pricing flexibility, contract structure, expansion mechanics
-4. MARKET POSITION: Leader/Challenger/Niche status, estimated market share, key differentiators, main competitors, G2/Capterra scores
-5. GROWTH MOMENTUM: Growth signals, recent milestones (last 2 years), press coverage, awards
-6. PRICING FLEXIBILITY (A5): Can they charge for AI-delivered value? Can they move to usage-based or outcome-based pricing?`,
-  competitive_landscape: `Extract and structure the following:
-1. VERTICAL HEAT: How competitive is this vertical? What's driving competition? Score 0-100.
-2. AI-NATIVE ENTRANTS: For each startup \u2014 name, founded, funding, last raise ($, date, investors), traction, threat level
-3. INCUMBENT AI POSTURE: For each major incumbent \u2014 AI shipped (GA), announced (roadmap), customer response
-4. HORIZONTAL AI THREAT: Is OpenAI/Microsoft/Google disrupting this vertical? What workflows are at risk vs protected?
-5. RECENT NEWS: Key funding, acquisitions, product launches, partnerships, regulatory changes in last 18 months
-6. COMPETITIVE WINDOW: How long does the target company have before the competitive landscape closes in?
-7. COMPOUNDING LOOP: Is there a data/network flywheel? Does more usage = better product = more customers?`,
-  team_capability: `Extract and structure the following:
-1. KEY LEADERS: For CEO, CTO, CPO, Head of AI/ML, VP Engineering \u2014 name, background, prior companies, AI/ML credentials, public AI statements
-2. AI/ML TEAM SIZE: How many dedicated AI/ML staff? Any ML PhDs, ex-FAANG, published researchers?
-3. SHIPPED AI FEATURES: What AI features are currently in production? Not roadmap \u2014 what's live and being used by customers?
-4. HIRING SIGNALS: Job postings for AI/ML roles? What seniority, what skills?
-5. BUILD vs BUY: Building AI models internally or using OpenAI/Azure APIs? Or both?
-6. CEO AI CONVICTION: Specific quotes, commitments, structural actions (AI hires, acquisitions, partnerships) \u2014 not just "we're excited about AI"
-7. TECHNICAL MOAT INDICATORS: Patents, published research, open source contributions, engineering blog depth`,
-  regulatory_moat: `Extract and structure the following:
-1. REGULATORY FRAMEWORK: Specific regulations (HIPAA, OASIS, EVV, SOC2, PCI-DSS, etc.), enforcement level, trend direction
-2. CERTIFICATIONS HELD: Confirmed certifications \u2014 SOC2 Type II, HIPAA BAA, HITRUST, ISO 27001, state licenses
-3. SWITCHING COSTS: Specific friction factors \u2014 data migration complexity, compliance history resets, integration reconstruction, retraining cost
-4. DATA PORTABILITY: Can customers easily export data? What effort to migrate to a competitor?
-5. DATA MOAT: What proprietary data accumulates? Does it become more valuable over time? AI training advantage?
-6. MOAT DURABILITY: How long can this moat hold? What would erode it?
-7. COMPETITIVE BARRIERS: How hard is it for a new entrant to match the compliance posture? Time/cost estimates.`,
-  workflow_product: `Extract and structure the following:
-1. PRODUCT CATEGORY: Is this genuinely a System of Record, operational tool, or analytics/reporting layer?
-2. DAILY WORKFLOWS OWNED: What specific daily tasks do users do in this software?
-3. WORKFLOW EMBEDDEDNESS: How critical is this software? What happens if it goes down for a day?
-4. INTEGRATIONS: What systems is it integrated with? EHR/EMR, billing, payroll, CRM? Number and depth.
-5. VALUE QUANTIFICATION: Specific ROI metrics, case studies, time-savings data, revenue impact numbers
-6. CUSTOMER RETENTION SIGNALS: Known retention/churn rates, NPS, G2 ratings, multi-year relationship evidence
-7. PRICING & EXPANSION: How does revenue grow with a customer? More users, volume, modules? Outcome-based pricing?`,
-  data_architecture: `Extract and structure the following:
-1. TECH STACK: Cloud provider (AWS/Azure/GCP), database architecture, API structure, mobile vs web
-2. DATA VOLUME & DEPTH: Estimated records, years of longitudinal data, breadth per customer record
-3. OUTCOME LABELING: Does the software capture what happened AFTER service delivery? Outcomes, billing accuracy?
-4. AI FEATURES IN PRODUCTION: Specific AI/ML features live in the product \u2014 NLP, predictive analytics, scheduling optimization, documentation automation, risk scoring
-5. AI BUILD vs WRAP: Building proprietary models or wrapping OpenAI/Azure APIs? Long-term data moat strategy?
-6. ARCHITECTURE READINESS: Cloud-native? Microservices? Real-time data pipeline? Modern enough to build AI on?
-7. PROPRIETARY DATA ADVANTAGE: What data do they have that competitors can't replicate?`,
-  market_timing: `Extract and structure the following:
-1. MARKET SIZE: TAM/SAM estimates with source and methodology. Growth rate (CAGR). Confidence in estimates.
-2. PE/VC DEAL FLOW: Specific deals in this vertical in last 18 months \u2014 who raised, how much, at what stage, from whom
-3. M&A ACTIVITY: Acquisitions in the vertical \u2014 who bought whom, at what multiples, strategic rationale
-4. AI ADOPTION RATE: Survey data, operator reports \u2014 what % of operators use AI tools? Adoption trajectory?
-5. MACRO TAILWINDS: Demographics, labor shortages, reimbursement changes, regulatory mandates, consolidation trends
-6. COMPARABLE TRANSACTION MULTIPLES: Relevant PE/M&A comps \u2014 EV/Revenue multiples for similar vertical SaaS
-7. TIMING ASSESSMENT: Is this the right time to invest? Too early? Right timing? Too late? What catalysts ahead?`
-};
+function buildEvidenceContext(evidenceTexts, maxChars = 5e4) {
+  if (!Array.isArray(evidenceTexts)) return "";
+  let combined = "";
+  for (const chunk of evidenceTexts) {
+    if (!chunk) continue;
+    if (combined.length + chunk.length > maxChars) {
+      const remaining = maxChars - combined.length;
+      if (remaining > 200) combined += "\n\n---\n\n" + chunk.slice(0, remaining);
+      break;
+    }
+    combined += (combined ? "\n\n---\n\n" : "") + chunk;
+  }
+  return combined;
+}
 var handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
@@ -10148,115 +10152,230 @@ var handler = async (event) => {
   const startTime = Date.now();
   try {
     const body = JSON.parse(event.body || "{}");
-    const {
-      dimension,
-      company_name,
-      vertical,
-      raw_evidence
-    } = body;
-    if (!dimension || !company_name) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "dimension and company_name required" })
-      };
+    const { company_name, company_url, vertical, evidence_texts, use_knowledge_fallback } = body;
+    if (!company_name) {
+      return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
     }
-    const evidenceLength = (raw_evidence || "").length;
-    const focusInstructions = SYNTHESIS_FOCUS[dimension] || `Extract all investment-relevant facts about ${dimension} for ${company_name}.`;
-    const systemPrompt = `You are a senior investment analyst building a structured research brief for a PE/growth equity investment team. You are the "Research Synthesis Associate" \u2014 your job is to read all evidence and extract the most investment-relevant facts in a structured format.
+    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
+    const evidenceContext = buildEvidenceContext(evidence_texts || []);
+    const hasRichEvidence = evidenceContext.length > 1e3;
+    const systemPrompt = `You are a senior technical due diligence analyst at a PE/growth equity firm specializing in AI-ready vertical SaaS. You evaluate data foundation quality, outcome-labeled training data assets, and architecture readiness for AI deployment.
 
-FUNDAMENTAL RULES:
-1. FACTUAL PRECISION \u2014 Label every claim: [CONFIRMED: source] / [INFERRED: reasoning] / [ANALYST KNOWLEDGE] / [UNKNOWN]
-2. SPECIFICITY \u2014 "$4.2M ARR growing 40% YoY" beats "growing revenues". Names, numbers, dates, quotes.
-3. HONEST ABOUT GAPS \u2014 "[UNKNOWN \u2014 not found. Recommend: {specific question to ask management}]" is valuable.
-4. CALIBRATION \u2014 If evidence is sparse, use training knowledge (labeled [ANALYST KNOWLEDGE]) rather than leaving sections empty.
-5. INVESTMENT LENS \u2014 Every fact should connect to: risk, value, competitive position, or AI readiness.
+Key insight you apply: Vertical SaaS companies that are systems of record typically sit on extraordinary longitudinal datasets that become proprietary training data advantages when paired with the right architecture. The question is whether they have:
+1. Volume + breadth of data (many customers \xD7 long history \xD7 rich fields)
+2. Outcome labels (not just what happened, but what the RESULT was)
+3. Modern architecture that can actually leverage this data for AI
 
-Follow the numbered sections in the SYNTHESIS FOCUS exactly. Be concise but thorough. Target 800-1200 words.`;
-    let attempt = 0;
-    let lastError = "";
-    while (attempt < 3) {
-      const evidenceCap = EVIDENCE_CAPS[attempt] ?? 1e4;
-      const model = attempt < 2 ? SYNTHESIS_MODEL : SYNTHESIS_FALLBACK_MODEL;
-      const evidenceToSynth = (raw_evidence || "No evidence provided \u2014 use analyst training knowledge").slice(0, evidenceCap);
-      const truncationNote = evidenceLength > evidenceCap ? `
+CRITICAL INSTRUCTIONS:
+1. For healthcare/field service/fintech verticals, you know these systems collect rich operational + outcome data
+2. Infer data richness from the product description \u2014 a home health SOR collects visit notes, medications, outcomes, billing codes, etc.
+3. Distinguish between "we have data" and "we have AI-training-ready labeled outcome data"
+4. Architecture signals: job postings for ML engineers, cloud infrastructure, APIs, engineering blogs
+5. Be specific \u2014 name the types of data, the architecture signals, the AI features shipped`;
+    const userPrompt = `Assess data foundation quality, outcome-labeled data assets, and architecture readiness for AI at this vertical SaaS company.
 
-[NOTE: Total evidence was ${Math.round(evidenceLength / 1e3)}K chars. This synthesis shows the first ${Math.round(evidenceCap / 1e3)}K chars.]` : "";
-      const userPrompt = `Synthesize research evidence for ${company_name} (${vertical || "vertical SaaS"}) \u2014 dimension: "${dimension}".
+COMPANY: ${company_name}
+URL: ${company_url || "Not provided"}
+VERTICAL: ${vertical || "Infer from context"}
 
-Evidence: ${Math.round(Math.min(evidenceLength, evidenceCap) / 1e3)}K chars from ${evidenceLength > evidenceCap ? "first portion of" : ""} 5 research passes.
+${!hasRichEvidence && use_knowledge_fallback ? `KNOWLEDGE FALLBACK: Limited web evidence. CRITICAL: Use your training knowledge about ${company_name} and the ${vertical || "vertical SaaS"} market. You can infer the data types this system collects from knowing what category of software it is. A home health SOR collects patient demographics, visit records, care plans, medication adherence, billing codes, and outcomes. Use this reasoning. Mark confidence 'L' but give real substantive assessments.` : `Use evidence below plus your knowledge for the most accurate assessment.`}
 
-RAW EVIDENCE:
-${evidenceToSynth}${truncationNote}
+RESEARCH EVIDENCE (${evidenceContext.length} chars):
+${evidenceContext || "Limited web evidence \u2014 use training knowledge as instructed."}
 
-\u2501\u2501\u2501 SYNTHESIS FOCUS \u2501\u2501\u2501
-${focusInstructions}
+Return ONLY valid JSON with NO markdown fences:
 
-Write a structured analyst brief following the numbered sections above. Label every fact with [CONFIRMED: source], [INFERRED: reason], [ANALYST KNOWLEDGE], or [UNKNOWN]. Be specific \u2014 name names, give numbers, cite sources.`;
-      attempt++;
+{
+  "pack_name": "data_architecture",
+  "pack_version": "2.0",
+  "generated_at": "${(/* @__PURE__ */ new Date()).toISOString()}",
+  "data_quality_score": <0.0-1.0>,
+  "findings": [
+    {
+      "key": "data_asset_profile",
+      "value": {
+        "estimated_customer_count": "<e.g. '500+ agencies', '2000+ practices', 'Unknown' \u2014 use your knowledge>",
+        "data_types_collected": ["<specific data types: patient records, visit notes, billing codes, schedules, outcomes, medications, etc.>"],
+        "longitudinal_depth": "<how long is the historical record? Years of data per customer?>",
+        "data_volume_assessment": "LARGE"|"MEDIUM"|"SMALL"|"UNKNOWN",
+        "proprietary_data_advantage": "<what data does this company have that competitors building from scratch would NOT have?>",
+        "data_density": "<how information-rich are records? Structured vs unstructured? Labeled fields vs free text?>"
+      },
+      "confidence": "H"|"M"|"L",
+      "sources": ["<url or 'Analyst inference from product category'>"],
+      "unknowns": []
+    },
+    {
+      "key": "outcome_labeled_data_assessment",
+      "value": {
+        "outcome_capture_level": "SYSTEMATIC"|"PARTIAL"|"MINIMAL"|"NONE"|"UNKNOWN",
+        "outcome_examples": ["<specific outcomes this system tracks \u2014 e.g. patient readmission, visit completion, care plan adherence, billing collection rate>"],
+        "ground_truth_quality": "<how reliable and complete are the outcome labels? Manual entry? Auto-captured? Third-party verified?>",
+        "ml_training_readiness": "READY"|"NEEDS_WORK"|"SIGNIFICANT_GAP"|"NOT_READY",
+        "ai_training_examples": "<if you know about existing AI features, what data presumably trained them?>"
+      },
+      "confidence": "H"|"M"|"L",
+      "sources": [],
+      "unknowns": []
+    },
+    {
+      "key": "current_ai_features",
+      "value": {
+        "shipped_ai_features": ["<specific AI features that are in production \u2014 predictive scheduling, risk flagging, billing automation, NLP notes, etc.>"],
+        "ai_feature_maturity": "PRODUCTION_WITH_PROVEN_VALUE"|"PRODUCTION_EARLY"|"BETA"|"ANNOUNCED"|"NONE",
+        "ai_use_cases_obvious": ["<AI use cases that seem obvious given the data they collect but haven't been confirmed shipped yet>"],
+        "third_party_ai_integrations": ["<any AI tool integrations: OpenAI, AWS Bedrock, Azure AI, etc.>"]
+      },
+      "confidence": "H"|"M"|"L",
+      "sources": ["<url or 'Analyst knowledge'>"],
+      "unknowns": []
+    },
+    {
+      "key": "architecture_signals",
+      "value": {
+        "deployment_model": "CLOUD_NATIVE"|"CLOUD_HOSTED"|"HYBRID"|"ON_PREMISE"|"UNKNOWN",
+        "api_maturity": "FULL_API"|"PARTIAL_API"|"BASIC_INTEGRATION"|"NONE"|"UNKNOWN",
+        "tech_stack_signals": ["<evidence of tech stack from job postings, engineering blog, integrations, etc.>"],
+        "scalability_architecture": "<description of scalability architecture if known>",
+        "ml_infrastructure": "<any known ML pipeline, MLOps, feature stores, etc.>",
+        "legacy_risk": "<assessment of legacy technical debt that would block AI deployment>"
+      },
+      "confidence": "H"|"M"|"L",
+      "sources": [],
+      "unknowns": []
+    },
+    {
+      "key": "data_network_effects",
+      "value": {
+        "network_effect_present": <boolean>,
+        "flywheel_description": "<does more customers = better models = better product? Describe the specific flywheel.>",
+        "cross_customer_learning": "<is data from multiple customers used to improve outcomes for all? Benchmarking? Aggregate analytics?>",
+        "competitive_data_advantage": "<in 3-5 years, if this company builds AI on its data, how defensible is that advantage?>"
+      },
+      "confidence": "H"|"M"|"L",
+      "sources": [],
+      "unknowns": []
+    }
+  ],
+  "factor_inputs": {
+    "A2": {
+      "evidence_summary": "<3-4 sentences: What data does this company sit on? Estimated volume, breadth, longitudinal depth. Is this a rich proprietary dataset that would take competitors years to replicate? Be specific about the types of records collected.>",
+      "signal_strength": <0.0-1.0>
+    },
+    "A3": {
+      "evidence_summary": "<3-4 sentences: Does this system capture outcome-labeled data? Does it record what actually happened \u2014 not just the input (care plan) but the output (patient outcome, readmission, billing result)? Is this data structured for ML training use?>",
+      "signal_strength": <0.0-1.0>
+    },
+    "A7": {
+      "evidence_summary": "<3-4 sentences: Is the architecture ready to leverage the data for AI? Cloud-native? API-first? Any ML infrastructure? Or is it a legacy monolith that would require years of architectural work before AI can be deployed at scale?>",
+      "signal_strength": <0.0-1.0>
+    }
+  },
+  "red_flags": ["<Real concerns: e.g. 'On-premise deployment limits cross-customer data aggregation', 'Data primarily unstructured free text with no outcome labels'>"],
+  "green_flags": ["<Positive signals: e.g. 'Cloud-native SOR with 10+ years of structured patient + outcome data across 2000+ agencies'>"],
+  "v2_stub": false
+}
+
+SIGNAL STRENGTH CALIBRATION:
+A2 (Data Foundation Quality):
+0.1 = No meaningful data, thin/sparse records
+0.2 = Basic operational data, limited history, few fields
+0.3 = Multi-year operational data but siloed, inconsistent quality
+0.4 = Decent structured dataset, growing over time
+0.5 = Solid multi-year operational dataset with reasonable breadth
+0.6 = Rich longitudinal dataset across many customers and years
+0.7 = Industry-leading data volume with quality controls
+0.8 = Exceptional proprietary dataset that would take 5+ years for competitors to replicate
+0.9 = Best-in-class data asset, network effects growing the moat
+1.0 = Dominant data position, de facto industry standard
+
+A3 (Outcome-Labeled Data):
+0.1 = No outcome data \u2014 only inputs recorded, no results tracked
+0.2 = Very minimal implicit outcomes, hard to extract labels
+0.3 = Some outcomes tracked but not systematically or at scale
+0.4 = Partial outcome tracking \u2014 some modules capture outcomes
+0.5 = Reasonable outcome tracking in core workflows
+0.6 = Systematic outcome capture across most workflows
+0.7 = Rich outcome-labeled dataset with clear input-output structure
+0.8 = Comprehensive longitudinal outcome data, structured for ML
+0.9 = Gold-standard outcome-labeled training data, regularly audited
+1.0 = Industry benchmark for outcome measurement, published results
+
+A7 (Architecture Readiness):
+0.1 = Legacy on-premise monolith, years away from AI deployment
+0.2 = Mostly legacy, some modernization in progress
+0.3 = Partially modernized, basic APIs, moving to cloud
+0.4 = Primarily cloud-hosted (not native), reasonable APIs
+0.5 = Modern cloud deployment, REST APIs available
+0.6 = Cloud-native with good API coverage, scalable
+0.7 = Cloud-native, microservices, ML-friendly infrastructure
+0.8 = Modern ML stack \u2014 MLOps, feature stores, model serving
+0.9 = AI-native architecture, purpose-built for ML deployment
+1.0 = Best-in-class ML infrastructure, production AI at scale`;
+    const PACK_FALLBACK_MODEL = "claude-haiku-3-5";
+    let attempts = 0;
+    while (attempts < 3) {
+      attempts++;
       try {
-        console.log(`[synthesize] attempt ${attempt}/3: model=${model}, evidence=${Math.round(evidenceCap / 1e3)}K, dimension=${dimension}`);
+        const attemptModel = attempts >= 3 ? PACK_FALLBACK_MODEL : model;
+        const promptToUse = attempts === 1 ? userPrompt : userPrompt.slice(0, Math.floor(userPrompt.length / attempts));
+        const elapsed = Date.now() - startTime;
+        console.log(`[pack] attempt ${attempts}/3: model=${attemptModel}, prompt=${Math.round(promptToUse.length / 1e3)}K chars, elapsed=${elapsed}ms`);
         const response = await client.messages.create({
-          model,
+          model: attemptModel,
           max_tokens: 4096,
-          // Synthesis is notes, not the final report — 4K is sufficient
+          // Structured JSON output — 4K tokens sufficient, faster than 8K
           system: systemPrompt,
-          messages: [{ role: "user", content: userPrompt }]
+          messages: [{ role: "user", content: promptToUse }]
         });
         const text = response.content[0].type === "text" ? response.content[0].text : "";
-        const elapsed = Date.now() - startTime;
-        console.log(`[synthesize] attempt ${attempt} succeeded: ${text.length} chars in ${elapsed}ms`);
-        if (text && text.length > 200) {
+        console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now() - startTime}ms`);
+        const parsed = extractJSONObject(text);
+        if (parsed) {
+          console.log(`[pack] JSON extracted successfully on attempt ${attempts}`);
           return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              synthesis: text,
-              dimension,
-              evidence_input_chars: evidenceLength,
-              evidence_fed_chars: Math.min(evidenceLength, evidenceCap),
-              synthesis_chars: text.length,
-              model_used: model,
-              attempt_number: attempt,
-              elapsed_ms: elapsed
-            })
+            body: JSON.stringify({ ...parsed, elapsed_ms: Date.now() - startTime })
           };
+        } else {
+          console.error(`[pack] JSON extraction failed on attempt ${attempts}. Text preview: ${text.slice(0, 300)}`);
         }
-        lastError = `Response too short: ${text.length} chars`;
       } catch (e2) {
-        lastError = e2?.message || "unknown error";
-        const elapsed = Date.now() - startTime;
-        console.error(`[synthesize] attempt ${attempt}/3 failed for ${dimension} at ${elapsed}ms:`, lastError);
+        console.error(`Attempt ${attempts} failed:`, e2?.message);
+        if (attempts >= 3) break;
       }
     }
-    console.warn(`[synthesize] All 3 attempts failed for ${dimension}. Returning raw evidence. Last error: ${lastError}`);
-    const fallbackContent = `[SYNTHESIS FAILED \u2014 ${dimension} | Error: ${lastError}]
-
-RAW EVIDENCE FOR PACK ANALYSIS:
-${(raw_evidence || "").slice(0, 25e3)}`;
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        synthesis: fallbackContent,
-        dimension,
-        evidence_input_chars: evidenceLength,
-        evidence_fed_chars: 25e3,
-        synthesis_chars: 0,
-        model_used: "fallback",
-        fallback: true,
-        fallback_reason: lastError,
+        pack_name: "data_architecture",
+        pack_version: "2.0",
+        generated_at: (/* @__PURE__ */ new Date()).toISOString(),
+        data_quality_score: 0.1,
+        findings: [],
+        factor_inputs: {
+          A2: { evidence_summary: "Pack failed after retries", signal_strength: 0.4 },
+          A3: { evidence_summary: "Pack failed after retries", signal_strength: 0.4 },
+          A7: { evidence_summary: "Pack failed after retries", signal_strength: 0.4 }
+        },
+        red_flags: ["Data Architecture pack failed"],
+        green_flags: [],
+        v2_stub: false,
+        status: "failed",
         elapsed_ms: Date.now() - startTime
       })
     };
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err?.message || "Synthesis failed" })
+      body: JSON.stringify({ error: err?.message })
     };
   }
 };
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+0 && (_netlifyExports = {
   handler
 });
 /*! Bundled license information:
@@ -10286,8 +10405,14 @@ node-domexception/index.js:
 */
 
 
+const _netlifyHandler = (_netlifyExports && (_netlifyExports.handler || _netlifyExports.default)) || null;
+
 // Vercel API route export
-module.exports = async function handler(req, res) {
-  await adapt(exports.handler, req, res);
+module.exports = async function vercelHandler(req, res) {
+  if (!_netlifyHandler) {
+    res.status(500).json({ error: 'Handler not found in bundle', bundle: 'pack-data-architecture' });
+    return;
+  }
+  await adapt(_netlifyHandler, req, res);
 };
 module.exports.config = { maxDuration: 300 };

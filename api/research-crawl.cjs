@@ -36,6 +36,7 @@ async function adapt(handler, req, res) {
 
 
 // Bundled function: research-crawl
+let _netlifyExports = {};
 "use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -60,7 +61,7 @@ var research_crawl_exports = {};
 __export(research_crawl_exports, {
   handler: () => handler
 });
-module.exports = __toCommonJS(research_crawl_exports);
+_netlifyExports = __toCommonJS(research_crawl_exports);
 var handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
@@ -209,13 +210,19 @@ var handler = async (event) => {
   }
 };
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+0 && (_netlifyExports = {
   handler
 });
 
 
+const _netlifyHandler = (_netlifyExports && (_netlifyExports.handler || _netlifyExports.default)) || null;
+
 // Vercel API route export
-module.exports = async function handler(req, res) {
-  await adapt(exports.handler, req, res);
+module.exports = async function vercelHandler(req, res) {
+  if (!_netlifyHandler) {
+    res.status(500).json({ error: 'Handler not found in bundle', bundle: 'research-crawl' });
+    return;
+  }
+  await adapt(_netlifyHandler, req, res);
 };
 module.exports.config = { maxDuration: 300 };

@@ -35,7 +35,8 @@ async function adapt(handler, req, res) {
 }
 
 
-// Bundled function: auth-check
+// Bundled function: document-parse
+let _netlifyExports = {};
 "use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -55,53 +56,92 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// netlify/functions/auth-check.ts
-var auth_check_exports = {};
-__export(auth_check_exports, {
+// netlify/functions/document-parse.ts
+var document_parse_exports = {};
+__export(document_parse_exports, {
   handler: () => handler
 });
-module.exports = __toCommonJS(auth_check_exports);
+_netlifyExports = __toCommonJS(document_parse_exports);
 var handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
   }
   try {
     const body = JSON.parse(event.body || "{}");
-    const { passcode } = body;
-    if (!passcode) {
+    const { content_base64, filename, content_type } = body;
+    if (!content_base64) {
+      return { statusCode: 400, body: JSON.stringify({ error: "No content provided" }) };
+    }
+    const buffer = Buffer.from(content_base64, "base64");
+    if (content_type?.includes("pdf") || filename?.toLowerCase().endsWith(".pdf")) {
+      try {
+        const pdfParse = require("pdf-parse");
+        const result = await pdfParse(buffer);
+        return {
+          statusCode: 200,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            success: true,
+            text: result.text?.slice(0, 2e4) || "",
+            page_count: result.numpages || 0,
+            filename
+          })
+        };
+      } catch (pdfErr) {
+        return {
+          statusCode: 200,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            success: false,
+            text: "",
+            filename,
+            error: "PDF parse failed"
+          })
+        };
+      }
+    }
+    if (content_type?.includes("text") || filename?.toLowerCase().endsWith(".txt")) {
       return {
-        statusCode: 400,
-        body: JSON.stringify({ success: false, error: "Passcode required" })
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          success: true,
+          text: buffer.toString("utf-8").slice(0, 2e4),
+          filename
+        })
       };
     }
-    const serverPasscode = process.env.ACCESS_PASSCODE;
-    if (!serverPasscode) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ success: false, error: "Server not configured" })
-      };
-    }
-    const success = passcode === serverPasscode;
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ success })
+      body: JSON.stringify({
+        success: false,
+        text: "",
+        filename,
+        error: `Unsupported file type: ${content_type || filename}`
+      })
     };
-  } catch {
+  } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ success: false, error: "Internal error" })
+      body: JSON.stringify({ success: false, error: err?.message || "Parse error" })
     };
   }
 };
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+0 && (_netlifyExports = {
   handler
 });
 
 
+const _netlifyHandler = (_netlifyExports && (_netlifyExports.handler || _netlifyExports.default)) || null;
+
 // Vercel API route export
-module.exports = async function handler(req, res) {
-  await adapt(exports.handler, req, res);
+module.exports = async function vercelHandler(req, res) {
+  if (!_netlifyHandler) {
+    res.status(500).json({ error: 'Handler not found in bundle', bundle: 'document-parse' });
+    return;
+  }
+  await adapt(_netlifyHandler, req, res);
 };
 module.exports.config = { maxDuration: 300 };
