@@ -56,6 +56,8 @@ export const useArchiveStore = create<ArchiveState>()(
             status: r.status,
             risk_score: r.score_bundle?.risk_score,
             readiness_score: r.score_bundle?.readiness_score,
+            threat_level: r.score_bundle?.threat_level,
+            readiness_stage: r.score_bundle?.readiness_stage,
             quadrant: r.score_bundle?.quadrant,
           }))
           .sort((a, b) => b.created_at.localeCompare(a.created_at));

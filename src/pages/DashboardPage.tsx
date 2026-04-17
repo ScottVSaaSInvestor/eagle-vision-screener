@@ -3,16 +3,29 @@ import { useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { useArchiveStore } from '@/store/archiveStore';
 import { DispositionBadge } from '@/components/ui/DispositionBadge';
-import { GradeBadge } from '@/components/ui/GradeBadge';
 import { SignalChip } from '@/components/ui/SignalChip';
 import { EagleIcon } from '@/components/brand/EagleIcon';
-import type { Quadrant, Disposition, LetterGrade } from '@/engine/types';
+import type { Quadrant, Disposition, ThreatLevel, ReadinessStage } from '@/engine/types';
 
 const QUADRANT_COLORS: Record<Quadrant, string> = {
   EXECUTE: '#1DB954',
   RACE_MODE: '#FFB300',
-  BUILD_MODE: '#94A3B8',
+  BUILD_MODE: '#C5A572',
   DANGER_ZONE: '#D32F2F',
+};
+
+const THREAT_COLORS: Record<ThreatLevel, string> = {
+  LOW: '#1DB954',
+  MODERATE: '#FFB300',
+  HIGH: '#F57C00',
+  CRITICAL: '#D32F2F',
+};
+
+const STAGE_COLORS: Record<ReadinessStage, string> = {
+  1: '#64748B',
+  2: '#FFB300',
+  3: '#1DB954',
+  4: '#C5A572',
 };
 
 export function DashboardPage() {
@@ -124,7 +137,7 @@ export function DashboardPage() {
             <table className="w-full">
               <thead>
                 <tr style={{ background: '#001A2E', borderBottom: '1px solid rgba(197,165,114,0.2)' }}>
-                  {['Company', 'Vertical', 'Date', 'Grade', 'Disposition', 'Confidence', 'Quadrant', 'Actions'].map(h => (
+                  {['Company', 'Vertical', 'Date', 'AI Threat', 'Stage', 'Disposition', 'Quadrant', 'Actions'].map(h => (
                     <th
                       key={h}
                       className="px-4 py-3 text-left text-xs font-semibold tracking-widest"
@@ -158,8 +171,23 @@ export function DashboardPage() {
                       {new Date(entry.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
-                      {entry.overall_grade ? (
-                        <GradeBadge grade={entry.overall_grade} size="sm" />
+                      {entry.threat_level ? (
+                        <span className="text-xs font-bold px-2 py-0.5 rounded" style={{
+                          background: `${THREAT_COLORS[entry.threat_level]}20`,
+                          color: THREAT_COLORS[entry.threat_level],
+                          fontFamily: 'Montserrat',
+                        }}>
+                          {entry.threat_level}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-600">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {entry.readiness_stage ? (
+                        <span className="text-xs font-bold" style={{ color: STAGE_COLORS[entry.readiness_stage], fontFamily: 'Montserrat' }}>
+                          Stage {entry.readiness_stage}
+                        </span>
                       ) : (
                         <span className="text-xs text-gray-600">—</span>
                       )}
@@ -178,9 +206,6 @@ export function DashboardPage() {
                           {entry.status}
                         </span>
                       )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <SignalChip confidence={entry.confidence_overall} />
                     </td>
                     <td className="px-4 py-3">
                       {entry.quadrant ? (

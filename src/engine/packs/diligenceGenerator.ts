@@ -62,6 +62,12 @@ const FACTOR_DILIGENCE: Record<FactorId, {
     what_to_test: 'CEO 1:1 with open-ended AI questions: "What does this company look like in 3 years with AI fully deployed? What is your Build vs. Buy vs. Partner framework? How is the board aligned on AI investment levels?" Assess specificity and urgency of answers.',
     evidence_to_request: 'Board presentation with AI section, CEO written communications on AI strategy (letters, blog posts), AI-specific hiring plan and budget allocation',
   },
+  A10: {
+    title: 'SOR→SOA Transition Path Validation',
+    why_template: (s) => `SOR→SOA Transition Path scored ${s}/100. ${s < 30 ? 'The company has not established a credible System of Record position, or the SOA path is unclear. This is the foundational PE thesis — without it, the AI investment rationale is weak.' : s < 55 ? 'SOR position appears established but the path from System of Record to System of Action is not yet well-defined. The investment thesis requires a concrete, credible AI value creation roadmap.' : 'SOR position is solid and early SOA signals are present — need to validate the specific AI use cases, timelines, and economic model for the transition.'}`,
+    what_to_test: 'Verify SOR position: "Is this the authoritative data source for core operations?" Define 3 specific SOA use cases (e.g., predictive scheduling, outcome optimization, automated compliance). Assess feasibility timeline and economic model for each. Ask: "What would your product do differently with AI in Year 2 vs. Year 1 vs. today?"',
+    evidence_to_request: 'Product roadmap with AI milestones, any prototypes or pilots of AI-driven workflow automation, customer interviews on desired AI use cases, technical feasibility assessment for top 3 SOA use cases',
+  },
   R1: {
     title: 'Competitive Window Validation',
     why_template: (s) => `Competitive Window scored ${s}/100 (risk). ${s > 70 ? 'Window appears to be closing — rapid competitive landscape evolution threatens investment timing. Urgency is critical.' : s > 50 ? 'Window is narrowing. Competitive dynamics are accelerating and the investment case requires a clear time-sensitive thesis.' : 'Window appears open — validate this is sustained and not an artifact of incomplete data.'}`,

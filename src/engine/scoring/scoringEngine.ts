@@ -1,11 +1,19 @@
 /**
- * Eagle Vision Scoring Engine
+ * Eagle Vision Scoring Engine — V14
  * DETERMINISTIC — No LLM calls. LLMs produce evidence. This code produces scores.
+ *
+ * V14 REDESIGN:
+ * - No combined "overall score" driving a single letter grade — too confusing
+ * - Risk → ThreatLevel (LOW / MODERATE / HIGH / CRITICAL) — clear directional signal
+ * - Readiness → ReadinessStage (1-4) — where are they on SOR→SOA journey?
+ * - Verdict logic: BUILD_MODE is never NO-GO. Only DANGER_ZONE or hard structural
+ *   blockers produce NO-GO. The question is "can they get there in the hold period?"
+ * - what_to_fix: roadmap for closing gaps to reach Stage 3 in hold period
  */
 
 import type {
-  DataPack, FactorId, FactorScore, ScoreBundle,
-  LetterGrade, Disposition, Quadrant, Confidence,
+  DataPack, FactorId, FactorScore, ScoreBundle, StageAssessment,
+  LetterGrade, Disposition, Quadrant, Confidence, ThreatLevel, ReadinessStage,
   PackName
 } from '../types';
 import { FACTOR_NAMES } from '../types';
@@ -29,6 +37,7 @@ const DEFAULT_PACK_FOR_FACTOR: Record<FactorId, PackName> = {
   A7: 'data_architecture',
   A8: 'competitive_landscape',
   A9: 'team_capability',
+  A10: 'workflow_product',  // SOR→SOA Path — workflow pack has the most relevant evidence
 };
 
 function scoreToGrade(score: number): LetterGrade {
@@ -37,6 +46,85 @@ function scoreToGrade(score: number): LetterGrade {
   if (score >= 65) return 'C';
   if (score >= 55) return 'D';
   return 'F';
+}
+
+/**
+ * Convert risk score (0-100, higher = more threat) → ThreatLevel label.
+ * These thresholds are calibrated for PE/growth-equity investment decisions.
+ */
+function getThreatLevel(riskScore: number): ThreatLevel {
+  if (riskScore < 30) return 'LOW';
+  if (riskScore < 50) return 'MODERATE';
+  if (riskScore < 70) return 'HIGH';
+  return 'CRITICAL';
+}
+
+/**
+ * Convert readiness score (0-100, higher = more ready) → Stage (1-4).
+ *
+ * Stage 1: Data Foundation — owns workflow, accumulating data, no AI yet
+ * Stage 2: AI-Enabled — shipped AI features, early team, clear roadmap
+ * Stage 3: AI-Native — AI is core to product, drives measurable outcomes
+ * Stage 4: System of Action — autonomous workflows, outcome-based pricing dominant
+ *
+ * A PE buyer at Stage 1-2 is buying the BUILD thesis.
+ * A PE buyer at Stage 3+ is buying an already-valuable AI asset.
+ */
+function getReadinessStage(readinessScore: number): ReadinessStage {
+  if (readinessScore < 40) return 1;
+  if (readinessScore < 58) return 2;
+  if (readinessScore < 75) return 3;
+  return 4;
+}
+
+function buildStageAssessment(
+  stage: ReadinessStage,
+  readinessFactors: FactorScore[]
+): StageAssessment {
+  const STAGE_LABELS: Record<ReadinessStage, string> = {
+    1: 'Stage 1: Data Foundation',
+    2: 'Stage 2: AI-Enabled',
+    3: 'Stage 3: AI-Native',
+    4: 'Stage 4: System of Action',
+  };
+  const STAGE_DESCRIPTIONS: Record<ReadinessStage, string> = {
+    1: 'The company owns the core operational workflow and is accumulating longitudinal data, but has not yet shipped meaningful AI features. The investment thesis is: own the SOR, build the AI layer.',
+    2: 'The company has shipped early AI features, is assembling an AI team, and has a credible roadmap. The data foundation is in place. The investment thesis is: accelerate the AI roadmap and drive to Stage 3 in the hold period.',
+    3: 'AI is core to the product — it drives measurable operational outcomes for customers. The data flywheel is visible. The investment thesis is: scale the AI advantage and evolve toward outcome-based pricing.',
+    4: 'The company has reached System of Action maturity — autonomous workflow execution, outcome-based pricing, self-improving models. The investment thesis is: protect and extend the moat.',
+  };
+
+  // Evidence for current stage — factors scoring above 60
+  const evidenceForStage: string[] = readinessFactors
+    .filter(f => f.raw_score >= 60 && f.evidence_summary &&
+      !f.evidence_summary.includes('No evidence') && !f.evidence_summary.includes('defaulting'))
+    .sort((a, b) => b.raw_score - a.raw_score)
+    .slice(0, 4)
+    .map(f => `${f.factor_name} (${f.raw_score}/100): ${f.evidence_summary.slice(0, 120)}${f.evidence_summary.length > 120 ? '…' : ''}`);
+
+  // Gaps to next stage — lowest-scoring factors
+  const gapsToNextStage: string[] = readinessFactors
+    .filter(f => f.raw_score < 60)
+    .sort((a, b) => a.raw_score - b.raw_score)
+    .slice(0, 4)
+    .map(f => {
+      const gapLabel = f.raw_score < 40 ? '⚡ CRITICAL' : '⚠ NEEDS WORK';
+      return `${gapLabel} — ${f.factor_name} (${f.raw_score}/100)`;
+    });
+
+  // Hold period achievable: can they reach Stage 3 in 3-5yr?
+  // Not achievable only if at Stage 1 with multiple critical gaps AND high threat
+  const criticalGapCount = readinessFactors.filter(f => f.raw_score < 40).length;
+  const holdPeriodAchievable = !(stage === 1 && criticalGapCount >= 4);
+
+  return {
+    stage,
+    stage_label: STAGE_LABELS[stage],
+    stage_description: STAGE_DESCRIPTIONS[stage],
+    evidence_for_stage: evidenceForStage,
+    gaps_to_next_stage: gapsToNextStage,
+    hold_period_achievable: holdPeriodAchievable,
+  };
 }
 
 function getQuadrant(riskScore: number, readinessScore: number): Quadrant {
@@ -48,26 +136,71 @@ function getQuadrant(riskScore: number, readinessScore: number): Quadrant {
   return 'DANGER_ZONE';
 }
 
+/**
+ * V14 Disposition Logic — investment verdict.
+ *
+ * KEY CHANGE: BUILD_MODE is never automatically NO-GO.
+ * AxisCare problem: LOW risk + MODERATE readiness → BUILD_MODE → was returning NO-GO. WRONG.
+ * BUILD_MODE = patient opportunity with a clear build plan. The question is:
+ * "Can they reach Stage 3 in the 3-5yr hold period?" If yes → GO or MAYBE, not NO-GO.
+ *
+ * NO-GO only when:
+ * 1. CRITICAL threat level (riskScore >= 70) AND Stage 1 (not yet even started) → DANGER_ZONE
+ * 2. CRITICAL threat level AND 3+ critical gaps → structural disaster
+ * 3. Missing the foundational SOR position entirely (A1 + A10 both < 30) → no thesis
+ */
 function getDisposition(
   quadrant: Quadrant,
+  threatLevel: ThreatLevel,
+  stage: ReadinessStage,
   criticalGaps: FactorId[],
+  readinessFactors: FactorScore[],
   confidenceOverall: Confidence
 ): Disposition {
-  if (quadrant === 'DANGER_ZONE' || criticalGaps.length >= 2) return 'NO-GO';
-  if ((quadrant === 'EXECUTE' || quadrant === 'RACE_MODE') && criticalGaps.length === 0) {
-    // Only downgrade GO to MAYBE if confidence is LOW AND we have no strong pack coverage
-    if (confidenceOverall === 'L') return 'MAYBE';
-    return 'GO';
+
+  // DANGER_ZONE: high threat + readiness not established
+  if (quadrant === 'DANGER_ZONE') {
+    if (threatLevel === 'CRITICAL') return 'NO-GO';
+    if (threatLevel === 'HIGH' && stage <= 1) return 'NO-GO';
+    return 'MAYBE'; // DANGER_ZONE but not hopeless — flag for deep diligence
   }
+
+  // Check for structural missing SOR position — the core thesis is absent
+  const a1 = readinessFactors.find(f => f.factor_id === 'A1');
+  const a10 = readinessFactors.find(f => f.factor_id === 'A10');
+  const missingSOR = (a1?.raw_score ?? 50) < 30 && (a10?.raw_score ?? 50) < 30;
+  if (missingSOR) return 'NO-GO'; // No SOR = no PE thesis
+
+  // EXECUTE: low risk + high readiness
+  if (quadrant === 'EXECUTE') {
+    if (criticalGaps.length === 0) {
+      return confidenceOverall === 'L' ? 'MAYBE' : 'GO';
+    }
+    return 'MAYBE';
+  }
+
+  // RACE_MODE: high risk + high readiness — strong but time-pressured
+  if (quadrant === 'RACE_MODE') {
+    if (criticalGaps.length === 0 && threatLevel !== 'CRITICAL') {
+      return confidenceOverall === 'L' ? 'MAYBE' : 'GO';
+    }
+    if (criticalGaps.length >= 3) return 'MAYBE';
+    return 'MAYBE';
+  }
+
+  // BUILD_MODE: low risk + readiness gaps — this is a patient opportunity
+  // NEVER NO-GO. The question is whether gaps can be closed in the hold period.
+  if (quadrant === 'BUILD_MODE') {
+    if (stage >= 2 && criticalGaps.length <= 2) return 'GO'; // BUILD with conviction
+    if (stage >= 1 && criticalGaps.length <= 4) return 'MAYBE'; // BUILD with conditions
+    return 'MAYBE'; // BUILD with significant work ahead
+  }
+
   return 'MAYBE';
 }
 
 /**
  * Compute confidence for a factor from its pack data.
- * BUG FIX: Previously used data_quality_score thresholds that were too strict.
- * Failed packs return 0.1 which should be L, but non-failed packs with evidence
- * shouldn't be penalized as harshly.
- * Also: if the factor has actual evidence (non-default), bump confidence floor.
  */
 function getFactorConfidence(packData: DataPack | undefined, factorId: FactorId): Confidence {
   if (!packData) return 'L';
@@ -75,7 +208,6 @@ function getFactorConfidence(packData: DataPack | undefined, factorId: FactorId)
   if (!input) return 'L';
   if (packData.v2_stub) return 'L';
 
-  // Check if this is a fallback/failed state
   const evidenceSummary = input.evidence_summary || '';
   const isFallback = (
     evidenceSummary.includes('Pack failed after') ||
@@ -84,18 +216,14 @@ function getFactorConfidence(packData: DataPack | undefined, factorId: FactorId)
   );
   if (isFallback) return 'L';
 
-  // If we have actual evidence text, use data_quality_score with more lenient thresholds
-  // data_quality_score > 0.6 → H, > 0.25 → M, else L
-  // This prevents LOW confidence from cascading and downgrading GO dispositions
-  // when we have real (if imperfect) evidence.
   if (packData.data_quality_score > 0.6) return 'H';
   if (packData.data_quality_score > 0.25) return 'M';
   return 'L';
 }
 
 /**
- * Build narrative lean-in reasons — full sentences, not truncated fragments.
- * Picks the most compelling positive signals and writes them as investment bullets.
+ * Build Investment Positives — things that make this a compelling opportunity.
+ * For BUILD_MODE: emphasize the low-risk open window + foundation strengths.
  */
 function getLeanInReasons(
   _factorScores: FactorScore[],
@@ -103,21 +231,20 @@ function getLeanInReasons(
   readinessScores: FactorScore[]
 ): string[] {
   const reasons: string[] = [];
-
-  // Strongest readiness factors (readiness >= 70 = good) — most compelling investment positives
   const hasRealEvidence = (s: string) => s && !s.includes('No evidence') && !s.includes('Pack failed') && !s.includes('defaulting to neutral') && s.length > 20;
+
+  // Strongest readiness factors — investment positives
   const strongReadiness = readinessScores
-    .filter(f => f.raw_score >= 70 && hasRealEvidence(f.evidence_summary))
+    .filter(f => f.raw_score >= 65 && hasRealEvidence(f.evidence_summary))
     .sort((a, b) => b.raw_score - a.raw_score)
     .slice(0, 3);
 
   for (const f of strongReadiness) {
     const summary = f.evidence_summary.replace(/\.\.\.$/, '').trim();
-    const grade = f.letter_grade;
-    reasons.push(`${f.factor_name} [${grade}] — ${summary.length > 200 ? summary.slice(0, 200) + '…' : summary}`);
+    reasons.push(`${f.factor_name} [${f.raw_score}/100] — ${summary.length > 200 ? summary.slice(0, 200) + '…' : summary}`);
   }
 
-  // Lowest risk factors (risk < 35 = well-protected) — structural moats
+  // Lowest risk factors — structural moats / open windows
   const lowRisk = riskScores
     .filter(f => f.raw_score < 35 && hasRealEvidence(f.evidence_summary))
     .sort((a, b) => a.raw_score - b.raw_score)
@@ -125,37 +252,33 @@ function getLeanInReasons(
 
   for (const f of lowRisk) {
     const summary = f.evidence_summary.replace(/\.\.\.$/, '').trim();
-    reasons.push(`Low ${f.factor_name} risk — ${summary.length > 200 ? summary.slice(0, 200) + '…' : summary}`);
+    reasons.push(`Low ${f.factor_name} risk [${f.raw_score}/100] — ${summary.length > 200 ? summary.slice(0, 200) + '…' : summary}`);
   }
 
   return reasons.slice(0, 4);
 }
 
 /**
- * Build narrative hesitate reasons — full sentences with context.
- * Focuses on the highest-risk and lowest-readiness factors.
+ * Build Risk & Hesitation Signals.
  */
 function getHesitateReasons(
   riskScores: FactorScore[],
   readinessScores: FactorScore[]
 ): string[] {
   const reasons: string[] = [];
-
   const hasRealEvidenceH = (s: string) => s && !s.includes('No evidence') && !s.includes('Pack failed') && !s.includes('defaulting to neutral') && s.length > 20;
 
-  // Highest risk factors (risk > 60 = danger) — investment killers
   const highRisk = riskScores
-    .filter(f => f.raw_score > 60 && hasRealEvidenceH(f.evidence_summary))
+    .filter(f => f.raw_score > 55 && hasRealEvidenceH(f.evidence_summary))
     .sort((a, b) => b.raw_score - a.raw_score)
-    .slice(0, 3);
+    .slice(0, 2);
 
   for (const f of highRisk) {
     const summary = f.evidence_summary.replace(/\.\.\.$/, '').trim();
-    const grade = f.letter_grade;
-    reasons.push(`${f.factor_name} elevated [${grade}/${f.raw_score}] — ${summary.length > 200 ? summary.slice(0, 200) + '…' : summary}`);
+    reasons.push(`${f.factor_name} elevated [${f.raw_score}/100] — ${summary.length > 200 ? summary.slice(0, 200) + '…' : summary}`);
   }
 
-  // Critical gaps in readiness (readiness <= 40) — execution blockers
+  // Critical gaps in readiness — execution blockers
   const criticalReadiness = readinessScores
     .filter(f => f.is_critical_gap && hasRealEvidenceH(f.evidence_summary))
     .sort((a, b) => a.raw_score - b.raw_score)
@@ -163,22 +286,71 @@ function getHesitateReasons(
 
   for (const f of criticalReadiness) {
     const summary = f.evidence_summary.replace(/\.\.\.$/, '').trim();
-    reasons.push(`Critical gap: ${f.factor_name} [${f.raw_score}/100] — ${summary.length > 200 ? summary.slice(0, 200) + '…' : summary}`);
+    reasons.push(`Gap: ${f.factor_name} [${f.raw_score}/100] — requires investment before AI thesis executes`);
   }
 
-  // If no high-risk or critical-gap evidence, add a fallback hesitation reason based on score alone
+  // Fallback if nothing with real evidence
   if (reasons.length === 0) {
-    const worstRisk = riskScores.sort((a, b) => b.raw_score - a.raw_score)[0];
-    if (worstRisk && worstRisk.raw_score > 50) {
-      reasons.push(`${worstRisk.factor_name} requires further investigation [${worstRisk.raw_score}/100 — evidence quality insufficient for high-confidence assessment]`);
-    }
-    const worstReadiness = readinessScores.sort((a, b) => a.raw_score - b.raw_score)[0];
-    if (worstReadiness && worstReadiness.raw_score < 55) {
-      reasons.push(`${worstReadiness.factor_name} gap needs validation [${worstReadiness.raw_score}/100 — specific evidence required before investment conviction]`);
+    const worstReadiness = [...readinessScores].sort((a, b) => a.raw_score - b.raw_score)[0];
+    if (worstReadiness && worstReadiness.raw_score < 50) {
+      reasons.push(`${worstReadiness.factor_name} needs validation [${worstReadiness.raw_score}/100 — gather evidence in diligence]`);
     }
   }
 
   return reasons.slice(0, 4);
+}
+
+/**
+ * Build what_to_fix: specific roadmap items to close gaps to next stage.
+ * These are the investment actions, not complaints about the company.
+ */
+function buildWhatToFix(
+  stage: ReadinessStage,
+  readinessFactors: FactorScore[],
+  threatLevel: ThreatLevel
+): string[] {
+  const fixes: string[] = [];
+
+  const sortedGaps = [...readinessFactors]
+    .filter(f => f.raw_score < 65)
+    .sort((a, b) => {
+      // Weight by importance: critical gaps first, then by score
+      const aScore = a.is_critical_gap ? -1000 + a.raw_score : a.raw_score;
+      const bScore = b.is_critical_gap ? -1000 + b.raw_score : b.raw_score;
+      return aScore - bScore;
+    })
+    .slice(0, 5);
+
+  const FIX_TEMPLATES: Record<string, string> = {
+    A6: 'Hire dedicated AI/ML lead and 2-3 ML engineers within 12 months post-close — execution bottleneck',
+    A9: 'Align CEO on AI-first roadmap with board-level commitment and measurable milestones',
+    A8: 'Instrument multi-tenant data platform to surface aggregate benchmarks and cross-customer insights',
+    A3: 'Build outcome tracking layer: link EVV visits and billing events to care outcome metrics',
+    A4: 'Develop quantified ROI case studies (minimum 3 with hard metrics) to support pricing evolution',
+    A5: 'Pilot outcome-based or usage-based pricing module with 10% of new customers in Year 2',
+    A7: 'Audit architecture for ML readiness: data pipelines, API access, model serving infrastructure',
+    A10: 'Define concrete SOA roadmap: 3 specific AI use cases tied to operational outcomes + pricing impact',
+    A1: 'Deepen workflow embedding: add integrations to make platform mission-critical for daily ops',
+    A2: 'Implement data quality controls: audit completeness, add validation, build longitudinal tracking',
+  };
+
+  for (const gap of sortedGaps) {
+    const template = FIX_TEMPLATES[gap.factor_id];
+    if (template) {
+      const prefix = gap.is_critical_gap ? '🔴 CRITICAL: ' : '🟡 PRIORITY: ';
+      fixes.push(`${prefix}${template}`);
+    }
+  }
+
+  if (threatLevel === 'MODERATE' || threatLevel === 'HIGH') {
+    fixes.push('⏱ TIMING: Competitive window is open but narrowing — initiate AI roadmap within 6 months post-close');
+  }
+
+  if (stage <= 2) {
+    fixes.push('📊 MILESTONE: Target Stage 3 (AI-Native) within 24-30 months — defined as: AI drives measurable customer outcomes in at least 2 core workflows');
+  }
+
+  return fixes.slice(0, 6);
 }
 
 /**
@@ -199,7 +371,6 @@ export function computeScoreBundle(
     const packName = DEFAULT_PACK_FOR_FACTOR[factorId];
     const pack = dataPacks[packName];
     const input = pack?.factor_inputs[factorId];
-    // BUG FIX: use safeSignal to guard NaN/null/undefined
     const signal = safeSignal(input?.signal_strength ?? 0.5);
     const evidence = input?.evidence_summary ?? 'No evidence collected — defaulting to neutral';
     const rubricResult = applyRubric(factorId, signal, evidence);
@@ -210,13 +381,15 @@ export function computeScoreBundle(
       factor_name: FACTOR_NAMES[factorId],
       weight: RISK_WEIGHTS[factorId],
       raw_score: rubricResult.score,
+      display_score: rubricResult.score,
       weighted_contribution: rubricResult.score * RISK_WEIGHTS[factorId],
       letter_grade: scoreToGrade(100 - rubricResult.score), // Invert: low risk = good grade
       confidence,
       evidence_summary: evidence,
-      is_critical_gap: false, // Risk factors don't have critical gaps
+      is_critical_gap: false,
       pack_source: packName,
       rubric_applied: rubricResult.rubric_applied,
+      is_risk_factor: true,
     });
   }
 
@@ -225,7 +398,6 @@ export function computeScoreBundle(
     const packName = DEFAULT_PACK_FOR_FACTOR[factorId];
     const pack = dataPacks[packName];
     const input = pack?.factor_inputs[factorId];
-    // BUG FIX: use safeSignal
     const signal = safeSignal(input?.signal_strength ?? 0.5);
     const evidence = input?.evidence_summary ?? 'No evidence collected — defaulting to neutral';
     const rubricResult = applyRubric(factorId, signal, evidence);
@@ -237,6 +409,7 @@ export function computeScoreBundle(
       factor_name: FACTOR_NAMES[factorId],
       weight: READINESS_WEIGHTS[factorId],
       raw_score: rubricResult.score,
+      display_score: rubricResult.score,
       weighted_contribution: rubricResult.score * READINESS_WEIGHTS[factorId],
       letter_grade: scoreToGrade(rubricResult.score),
       confidence,
@@ -244,6 +417,7 @@ export function computeScoreBundle(
       is_critical_gap: isCriticalGap,
       pack_source: packName,
       rubric_applied: rubricResult.rubric_applied,
+      is_risk_factor: false,
     });
   }
 
@@ -254,7 +428,7 @@ export function computeScoreBundle(
   const riskScore = riskFactorScores.reduce((sum, f) => sum + f.weighted_contribution, 0);
   const readinessScore = readinessFactorScores.reduce((sum, f) => sum + f.weighted_contribution, 0);
 
-  // Overall score: invert risk (lower risk = higher contribution) + readiness
+  // Overall score: kept for legacy display but NOT the primary verdict driver
   const overallScore = ((100 - riskScore) + readinessScore) / 2;
 
   // ─── Critical Gaps (readiness factors scoring ≤ 40) ─────────────────────
@@ -263,9 +437,6 @@ export function computeScoreBundle(
     .map(f => f.factor_id);
 
   // ─── Confidence Aggregation ───────────────────────────────────────────────
-  // BUG FIX: Don't let a single L-confidence factor (e.g. the low-weight A9 Leadership)
-  // collapse overall confidence to L when most factors have real evidence.
-  // Use a majority-vote approach: H if >60% H, L only if >50% L, else M.
   const allConfidences = factorScores.map(f => f.confidence);
   const hCount = allConfidences.filter(c => c === 'H').length;
   const lCount = allConfidences.filter(c => c === 'L').length;
@@ -279,9 +450,17 @@ export function computeScoreBundle(
     confidenceOverall = 'M';
   }
 
+  // ─── New V14 verdict signals ──────────────────────────────────────────────
+  const threatLevel = getThreatLevel(riskScore);
+  const readinessStage = getReadinessStage(readinessScore);
+  const stageAssessment = buildStageAssessment(readinessStage, readinessFactorScores);
+  const whatToFix = buildWhatToFix(readinessStage, readinessFactorScores, threatLevel);
+
   // ─── Quadrant & Disposition ───────────────────────────────────────────────
   const quadrant = getQuadrant(riskScore, readinessScore);
-  const disposition = getDisposition(quadrant, criticalGaps, confidenceOverall);
+  const disposition = getDisposition(
+    quadrant, threatLevel, readinessStage, criticalGaps, readinessFactorScores, confidenceOverall
+  );
 
   const leanInReasons = getLeanInReasons(factorScores, riskFactorScores, readinessFactorScores);
   const hesitateReasons = getHesitateReasons(riskFactorScores, readinessFactorScores);
@@ -289,8 +468,11 @@ export function computeScoreBundle(
   return {
     risk_score: Math.round(riskScore * 10) / 10,
     readiness_score: Math.round(readinessScore * 10) / 10,
+    threat_level: threatLevel,
+    readiness_stage: readinessStage,
+    stage_assessment: stageAssessment,
     overall_score: Math.round(overallScore * 10) / 10,
-    risk_grade: scoreToGrade(100 - riskScore), // Invert: low risk = high grade
+    risk_grade: scoreToGrade(100 - riskScore),
     readiness_grade: scoreToGrade(readinessScore),
     overall_grade: scoreToGrade(overallScore),
     quadrant,
@@ -300,6 +482,7 @@ export function computeScoreBundle(
     factor_scores: factorScores,
     lean_in_reasons: leanInReasons,
     hesitate_reasons: hesitateReasons,
+    what_to_fix: whatToFix,
     computed_at: new Date().toISOString(),
   };
 }
