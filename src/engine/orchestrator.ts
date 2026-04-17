@@ -686,9 +686,10 @@ export async function runScreening(
   // ═══════════════════════════════════════════════════════════════════════════
   log({ message: `\n━━━ PHASE 5: Evidence Synthesis ━━━`, level: 'info' });
   const totalEvidence = [...profileCorpus, ...compCorpus, ...teamCorpus, ...regCorpus, ...workCorpus, ...dataCorpus, ...marketCorpus].join('').length;
-  log({ message: `Claude is synthesizing ~${Math.round(totalEvidence/1000)}K chars of raw evidence into structured analyst briefs (7 dims, up to 90K each)...`, level: 'info' });
+  log({ message: `Sending all 7 evidence corpora to server for parallel synthesis (~${Math.round(totalEvidence/1000)}K chars total)...`, level: 'info' });
+  log({ message: `  ℹ️  All synthesis runs server-side in one call — no browser timeout risk. Expected: 20-40s.`, level: 'info' });
 
-  // Build trimmed corpora for synthesis (cap at SYNTH_MAX_CHARS each)
+  // Build trimmed corpora (cap at SYNTH_MAX_CHARS each before sending)
   const profileFull  = trimCorpus(profileCorpus,  CFG.SYNTH_MAX_CHARS).join('\n\n---\n\n');
   const compFull     = trimCorpus(compCorpus,      CFG.SYNTH_MAX_CHARS).join('\n\n---\n\n');
   const teamFull     = trimCorpus(teamCorpus,      CFG.SYNTH_MAX_CHARS).join('\n\n---\n\n');
@@ -697,39 +698,48 @@ export async function runScreening(
   const dataFull     = trimCorpus(dataCorpus,      CFG.SYNTH_MAX_CHARS).join('\n\n---\n\n');
   const marketFull   = trimCorpus(marketCorpus,    CFG.SYNTH_MAX_CHARS).join('\n\n---\n\n');
 
-  // Synthesize all 7 dimensions SEQUENTIALLY (not parallel) to avoid hammering
-  // Claude's API rate limits and to give each call the full context window.
-  // Each synthesis call = one Netlify function call (28s client timeout, 26s Netlify hard limit).
-  // Sequential means 7 × ~8-12s = ~70-90s total for synthesis on 30K evidence with Sonnet.
-  // NO sleeps between synthesis calls — every second counts, and Sonnet doesn't need cooldown.
-  log({ message: `  Running synthesis sequentially (1/7): company_profile...`, level: 'info' });
-  const profileSynth = await synthesizeDimension('company_profile',      co, v, profileFull, log);
-  if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
+  // ONE server-side call synthesizes all 7 dims in parallel (server → Anthropic, no browser kill)
+  // Vercel Pro timeout = 300s. 7 parallel Sonnet calls on 30K chars = ~20-30s total.
+  const synthResult = await apiCall('run-synthesis-all', {
+    company_name: co,
+    vertical: v,
+    corpora: {
+      company_profile:       profileFull,
+      competitive_landscape: compFull,
+      team_capability:       teamFull,
+      regulatory_moat:       regFull,
+      workflow_product:      workFull,
+      data_architecture:     dataFull,
+      market_timing:         marketFull,
+    },
+  }, CFG.SYNTH_TIMEOUT_MS);
 
-  log({ message: `  Running synthesis (2/7): competitive_landscape...`, level: 'info' });
-  const compSynth = await synthesizeDimension('competitive_landscape',    co, v, compFull, log);
-  if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
+  const briefs = synthResult?.briefs || {};
+  const synthMeta = synthResult?.meta || {};
+  const successCount = synthResult?.success_count ?? 0;
 
-  log({ message: `  Running synthesis (3/7): team_capability...`, level: 'info' });
-  const teamSynth = await synthesizeDimension('team_capability',          co, v, teamFull, log);
-  if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
+  // Log per-dimension results
+  const dims = ['company_profile','competitive_landscape','team_capability','regulatory_moat','workflow_product','data_architecture','market_timing'] as const;
+  dims.forEach(dim => {
+    const m = synthMeta[dim] as any;
+    if (!m) return;
+    if (m.fallback) {
+      log({ message: `  ⚠ ${dim} synthesis fell back to raw evidence`, level: 'warning' });
+    } else {
+      log({ message: `  ✓ ${dim} synthesized → ${Math.round(m.synthesis_chars/1000)}K chars (${m.model_used}, ${m.elapsed_ms}ms)`, level: 'success' });
+    }
+  });
 
-  log({ message: `  Running synthesis (4/7): regulatory_moat...`, level: 'info' });
-  const regSynth = await synthesizeDimension('regulatory_moat',           co, v, regFull, log);
-  if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
+  log({ message: `✓ Synthesis complete: ${successCount}/7 dims synthesized in ${synthResult?.total_elapsed_ms || 0}ms`, level: 'success' });
 
-  log({ message: `  Running synthesis (5/7): workflow_product...`, level: 'info' });
-  const workSynth = await synthesizeDimension('workflow_product',          co, v, workFull, log);
-  if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
-
-  log({ message: `  Running synthesis (6/7): data_architecture...`, level: 'info' });
-  const dataSynth = await synthesizeDimension('data_architecture',         co, v, dataFull, log);
-  if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
-
-  log({ message: `  Running synthesis (7/7): market_timing...`, level: 'info' });
-  const marketSynth = await synthesizeDimension('market_timing',           co, v, marketFull, log);
-
-  log({ message: `✓ All 7 synthesis briefs complete`, level: 'success' });
+  // Extract individual briefs (fall back to raw evidence if a dim failed)
+  const profileSynth = briefs.company_profile       || `[SYNTHESIS UNAVAILABLE]\n\nRAW EVIDENCE:\n${profileFull.slice(0,20000)}`;
+  const compSynth    = briefs.competitive_landscape  || `[SYNTHESIS UNAVAILABLE]\n\nRAW EVIDENCE:\n${compFull.slice(0,20000)}`;
+  const teamSynth    = briefs.team_capability        || `[SYNTHESIS UNAVAILABLE]\n\nRAW EVIDENCE:\n${teamFull.slice(0,20000)}`;
+  const regSynth     = briefs.regulatory_moat        || `[SYNTHESIS UNAVAILABLE]\n\nRAW EVIDENCE:\n${regFull.slice(0,20000)}`;
+  const workSynth    = briefs.workflow_product       || `[SYNTHESIS UNAVAILABLE]\n\nRAW EVIDENCE:\n${workFull.slice(0,20000)}`;
+  const dataSynth    = briefs.data_architecture      || `[SYNTHESIS UNAVAILABLE]\n\nRAW EVIDENCE:\n${dataFull.slice(0,20000)}`;
+  const marketSynth  = briefs.market_timing          || `[SYNTHESIS UNAVAILABLE]\n\nRAW EVIDENCE:\n${marketFull.slice(0,20000)}`;
 
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
