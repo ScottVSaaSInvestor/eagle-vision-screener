@@ -9,8 +9,8 @@ import { join } from 'path';
 
 const functionsDir = 'netlify/functions';
 const apiDir = 'api';
-// Use .cjs extension so Node.js treats files as CommonJS even in "type": "module" projects
-const outExt = '.cjs';
+// Use .js extension — the api/package.json with "type":"commonjs" ensures Node treats these as CJS
+const outExt = '.js';
 
 // Get all function files
 const files = (await readdir(functionsDir)).filter(f => f.endsWith('.ts'));
@@ -104,7 +104,7 @@ module.exports.config = { maxDuration: 300 };
 `;
 
     await writeFile(outputPath, vercelRoute);
-    console.log(`  ✅ ${name}${outExt}`);
+    console.log(`  ✅ ${name}.js`);
   } catch (err) {
     console.error(`  ❌ ${name}: ${err.message}`);
   }
