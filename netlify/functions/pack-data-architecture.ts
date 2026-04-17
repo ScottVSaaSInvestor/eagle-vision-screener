@@ -63,7 +63,7 @@ const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'company_name required' }) };
     }
 
-    const model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929';
+    const model = process.env.ANTHROPIC_MODEL || 'claude-opus-4-5';
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const hasRichEvidence = evidenceContext.length > 1000;
 

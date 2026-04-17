@@ -29,11 +29,13 @@ const SYNTHESIS_MODEL = 'claude-sonnet-4-5';
 const SYNTHESIS_FALLBACK_MODEL = 'claude-haiku-3-5';
 
 // Max chars to feed synthesizer per attempt.
-// Orchestrator now caps evidence at 30K before sending, so attempt 1 sees ≤30K.
-// Attempt 1: 30K chars  — ~6-10s on Sonnet, leaves 16s headroom inside 26s Netlify limit
-// Attempt 2: 15K chars  — ~3-5s, ultra-reliable fallback
-// Attempt 3: 8K chars   — ~2-3s on Haiku, guaranteed completion
-const EVIDENCE_CAPS = [30000, 15000, 8000];
+// On Vercel Pro (300s): attempt 1 gets full 50K — Sonnet finishes in 15-25s.
+// On Netlify (26s): orchestrator already caps at 30K, so attempt 1 sees ≤30K (~8-12s).
+// Retry ladder ensures completion even on overloaded API:
+// Attempt 1: 50K chars  — ~15-25s on Sonnet (Vercel) / ~8-12s on 30K (Netlify)
+// Attempt 2: 25K chars  — ~8-12s, reliable fallback
+// Attempt 3: 10K chars  — ~3-5s on Haiku, guaranteed completion
+const EVIDENCE_CAPS = [50000, 25000, 10000];
 
 // What each dimension's synthesis should focus on extracting
 const SYNTHESIS_FOCUS: Record<string, string> = {

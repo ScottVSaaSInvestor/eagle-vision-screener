@@ -49,19 +49,19 @@ const CFG = {
   PASS5_ENABLED: true,
   PASS5_WEAK_THRESHOLD_CHARS: 15000, // dims with < this many chars get a second pass
   PASS5_EXTRA_QUERIES: 5,            // extra queries for weak dims
-  // Synthesis: 30K chars per dimension (reduced from 50K)
-  // WHY: Sonnet on 30K evidence completes in 6-10s, leaving 16s headroom inside
-  // Netlify's 26s hard timeout. The synthesis function's own retry ladder then has
-  // room to run a 2nd attempt at 20K (4-7s) or 3rd at 10K on Haiku (2-3s) if needed.
-  // Quality impact: minimal — synthesis briefs are 800-1200 words regardless of input size.
-  SYNTH_MAX_CHARS: 30000,
-  // Pack call timeout — well under Netlify's 26s hard limit
-  PACK_TIMEOUT_MS: 24000,
-  // Synthesis call timeout — give slightly more than default 25s so the 3rd
-  // haiku-fallback attempt has time to complete before client aborts.
-  SYNTH_TIMEOUT_MS: 28000,
-  // Gap-fill call timeout
-  GAPFILL_TIMEOUT_MS: 22000,
+  // Synthesis: 50K chars per dimension
+  // On Vercel Pro (300s timeout) we can feed full evidence to Sonnet comfortably.
+  // Sonnet on 50K chars: ~15-25s. Well within 300s budget.
+  // On Netlify (26s): the synthesize function's own retry ladder caps at 30K/15K/8K.
+  SYNTH_MAX_CHARS: 50000,
+  // Pack call timeout — Vercel Pro allows 300s. Opus on 8K input tokens: ~60-90s.
+  // Set to 180s to allow Opus to fully reason through complex evidence.
+  PACK_TIMEOUT_MS: 180000,
+  // Synthesis call timeout — Sonnet finishes in 15-25s on 50K chars.
+  // Set to 90s to give 3 retry attempts comfortable room.
+  SYNTH_TIMEOUT_MS: 90000,
+  // Gap-fill call timeout — Sonnet generates queries in 5-10s.
+  GAPFILL_TIMEOUT_MS: 45000,
   // Delay between search batches — 800ms to avoid Tavily rate limits
   SEARCH_BATCH_DELAY_MS: 800,
   // Delay between crawl requests — respectful crawling
