@@ -10307,6 +10307,7 @@ R5 (Customer Switching Propensity) \u2014 LOWER IS BETTER:
           R5: { evidence_summary: "Pack failed after retries", signal_strength: 0.5 }
         },
         red_flags: ["Workflow Product pack failed"],
+        green_flags: [],
         v2_stub: false,
         status: "failed",
         elapsed_ms: Date.now() - startTime

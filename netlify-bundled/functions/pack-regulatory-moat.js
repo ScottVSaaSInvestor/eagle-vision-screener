@@ -10296,6 +10296,7 @@ R6 (Regulatory Moat Durability) \u2014 HIGHER IS BETTER FOR INVESTMENT:
           R6: { evidence_summary: "Pack failed after retries", signal_strength: 0.5 }
         },
         red_flags: ["Regulatory Moat pack failed"],
+        green_flags: [],
         v2_stub: false,
         status: "failed",
         elapsed_ms: Date.now() - startTime

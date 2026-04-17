@@ -49,11 +49,15 @@ const CFG = {
   PASS5_ENABLED: true,
   PASS5_WEAK_THRESHOLD_CHARS: 15000, // dims with < this many chars get a second pass
   PASS5_EXTRA_QUERIES: 5,            // extra queries for weak dims
-  // Synthesis: 90K chars per dimension (up from 60K)
-  SYNTH_MAX_CHARS: 90000,
+  // Synthesis: 50K chars per dimension (reduced from 90K)
+  // WHY: synthesis function uses claude-sonnet which can handle 40K evidence in 8-15s.
+  // Feeding 90K was causing Netlify 26s hard timeout → synthesis always failed.
+  // 50K gives plenty of evidence while staying within safe time budget.
+  SYNTH_MAX_CHARS: 50000,
   // Pack call timeout — well under Netlify's 26s hard limit
   PACK_TIMEOUT_MS: 24000,
-  // Synthesis call timeout — synthesis is heavier, needs more time
+  // Synthesis call timeout — synthesis-function retries with smaller evidence so
+  // give it the full 24s. The Netlify 26s hard timeout is the real constraint.
   SYNTH_TIMEOUT_MS: 24000,
   // Gap-fill call timeout
   GAPFILL_TIMEOUT_MS: 24000,
@@ -250,18 +254,31 @@ async function synthesizeDimension(
   rawEvidence: string,
   log: ProgressCallback
 ): Promise<string> {
-  log({ message: `  📋 Synthesizing ${dimension} evidence...`, level: 'info' });
+  const evidenceKB = Math.round(rawEvidence.length / 1000);
+  log({ message: `  📋 Synthesizing ${dimension} (${evidenceKB}K chars of evidence)...`, level: 'info' });
   try {
     const data = await apiCall('research-synthesize', {
       dimension,
       company_name: companyName,
       vertical,
       raw_evidence: rawEvidence.slice(0, CFG.SYNTH_MAX_CHARS),
-    }, 24000);
+    }, CFG.SYNTH_TIMEOUT_MS);
+
+    if (data.fallback) {
+      log({ message: `  ⚠ ${dimension} synthesis fell back to raw evidence (${data.fallback_reason?.slice(0,60)})`, level: 'warning' });
+    } else {
+      const synthKB = Math.round((data.synthesis_chars || 0) / 1000);
+      const model = data.model_used || 'unknown';
+      log({ message: `  ✓ ${dimension} synthesized → ${synthKB}K chars (${model}, attempt ${data.attempt_number || 1})`, level: 'success' });
+    }
+
+    // If synthesis returned a failure marker, still use it — packs can parse it
     return data.synthesis || rawEvidence.slice(0, 20000);
-  } catch {
-    log({ message: `  ⚠ Synthesis failed for ${dimension}, using raw evidence`, level: 'warning' });
-    return rawEvidence.slice(0, 20000);
+  } catch (err: any) {
+    const errMsg = err?.message?.slice(0, 80) || 'unknown error';
+    log({ message: `  ✗ ${dimension} synthesis call failed: ${errMsg}. Using raw evidence.`, level: 'error' });
+    // Fallback: pass raw evidence directly to pack (better than nothing)
+    return `[SYNTHESIS CALL FAILED: ${errMsg}]\n\nRAW EVIDENCE:\n${rawEvidence.slice(0, 20000)}`;
   }
 }
 
@@ -828,6 +845,30 @@ export async function runScreening(
   const diligenceAreas = generateDiligenceAreas(scoreBundle, dataPacks);
   const upgradeBreakConditions = generateUpgradeBreakConditions(scoreBundle, co);
 
+  // ── Extract detected vertical from company_profile pack ────────────────────
+  // The company_profile pack asks Claude to identify the exact industry vertical.
+  // If the user didn't specify a vertical, or if Claude found a more precise one,
+  // use it. This surfaces in the report header and all downstream analysis.
+  let detectedVertical: string | undefined;
+  try {
+    const profilePack = dataPacks['company_profile'];
+    if (profilePack) {
+      const overviewFinding = profilePack.findings?.find((f: any) => f.key === 'company_overview');
+      const detectedFromPack = (overviewFinding?.value as any)?.vertical;
+      if (detectedFromPack && typeof detectedFromPack === 'string' && detectedFromPack.length > 2) {
+        detectedVertical = detectedFromPack;
+        // Only log if different from user-provided vertical
+        if (detectedVertical !== v && v !== 'vertical SaaS') {
+          log({ message: `  🏷 Detected vertical: "${detectedVertical}" (user provided: "${v}")`, level: 'info' });
+        } else if (v === 'vertical SaaS') {
+          log({ message: `  🏷 Detected vertical: "${detectedVertical}"`, level: 'success' });
+        }
+      }
+    }
+  } catch {
+    // Non-critical — vertical detection failure doesn't block scoring
+  }
+
   log({ message: `\n🦅 Eagle Vision Deep Research v4 complete.`, level: 'success' });
   log({ message: `Evidence collected: ~${Math.round(totalEvidence/1000)}K chars across 5 research passes.`, level: 'info' });
 
@@ -836,6 +877,7 @@ export async function runScreening(
     evidence_log: evidenceLog,
     score_bundle: scoreBundle,
     confidence_overall: scoreBundle.confidence_overall,
+    detected_vertical: detectedVertical,
     diligence_areas: diligenceAreas,
     upgrade_break_conditions: upgradeBreakConditions,
   };

@@ -28,26 +28,63 @@ const TABS: { id: ReportTab; label: string }[] = [
 ];
 
 // ─── Narrative Helpers ────────────────────────────────────────────────────────
+
+/** Returns a factor's evidence summary, cleaned of failure/default markers */
+function cleanEvidence(ev: string | undefined): string {
+  if (!ev) return '';
+  if (ev.includes('Pack failed') || ev.includes('No evidence collected') || ev.includes('defaulting to neutral')) return '';
+  return ev.trim();
+}
+
 function getDispositionNarrative(record: ScreeningRecord): string {
   const sb = record.score_bundle;
   if (!sb) return '';
   const co = record.inputs.company_name;
-  const v = record.inputs.vertical || 'vertical SaaS';
+  const v = record.detected_vertical || record.inputs.vertical || 'vertical SaaS';
 
-  const quadrantText: Record<string, string> = {
-    EXECUTE: `positions ${co} in the EXECUTE quadrant — low AI risk, high AI readiness. This is the most attractive posture for an AI-era investment: the competitive window is open, the technical foundation is in place, and the company is positioned to execute an AI transformation within the investment horizon.`,
-    RACE_MODE: `positions ${co} in RACE MODE — high AI risk paired with high AI readiness. The competitive clock is running, but the company has the technical capability to outpace competitors if it moves quickly. This is a high-conviction, time-sensitive thesis that requires rapid execution post-close.`,
-    BUILD_MODE: `positions ${co} in BUILD MODE — low AI risk but readiness gaps mean the AI opportunity is not yet fully accessible. The competitive window is open and there is time to build AI capabilities, but the investment thesis depends on closing the readiness gaps within 12–24 months.`,
-    DANGER_ZONE: `places ${co} in the DANGER ZONE — elevated competitive risk combined with readiness gaps creates a challenging investment environment. The AI window may close before the company can adequately respond, and significant investment in capabilities would be required before AI value creation is possible.`,
+  // Pull key evidence summaries from the highest-weight factors to embed in narrative
+  const r1 = sb.factor_scores.find(f => f.factor_id === 'R1');
+  const r2 = sb.factor_scores.find(f => f.factor_id === 'R2');
+  const a6 = sb.factor_scores.find(f => f.factor_id === 'A6');
+  const a1 = sb.factor_scores.find(f => f.factor_id === 'A1');
+  const a2 = sb.factor_scores.find(f => f.factor_id === 'A2');
+
+  const r1Ev = cleanEvidence(r1?.evidence_summary);
+  const r2Ev = cleanEvidence(r2?.evidence_summary);
+  const a6Ev = cleanEvidence(a6?.evidence_summary);
+  const a1Ev = cleanEvidence(a1?.evidence_summary);
+  const a2Ev = cleanEvidence(a2?.evidence_summary);
+
+  const quadrantFraming: Record<string, string> = {
+    EXECUTE: `Eagle Vision's 7-dimension analysis places ${co} in the EXECUTE quadrant — the most attractive posture for an AI-era investment. With an AI Risk Score of ${sb.risk_score.toFixed(0)}/100 and an AI Readiness Score of ${sb.readiness_score.toFixed(0)}/100, the competitive window is open, the technical foundation is demonstrably in place, and the company has the organizational capability to execute an AI transformation within a standard 5-year investment horizon. This is a low-risk, high-conviction opportunity where timing is favorable and the key question for the investment committee is not whether to act, but how fast.`,
+    RACE_MODE: `Eagle Vision's 7-dimension analysis places ${co} in RACE MODE — a high-conviction thesis that carries a time-sensitive execution imperative. The AI Risk Score of ${sb.risk_score.toFixed(0)}/100 signals meaningful competitive pressure: AI-native entrants are active in ${v} and incumbent players are deploying AI features. However, the AI Readiness Score of ${sb.readiness_score.toFixed(0)}/100 indicates the company has the technical and organizational foundation to outpace these threats — provided the investment is closed and the AI roadmap accelerated without delay. This is not a "wait and watch" opportunity; the window for outrunning the competitive field narrows with each quarter.`,
+    BUILD_MODE: `Eagle Vision's 7-dimension analysis places ${co} in BUILD MODE — a patient but conditionally attractive investment position. The AI Risk Score of ${sb.risk_score.toFixed(0)}/100 indicates the competitive environment in ${v} is not yet critically threatening: the window is open, AI-native entrants have limited traction, and incumbents are moving slowly. However, the AI Readiness Score of ${sb.readiness_score.toFixed(0)}/100 reveals that the company has not yet assembled the full capability stack needed to fully capture the AI opportunity. The investment thesis is viable, but it depends on executing a 12–24 month capability build. This is an appropriate opportunity for a patient buyer with operational AI expertise who can actively contribute to the transformation.`,
+    DANGER_ZONE: `Eagle Vision's 7-dimension analysis places ${co} in the DANGER ZONE — a structurally challenging investment position that requires careful consideration before advancing. The AI Risk Score of ${sb.risk_score.toFixed(0)}/100 reflects a competitive environment in ${v} that is intensifying rapidly, while the AI Readiness Score of ${sb.readiness_score.toFixed(0)}/100 indicates significant capability gaps that compound the competitive vulnerability. In this quadrant, time is working against the company: the competitive window is narrowing at the same time internal readiness lags. A ${sb.disposition} disposition reflects the weight of this compounding risk. Investment conviction at this stage requires high-conviction specific evidence that the identified gaps can be closed before the competitive landscape becomes prohibitive.`,
   };
 
-  const confText = sb.confidence_overall === 'H'
-    ? 'This assessment is based on HIGH-confidence evidence collected across all seven research dimensions.'
-    : sb.confidence_overall === 'M'
-    ? 'This assessment is based on MEDIUM-confidence evidence. Some dimensions have data gaps that a full diligence process would resolve.'
-    : 'Evidence confidence is LOW. This screening provides a directional view, but significant data gaps remain. Treat as preliminary — management access and data room review are required before conviction.';
+  // Build key evidence sentence weaving actual findings into prose
+  const evidenceSentences: string[] = [];
+  if (r1Ev) evidenceSentences.push(`On the competitive front, the research found: "${r1Ev.slice(0, 200)}${r1Ev.length > 200 ? '…' : ''}"`);
+  if (r2Ev && !r2Ev.startsWith('[')) evidenceSentences.push(`AI-native entrant analysis surfaced: "${r2Ev.slice(0, 200)}${r2Ev.length > 200 ? '…' : ''}"`);
+  if (a1Ev) evidenceSentences.push(`On workflow embeddedness: "${a1Ev.slice(0, 200)}${a1Ev.length > 200 ? '…' : ''}"`);
+  if (a6Ev) evidenceSentences.push(`On AI team capability: "${a6Ev.slice(0, 200)}${a6Ev.length > 200 ? '…' : ''}"`);
+  if (a2Ev && !a2Ev.startsWith('[')) evidenceSentences.push(`Data foundation analysis found: "${a2Ev.slice(0, 200)}${a2Ev.length > 200 ? '…' : ''}"`);
 
-  return `Eagle Vision's 7-dimension AI investment analysis ${quadrantText[sb.quadrant] || ''} The AI Risk Score of ${sb.risk_score.toFixed(0)}/100 reflects the competitive intensity and timing pressure in ${v}, while the AI Readiness Score of ${sb.readiness_score.toFixed(0)}/100 measures the company's technical and organizational capacity to execute an AI transformation. ${confText}`;
+  const evidenceParagraph = evidenceSentences.length > 0
+    ? `\n\nKey evidence embedded in this assessment: ${evidenceSentences.slice(0, 3).join(' ')}`
+    : '';
+
+  const criticalGapSentence = sb.critical_gaps.length > 0
+    ? ` The scoring model identified ${sb.critical_gaps.length} critical readiness gap${sb.critical_gaps.length > 1 ? 's' : ''} (${sb.critical_gaps.join(', ')}) that represent execution blockers requiring resolution before the full AI value creation thesis can be achieved.`
+    : '';
+
+  const confText = sb.confidence_overall === 'H'
+    ? ' This assessment is based on HIGH-confidence evidence collected across all seven research dimensions, with multiple corroborating sources for the key scoring factors.'
+    : sb.confidence_overall === 'M'
+    ? ' Evidence confidence is MEDIUM. The core thesis is directionally clear, but several dimensions have data gaps — particularly around internal metrics, AI team specifics, and proprietary data architecture — that a first management meeting and data room review would resolve.'
+    : ' Evidence confidence is LOW. This screening provides a directional view based largely on public information and analyst knowledge, but significant gaps remain across multiple dimensions. The disposition should be treated as preliminary until management access is obtained and the data room is reviewed.';
+
+  return `${quadrantFraming[sb.quadrant] || ''}${criticalGapSentence}${evidenceParagraph}${confText}`;
 }
 
 function getScoreNarrative(record: ScreeningRecord): { riskNarrative: string; readinessNarrative: string; overallNarrative: string } {
@@ -57,17 +94,97 @@ function getScoreNarrative(record: ScreeningRecord): { riskNarrative: string; re
   const riskFactors = sb.factor_scores.filter(f => f.factor_id.startsWith('R'));
   const readinessFactors = sb.factor_scores.filter(f => f.factor_id.startsWith('A'));
 
-  const topRisk = riskFactors.sort((a, b) => b.raw_score - a.raw_score).slice(0, 2);
-  const bottomReadiness = readinessFactors.filter(f => f.raw_score < 60).sort((a, b) => a.raw_score - b.raw_score).slice(0, 2);
-  const topReadiness = readinessFactors.filter(f => f.raw_score >= 65).sort((a, b) => b.raw_score - a.raw_score).slice(0, 2);
+  // Sort for narrative construction — don't mutate original
+  const topRisk = [...riskFactors].sort((a, b) => b.raw_score - a.raw_score).slice(0, 3);
+  const bottomReadiness = [...readinessFactors].filter(f => f.raw_score < 60).sort((a, b) => a.raw_score - b.raw_score).slice(0, 3);
+  const topReadiness = [...readinessFactors].filter(f => f.raw_score >= 60).sort((a, b) => b.raw_score - a.raw_score).slice(0, 3);
 
-  const riskNarrative = `The ${sb.risk_score.toFixed(0)}/100 AI Risk Score (Grade ${sb.risk_grade}) reflects ${sb.risk_score < 40 ? 'a favorable competitive environment with meaningful structural protection' : sb.risk_score < 60 ? 'moderate competitive pressure with identifiable but manageable threats' : 'elevated competitive risk requiring urgency in investment decision-making'}. ${topRisk.length > 0 ? `The primary risk drivers are ${topRisk.map(f => `${f.factor_name} (${f.raw_score}/100)`).join(' and ')}.` : ''}`;
+  const riskLevel = sb.risk_score < 35 ? 'a favorable, well-protected competitive position'
+    : sb.risk_score < 50 ? 'moderate competitive pressure with identifiable but manageable threats'
+    : sb.risk_score < 65 ? 'elevated competitive risk requiring a clear and urgent AI response plan'
+    : 'critical competitive risk where existing structural advantages may not be sufficient to withstand AI disruption without rapid intervention';
 
-  const readinessNarrative = `The ${sb.readiness_score.toFixed(0)}/100 AI Readiness Score (Grade ${sb.readiness_grade}) indicates ${sb.readiness_score >= 65 ? 'strong foundational capability to execute an AI transformation' : sb.readiness_score >= 45 ? 'developing AI readiness with identifiable gaps that require focused investment' : 'significant readiness gaps that must be addressed before AI value creation is possible'}. ${topReadiness.length > 0 ? `Strengths include ${topReadiness.map(f => `${f.factor_name} (${f.raw_score}/100)`).join(' and ')}.` : ''} ${bottomReadiness.length > 0 ? `Areas requiring investment: ${bottomReadiness.map(f => `${f.factor_name} (${f.raw_score}/100)`).join(' and ')}.` : ''}`;
+  const riskDriverText = topRisk.length > 0
+    ? ` The highest-scoring risk factors — meaning the most significant threats — are: ${topRisk.map(f => {
+        const ev = cleanEvidence(f.evidence_summary);
+        return `${f.factor_name} (${f.raw_score}/100${ev ? `: "${ev.slice(0,120)}${ev.length>120?'…':''}"` : ''})`;
+      }).join('; ')}.`
+    : '';
 
-  const overallNarrative = `The ${sb.overall_score.toFixed(0)}/100 Overall Score (Grade ${sb.overall_grade}) is a composite of risk-adjusted readiness — ${sb.overall_score >= 70 ? 'a strong investment-grade signal that the AI opportunity is both accessible and defensible' : sb.overall_score >= 55 ? 'a moderate score suggesting conditional conviction pending resolution of identified risks and gaps' : 'a below-threshold score indicating that the investment thesis faces structural challenges that require significant de-risking'}.`;
+  const riskNarrative = `The AI Risk Score of ${sb.risk_score.toFixed(0)}/100 (Grade ${sb.risk_grade}) reflects ${riskLevel}.${riskDriverText} Risk scores measure competitive and timing threats — a lower score is better. The seven risk factors assess the Competitive Window, AI-Native Entrant Threat, Incumbent AI Posture, Horizontal AI Encroachment, Customer Switching Propensity, Regulatory Moat Durability, and Market Timing Risk. Each factor is weighted by its historically-observed impact on AI-era investment outcomes in vertical SaaS.`;
+
+  const readinessLevel = sb.readiness_score >= 70 ? 'strong foundational AI capability — the company demonstrably has the data, team, architecture, and leadership conviction needed to execute an AI transformation'
+    : sb.readiness_score >= 55 ? 'developing AI readiness with identifiable strengths that should be built upon and specific gaps that require focused capital and operational support'
+    : sb.readiness_score >= 40 ? 'meaningful readiness gaps across multiple dimensions that represent execution risk — value creation is contingent on closing these gaps post-close'
+    : 'significant AI readiness deficits that represent material execution risk — the investment thesis requires a clear plan to rebuild foundational capability before AI value creation is achievable';
+
+  const strengthText = topReadiness.length > 0
+    ? ` Readiness strengths that support conviction: ${topReadiness.map(f => {
+        const ev = cleanEvidence(f.evidence_summary);
+        return `${f.factor_name} (${f.raw_score}/100${ev ? `: "${ev.slice(0,100)}${ev.length>100?'…':''}"` : ''})`;
+      }).join('; ')}.`
+    : '';
+
+  const gapText = bottomReadiness.length > 0
+    ? ` Priority investment areas (readiness gaps below threshold): ${bottomReadiness.map(f => `${f.factor_name} scored ${f.raw_score}/100 — ${f.raw_score < 40 ? 'CRITICAL gap requiring immediate action' : 'gap requiring investment within 12-18 months'}`).join('; ')}.`
+    : '';
+
+  const readinessNarrative = `The AI Readiness Score of ${sb.readiness_score.toFixed(0)}/100 (Grade ${sb.readiness_grade}) indicates ${readinessLevel}.${strengthText}${gapText} The nine readiness factors assess Workflow Embeddedness, Data Foundation, Outcome-Labeled Data, Value Quantification, Pricing Model Flexibility, AI/ML Team Capability, Architecture Readiness, Compounding Loop Potential, and Leadership AI Clarity.`;
+
+  const overallInterpretation = sb.overall_score >= 75
+    ? 'a strong investment-grade signal — the AI opportunity is accessible, defensible, and executable within the investment horizon. This score places the company in the top tier of AI-era vertical SaaS investment opportunities we would expect to see'
+    : sb.overall_score >= 62
+    ? 'a solid but conditional investment signal — the core thesis is valid, but identified risks and gaps require specific resolution before full conviction. A well-structured investment with appropriate operational support could create substantial value'
+    : sb.overall_score >= 48
+    ? 'a moderate, below-threshold score suggesting the investment thesis carries meaningful execution risk. The combination of competitive threats and readiness gaps means value creation is possible but not structurally assured — the thesis depends on specific assumptions about the company\'s ability to close gaps while managing competition'
+    : 'a below-threshold score indicating structural challenges on multiple dimensions. An investment at current conditions would carry elevated risk, and significant operational intervention would be required before AI-driven value creation could begin';
+
+  const overallNarrative = `The Overall Score of ${sb.overall_score.toFixed(0)}/100 (Grade ${sb.overall_grade}) represents ${overallInterpretation}. This composite score is computed as a risk-adjusted readiness measure: Readiness Score weighted at ${((sb.readiness_score / (sb.readiness_score + sb.risk_score)) * 100).toFixed(0)}% and Risk Score weighted at ${((sb.risk_score / (sb.readiness_score + sb.risk_score)) * 100).toFixed(0)}% of the composite, with critical gaps applying a structural discount. The ${sb.disposition} disposition reflects the interaction of all three signals — risk level, readiness level, and the presence or absence of critical execution blockers.`;
 
   return { riskNarrative, readinessNarrative, overallNarrative };
+}
+
+// ─── Factor Narrative Generator ──────────────────────────────────────────────
+// Generates rich, institutional-quality prose interpretation of a factor's score
+// by combining the rubric, evidence summary, and score range into a coherent analysis.
+function getFactorNarrative(factor: FactorScore): string {
+  const isRisk = factor.factor_id.startsWith('R');
+  const score = factor.raw_score;
+  const ev = cleanEvidence(factor.evidence_summary);
+  const weight = (factor.weight * 100).toFixed(0);
+
+  // Score interpretation ranges differ for risk (lower = better) vs readiness (higher = better)
+  const scoreInterpretation = isRisk
+    ? score < 30 ? `This score of ${score}/100 is a strong positive signal — it indicates low risk on this dimension. Risk factors are scored inversely: a low score means this threat is well-contained.`
+    : score < 50 ? `This score of ${score}/100 represents moderate risk — the threat exists and is real, but is manageable with appropriate strategy and execution.`
+    : score < 70 ? `This score of ${score}/100 represents elevated risk — this factor is a material concern that should be specifically addressed in the investment thesis and post-close plan.`
+    : `This score of ${score}/100 represents high risk — this factor is a significant threat that should be a primary focus of diligence and a key condition for investment conviction.`
+    : score < 35 ? `This score of ${score}/100 represents a critical readiness gap — this factor is significantly below threshold and represents an execution blocker for the AI investment thesis.`
+    : score < 55 ? `This score of ${score}/100 indicates developing capability — the foundation exists but meaningful investment is required to close the gap and execute the AI thesis.`
+    : score < 72 ? `This score of ${score}/100 indicates solid capability — this factor is at or above the threshold for investment conviction, though there is room for further development.`
+    : `This score of ${score}/100 represents a readiness strength — this factor is a distinctive positive that supports investment conviction and contributes meaningfully to the AI thesis.`;
+
+  const weightSentence = `This factor carries a ${weight}% weight in the ${isRisk ? 'AI Risk' : 'AI Readiness'} composite score, contributing ${factor.weighted_contribution.toFixed(1)} points to the overall ${isRisk ? 'risk' : 'readiness'} score.`;
+
+  const evidenceSentence = ev
+    ? `The evidence underlying this assessment states: "${ev.slice(0, 350)}${ev.length > 350 ? '…' : ''}"`
+    : `No primary evidence was collected for this factor from public sources. The score reflects analyst baseline assumptions and the rubric default for this factor. This gap should be a specific focus of management due diligence.`;
+
+  const rubricSentence = factor.rubric_applied
+    ? `The scoring rubric applied: ${factor.rubric_applied}`
+    : '';
+
+  const criticalGapWarning = factor.is_critical_gap
+    ? `\n\n⚡ CRITICAL GAP ALERT: This factor is flagged as a critical readiness gap (score ≤ 40). In the Eagle Vision model, critical gaps apply a structural discount to the overall score and are weighted heavily in the GO/MAYBE/NO-GO disposition. A critical gap on this factor means the AI investment thesis cannot fully be achieved without closing this specific capability — it is not merely an optimization opportunity, but a prerequisite.`
+    : '';
+
+  const confidenceNote = factor.confidence === 'L'
+    ? `\n\n⚠️ LOW CONFIDENCE: This score is based on limited or low-quality evidence. The signal_strength underlying this score may shift substantially when better evidence is gathered — either from management access, data room review, or customer reference calls. Treat this factor's score as a directional indicator, not a confirmed finding.`
+    : factor.confidence === 'M'
+    ? `\nMODERATE CONFIDENCE: The evidence quality for this factor is adequate but not comprehensive. One or two additional data points from diligence would increase confidence materially.`
+    : '';
+
+  return `${scoreInterpretation} ${weightSentence}\n\n${evidenceSentence}\n\n${rubricSentence}${criticalGapWarning}${confidenceNote}`;
 }
 
 // ─── Factor Description Map ───────────────────────────────────────────────────
@@ -196,7 +313,14 @@ export function ReportPage() {
               <a href={inputs.company_url} target="_blank" rel="noopener" className="text-xs font-mono" style={{ color: '#C5A572' }}>
                 {inputs.company_url}
               </a>
-              {inputs.vertical && <span className="text-xs text-gray-500">{inputs.vertical}</span>}
+              {(record.detected_vertical || inputs.vertical) && (
+                <span className="text-xs px-2 py-0.5 rounded font-medium" style={{ background: 'rgba(197,165,114,0.12)', color: '#C5A572', border: '1px solid rgba(197,165,114,0.25)' }}>
+                  {record.detected_vertical || inputs.vertical}
+                  {record.detected_vertical && record.detected_vertical !== inputs.vertical && inputs.vertical && (
+                    <span className="text-gray-600 ml-1">(user: {inputs.vertical})</span>
+                  )}
+                </span>
+              )}
               <span className="text-xs text-gray-600 font-mono">{new Date(record.created_at).toLocaleDateString()}</span>
               {sb && (
                 <span className="text-xs font-mono px-2 py-0.5 rounded" style={{
@@ -283,6 +407,7 @@ function HeadlineTab({ record }: { record: ScreeningRecord }) {
   const allGreenFlags = Object.values(record.data_packs).flatMap(p => (p as any)?.green_flags || []);
   const allRedFlags = Object.values(record.data_packs).flatMap(p => p?.red_flags || []);
   const companyProfile = record.data_packs.company_profile;
+  const profileOverview = companyProfile?.findings.find(f => f.key === 'company_overview')?.value as any;
   const profileFinancials = companyProfile?.findings.find(f => f.key === 'financials_and_scale')?.value as any;
   const profileProduct = companyProfile?.findings.find(f => f.key === 'product_and_pricing')?.value as any;
   const profileMarket = companyProfile?.findings.find(f => f.key === 'market_position')?.value as any;
@@ -298,6 +423,36 @@ function HeadlineTab({ record }: { record: ScreeningRecord }) {
 
   return (
     <div className="space-y-6 report-page">
+
+      {/* Company Brief — only shown when profile data exists */}
+      {profileOverview && (profileOverview.description || profileOverview.vertical) && (
+        <Card variant="elevated" padding="sm">
+          <div className="flex items-start justify-between gap-6">
+            <div className="flex-1">
+              <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>COMPANY BRIEF</div>
+              <p className="text-sm text-gray-200 mb-3" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>
+                {profileOverview.description || `${record.inputs.company_name} is a ${profileOverview.vertical || 'vertical SaaS'} company.`}
+              </p>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs" style={{ fontFamily: 'Inter' }}>
+                {profileOverview.founded_year && <span className="text-gray-500">Founded <span className="text-gray-300">{profileOverview.founded_year}</span></span>}
+                {profileOverview.headquarters && <span className="text-gray-500">HQ: <span className="text-gray-300">{profileOverview.headquarters}</span></span>}
+                {profileOverview.target_customer && <span className="text-gray-500">Serves: <span className="text-gray-300">{profileOverview.target_customer}</span></span>}
+                {profileFinancials?.funding_stage && <span className="text-gray-500">Stage: <span className="text-gray-300">{profileFinancials.funding_stage}</span></span>}
+                {profileFinancials?.estimated_arr_range && <span className="text-gray-500">Est. ARR: <span className="text-gray-300">{profileFinancials.estimated_arr_range}</span></span>}
+                {profileFinancials?.employee_count_range && <span className="text-gray-500">Employees: <span className="text-gray-300">{profileFinancials.employee_count_range}</span></span>}
+              </div>
+            </div>
+            {profileOverview.vertical && (
+              <div className="shrink-0">
+                <span className="text-xs px-3 py-1.5 rounded-full font-semibold" style={{ background: 'rgba(197,165,114,0.15)', color: '#C5A572', border: '1px solid rgba(197,165,114,0.3)', fontFamily: 'Montserrat' }}>
+                  {profileOverview.vertical}
+                </span>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
       {/* Grade Triptych + Disposition */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Disposition */}
@@ -334,17 +489,20 @@ function HeadlineTab({ record }: { record: ScreeningRecord }) {
             <GradeBadge grade={sb.risk_grade} score={sb.risk_score} label="AI Risk" size="lg" />
             <GradeBadge grade={sb.readiness_grade} score={sb.readiness_score} label="AI Readiness" size="lg" />
           </div>
-          {/* Score narratives */}
-          <div className="space-y-2 mt-2">
-            <p className="text-xs text-gray-400" style={{ fontFamily: 'Inter', lineHeight: 1.6 }}>
-              <span style={{ color: '#C5A572' }}>Risk:</span> {riskNarrative}
-            </p>
-            <p className="text-xs text-gray-400" style={{ fontFamily: 'Inter', lineHeight: 1.6 }}>
-              <span style={{ color: '#C5A572' }}>Readiness:</span> {readinessNarrative}
-            </p>
-            <p className="text-xs text-gray-400" style={{ fontFamily: 'Inter', lineHeight: 1.6 }}>
-              <span style={{ color: '#C5A572' }}>Overall:</span> {overallNarrative}
-            </p>
+          {/* Score narratives — institutional prose analysis */}
+          <div className="space-y-4 mt-3 border-t border-[rgba(197,165,114,0.15)] pt-3">
+            <div className="p-3 rounded-lg" style={{ background: 'rgba(211,47,47,0.06)' }}>
+              <div className="text-xs font-semibold mb-1.5 tracking-widest" style={{ color: '#D32F2F', fontFamily: 'Montserrat' }}>AI RISK ANALYSIS</div>
+              <p className="text-xs text-gray-300" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>{riskNarrative}</p>
+            </div>
+            <div className="p-3 rounded-lg" style={{ background: 'rgba(29,185,84,0.06)' }}>
+              <div className="text-xs font-semibold mb-1.5 tracking-widest" style={{ color: '#1DB954', fontFamily: 'Montserrat' }}>AI READINESS ANALYSIS</div>
+              <p className="text-xs text-gray-300" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>{readinessNarrative}</p>
+            </div>
+            <div className="p-3 rounded-lg" style={{ background: 'rgba(197,165,114,0.06)' }}>
+              <div className="text-xs font-semibold mb-1.5 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>OVERALL INVESTMENT SIGNAL</div>
+              <p className="text-xs text-gray-300" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>{overallNarrative}</p>
+            </div>
           </div>
         </Card>
       </div>
@@ -762,91 +920,110 @@ function FactorRow({ factor, isEven, isExpanded, onToggle, note, onNoteChange }:
         <div className="px-6 pb-6 pt-2" style={{ background: 'rgba(0,0,0,0.25)' }}>
           {/* What this factor measures */}
           {desc && (
-            <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(197,165,114,0.06)', border: '1px solid rgba(197,165,114,0.15)' }}>
+            <div className="mb-4 p-4 rounded-lg" style={{ background: 'rgba(197,165,114,0.06)', border: '1px solid rgba(197,165,114,0.15)' }}>
               <div className="text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>WHAT THIS FACTOR MEASURES</div>
-              <p className="text-xs text-gray-300 mb-2" style={{ fontFamily: 'Inter', lineHeight: 1.7 }}>{desc.what}</p>
-              <p className="text-xs text-gray-400 mb-2" style={{ fontFamily: 'Inter', lineHeight: 1.7 }}>
-                <span style={{ color: '#C5A572' }}>Why it matters:</span> {desc.why}
+              <p className="text-sm text-gray-200 mb-3 font-medium" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>{desc.what}</p>
+              <p className="text-xs text-gray-300 mb-3" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>
+                <span style={{ color: '#C5A572', fontWeight: 600 }}>Investment significance: </span>{desc.why}
               </p>
-              <p className="text-xs text-gray-500 font-mono" style={{ lineHeight: 1.5 }}>
-                <span style={{ color: '#C5A572' }}>Score guide:</span> {desc.howToRead}
+              <p className="text-xs text-gray-500 font-mono p-2 rounded" style={{ lineHeight: 1.5, background: 'rgba(0,0,0,0.2)' }}>
+                <span style={{ color: '#C5A572' }}>Score interpretation guide: </span>{desc.howToRead}
               </p>
             </div>
           )}
 
+          {/* Analyst Narrative — the rich institutional interpretation */}
+          <div className="mb-4 p-4 rounded-lg" style={{ background: isRisk ? 'rgba(211,47,47,0.06)' : 'rgba(29,185,84,0.06)', border: `1px solid ${isRisk ? 'rgba(211,47,47,0.2)' : 'rgba(29,185,84,0.2)'}` }}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs font-bold tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+                🦅 ANALYST INTERPRETATION
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: `${GRADE_COLOR[factor.letter_grade]}20`, color: GRADE_COLOR[factor.letter_grade], fontFamily: 'Montserrat' }}>
+                {factor.raw_score.toFixed(0)}/100 · Grade {factor.letter_grade}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {getFactorNarrative(factor).split('\n\n').filter(Boolean).map((para, i) => (
+                <p key={i} className={`text-xs ${para.startsWith('⚡') ? 'font-semibold' : para.startsWith('⚠️') ? '' : ''}`}
+                  style={{
+                    fontFamily: 'Inter',
+                    lineHeight: 1.8,
+                    color: para.startsWith('⚡') ? '#F57C00' : para.startsWith('⚠️') ? '#FFB300' : '#CBD5E1',
+                    whiteSpace: 'pre-wrap',
+                  }}>
+                  {para}
+                </p>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Evidence Summary — full text, no truncation */}
             <div>
-              <div className="text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>EVIDENCE SUMMARY</div>
+              <div className="text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>RAW EVIDENCE FROM RESEARCH PACKS</div>
               {hasRealEvidence ? (
-                <div className="p-3 rounded-lg" style={{ background: 'rgba(0,43,73,0.4)' }}>
-                  <p className="text-xs text-gray-300" style={{ fontFamily: 'Inter', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+                <div className="p-3 rounded-lg" style={{ background: 'rgba(0,43,73,0.4)', border: '1px solid rgba(197,165,114,0.1)' }}>
+                  <p className="text-xs text-gray-300" style={{ fontFamily: 'Inter', lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
                     {factor.evidence_summary}
                   </p>
                 </div>
               ) : (
                 <div className="p-3 rounded-lg" style={{ background: 'rgba(211,47,47,0.08)', border: '1px solid rgba(211,47,47,0.2)' }}>
-                  <p className="text-xs text-gray-600 italic" style={{ fontFamily: 'Inter' }}>
-                    No evidence was collected for this factor. This typically indicates: (1) the relevant Netlify function failed or timed out, (2) the company has limited public information on this dimension, or (3) the API keys were not configured. Score defaults to neutral (signal_strength = 0.5).
+                  <p className="text-xs text-gray-500 italic" style={{ fontFamily: 'Inter', lineHeight: 1.7 }}>
+                    No evidence was collected for this factor from public sources. This indicates: (1) the relevant research pack may have failed or timed out, (2) the company has limited publicly-available information on this dimension, or (3) the evidence synthesis fell back to raw data that didn't surface specific signals. The score uses a neutral default (signal_strength = 0.5) which produces a conservative mid-range score. This gap should be a specific focus of diligence: request this data directly from management.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Rubric + Score Interpretation */}
-            <div>
-              <div className="text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>SCORE INTERPRETATION</div>
-              <div className="p-3 rounded-lg mb-3" style={{ background: 'rgba(0,43,73,0.4)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl font-bold font-mono" style={{ color: GRADE_COLOR[factor.letter_grade] }}>{factor.raw_score.toFixed(0)}</span>
-                  <div>
-                    <div className="text-xs text-gray-400" style={{ fontFamily: 'Inter' }}>
-                      {isRisk ? 'Risk Score (lower = better)' : 'Readiness Score (higher = better)'}
-                    </div>
-                    <div className="text-xs" style={{ color: GRADE_COLOR[factor.letter_grade], fontFamily: 'Montserrat' }}>
-                      Grade {factor.letter_grade} · {(factor.weight * 100).toFixed(0)}% weight
+            {/* Scoring Math + Diligence Questions */}
+            <div className="space-y-3">
+              <div>
+                <div className="text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>SCORING MATH</div>
+                <div className="p-3 rounded-lg" style={{ background: 'rgba(0,43,73,0.4)' }}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-2xl font-bold font-mono" style={{ color: GRADE_COLOR[factor.letter_grade] }}>{factor.raw_score.toFixed(0)}</span>
+                    <div>
+                      <div className="text-xs font-semibold" style={{ color: GRADE_COLOR[factor.letter_grade], fontFamily: 'Montserrat' }}>Grade {factor.letter_grade}</div>
+                      <div className="text-xs text-gray-400" style={{ fontFamily: 'Inter' }}>
+                        {isRisk ? 'Risk Score — lower = better' : 'Readiness Score — higher = better'}
+                      </div>
                     </div>
                   </div>
+                  <div className="p-2 rounded font-mono text-xs mb-2" style={{ background: 'rgba(0,0,0,0.3)', color: '#C5A572' }}>
+                    {factor.raw_score.toFixed(1)} × {(factor.weight * 100).toFixed(0)}% weight = {factor.weighted_contribution.toFixed(1)} pts
+                    {isRisk ? ' → toward risk total' : ' → toward readiness total'}
+                  </div>
+                  {factor.rubric_applied && (
+                    <p className="text-xs text-gray-500 font-mono" style={{ lineHeight: 1.5 }}>
+                      Rubric: {factor.rubric_applied}
+                    </p>
+                  )}
                 </div>
-                <p className="text-xs text-gray-400 font-mono" style={{ lineHeight: 1.6 }}>
-                  {factor.rubric_applied}
-                </p>
               </div>
-              <div className="text-xs font-semibold mb-2 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'Montserrat' }}>WEIGHTED CONTRIBUTION</div>
-              <div className="p-2 rounded font-mono text-xs" style={{ background: 'rgba(0,0,0,0.3)', color: '#C5A572' }}>
-                {factor.raw_score.toFixed(1)} × {(factor.weight * 100).toFixed(0)}% = {factor.weighted_contribution.toFixed(1)} pts
-                {isRisk ? ' → risk contribution' : ' → readiness contribution'}
+
+              <div>
+                <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'Montserrat' }}>DATA SOURCE & CONFIDENCE</div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-mono" style={{ color: '#C5A572' }}>{factor.pack_source.replace(/_/g, ' ')}</span>
+                  <span className="text-gray-700">·</span>
+                  <SignalChip confidence={factor.confidence} />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Pack Source + Partner Note */}
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <div className="text-xs text-gray-500 flex items-center gap-2" style={{ fontFamily: 'Montserrat' }}>
-                <span>Pack source:</span>
-                <span className="text-xs font-mono" style={{ color: '#C5A572' }}>{factor.pack_source.replace('_', ' ')}</span>
-                <span>·</span>
-                <span>Confidence:</span>
-                <SignalChip confidence={factor.confidence} />
-              </div>
-              {factor.confidence === 'L' && (
-                <p className="text-xs text-gray-600 mt-1 italic" style={{ fontFamily: 'Inter' }}>
-                  LOW confidence: This score may shift significantly with additional evidence. Prioritize this factor in diligence.
-                </p>
-              )}
-            </div>
-            <div>
-              <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'Montserrat' }}>PARTNER ANNOTATION</div>
-              <textarea
-                value={note || ''}
-                onChange={(e) => onNoteChange(e.target.value)}
-                placeholder="Add your analysis, dispute this score, or note what additional evidence you need..."
-                rows={3}
-                className="w-full px-3 py-2 rounded text-xs text-white resize-none outline-none"
-                style={{ background: 'rgba(197,165,114,0.06)', border: '1px solid rgba(197,165,114,0.2)', fontFamily: 'Inter', color: 'white', lineHeight: 1.6 }}
-              />
-            </div>
+          {/* Partner Annotation */}
+          <div className="mt-4">
+            <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'Montserrat' }}>PARTNER ANNOTATION</div>
+            <textarea
+              value={note || ''}
+              onChange={(e) => onNoteChange(e.target.value)}
+              placeholder="Override this score with your analysis, dispute the AI assessment, or document what additional evidence you need to confirm or reject this finding..."
+              rows={3}
+              className="w-full px-3 py-2 rounded text-xs text-white resize-none outline-none"
+              style={{ background: 'rgba(197,165,114,0.06)', border: '1px solid rgba(197,165,114,0.2)', fontFamily: 'Inter', color: 'white', lineHeight: 1.6 }}
+            />
           </div>
         </div>
       )}

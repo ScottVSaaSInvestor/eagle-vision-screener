@@ -10317,6 +10317,7 @@ A7 (Architecture Readiness):
           A7: { evidence_summary: "Pack failed after retries", signal_strength: 0.4 }
         },
         red_flags: ["Data Architecture pack failed"],
+        green_flags: [],
         v2_stub: false,
         status: "failed",
         elapsed_ms: Date.now() - startTime

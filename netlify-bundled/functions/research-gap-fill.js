@@ -10168,7 +10168,7 @@ var handler = async (event) => {
         body: JSON.stringify({ error: "dimension and company_name required" })
       };
     }
-    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
+    const model = "claude-sonnet-4-5";
     const dimensionContext = DIMENSION_CONTEXT[dimension] || `You are identifying research gaps for ${dimension} analysis.`;
     const systemPrompt = `You are a senior investment research analyst at a PE/growth equity firm. Your job is to analyze partial research evidence and identify the most critical gaps that prevent a thorough investment-grade assessment.
 

@@ -105,8 +105,9 @@ function getLeanInReasons(
   const reasons: string[] = [];
 
   // Strongest readiness factors (readiness >= 70 = good) — most compelling investment positives
+  const hasRealEvidence = (s: string) => s && !s.includes('No evidence') && !s.includes('Pack failed') && !s.includes('defaulting to neutral') && s.length > 20;
   const strongReadiness = readinessScores
-    .filter(f => f.raw_score >= 70 && !f.evidence_summary.includes('No evidence') && !f.evidence_summary.includes('Pack failed'))
+    .filter(f => f.raw_score >= 70 && hasRealEvidence(f.evidence_summary))
     .sort((a, b) => b.raw_score - a.raw_score)
     .slice(0, 3);
 
@@ -118,7 +119,7 @@ function getLeanInReasons(
 
   // Lowest risk factors (risk < 35 = well-protected) — structural moats
   const lowRisk = riskScores
-    .filter(f => f.raw_score < 35 && !f.evidence_summary.includes('No evidence') && !f.evidence_summary.includes('Pack failed'))
+    .filter(f => f.raw_score < 35 && hasRealEvidence(f.evidence_summary))
     .sort((a, b) => a.raw_score - b.raw_score)
     .slice(0, 2);
 
@@ -140,9 +141,11 @@ function getHesitateReasons(
 ): string[] {
   const reasons: string[] = [];
 
+  const hasRealEvidenceH = (s: string) => s && !s.includes('No evidence') && !s.includes('Pack failed') && !s.includes('defaulting to neutral') && s.length > 20;
+
   // Highest risk factors (risk > 60 = danger) — investment killers
   const highRisk = riskScores
-    .filter(f => f.raw_score > 60 && !f.evidence_summary.includes('No evidence') && !f.evidence_summary.includes('Pack failed'))
+    .filter(f => f.raw_score > 60 && hasRealEvidenceH(f.evidence_summary))
     .sort((a, b) => b.raw_score - a.raw_score)
     .slice(0, 3);
 
@@ -154,13 +157,25 @@ function getHesitateReasons(
 
   // Critical gaps in readiness (readiness <= 40) — execution blockers
   const criticalReadiness = readinessScores
-    .filter(f => f.is_critical_gap && !f.evidence_summary.includes('No evidence') && !f.evidence_summary.includes('Pack failed'))
+    .filter(f => f.is_critical_gap && hasRealEvidenceH(f.evidence_summary))
     .sort((a, b) => a.raw_score - b.raw_score)
     .slice(0, 2);
 
   for (const f of criticalReadiness) {
     const summary = f.evidence_summary.replace(/\.\.\.$/, '').trim();
-    reasons.push(`Critical gap: ${f.factor_name} [${f.raw_score}/100] — ${summary.length > 180 ? summary.slice(0, 180) + '…' : summary}`);
+    reasons.push(`Critical gap: ${f.factor_name} [${f.raw_score}/100] — ${summary.length > 200 ? summary.slice(0, 200) + '…' : summary}`);
+  }
+
+  // If no high-risk or critical-gap evidence, add a fallback hesitation reason based on score alone
+  if (reasons.length === 0) {
+    const worstRisk = riskScores.sort((a, b) => b.raw_score - a.raw_score)[0];
+    if (worstRisk && worstRisk.raw_score > 50) {
+      reasons.push(`${worstRisk.factor_name} requires further investigation [${worstRisk.raw_score}/100 — evidence quality insufficient for high-confidence assessment]`);
+    }
+    const worstReadiness = readinessScores.sort((a, b) => a.raw_score - b.raw_score)[0];
+    if (worstReadiness && worstReadiness.raw_score < 55) {
+      reasons.push(`${worstReadiness.factor_name} gap needs validation [${worstReadiness.raw_score}/100 — specific evidence required before investment conviction]`);
+    }
   }
 
   return reasons.slice(0, 4);

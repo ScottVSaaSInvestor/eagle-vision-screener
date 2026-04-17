@@ -49,7 +49,7 @@ export const useArchiveStore = create<ArchiveState>()(
             created_at: r.created_at,
             company_name: r.inputs.company_name,
             company_url: r.inputs.company_url,
-            vertical: r.inputs.vertical,
+            vertical: r.detected_vertical || r.inputs.vertical,
             overall_grade: r.score_bundle?.overall_grade,
             disposition: r.score_bundle?.disposition,
             confidence_overall: r.confidence_overall,

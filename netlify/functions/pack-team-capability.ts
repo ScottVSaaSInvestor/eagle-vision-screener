@@ -243,6 +243,7 @@ A9 SIGNAL STRENGTH CALIBRATION:
           A9: { evidence_summary: 'Pack failed after 3 retries', signal_strength: 0.3 },
         },
         red_flags: ['Team Capability pack failed after retries'],
+        green_flags: [],
         v2_stub: false,
         status: 'failed',
         elapsed_ms: Date.now() - startTime,

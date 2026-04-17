@@ -199,6 +199,7 @@ export interface ScreeningRecord {
   disputes: PartnerNote[];
   confidence_overall: Confidence;
   honesty_flag?: boolean; // true if screening was partial/aborted
+  detected_vertical?: string; // extracted from company_profile pack, overrides inputs.vertical in UI
   diligence_areas?: DiligenceFocusArea[];
   upgrade_break_conditions?: UpgradeBreakConditions;
 }

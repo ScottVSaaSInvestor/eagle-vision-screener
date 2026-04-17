@@ -292,6 +292,7 @@ SIGNAL STRENGTH CALIBRATION — BE PRECISE, NOT MIDDLE:
           A8: { evidence_summary: 'Pack failed after 3 retries', signal_strength: 0.4 },
         },
         red_flags: ['Competitive Landscape pack failed — LLM returned malformed output after 3 retries'],
+        green_flags: [],
         v2_stub: false,
         status: 'failed',
         elapsed_ms: Date.now() - startTime,

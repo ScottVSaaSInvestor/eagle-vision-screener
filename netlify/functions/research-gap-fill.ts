@@ -124,7 +124,10 @@ const handler: Handler = async (event) => {
       };
     }
 
-    const model = process.env.ANTHROPIC_MODEL || 'claude-opus-4-5';
+    // Gap-fill just generates search queries — speed is critical, depth is not.
+    // Sonnet is 3-4x faster than Opus and more than sufficient for query generation.
+    // This keeps gap-fill well within the 26s Netlify timeout.
+    const model = 'claude-sonnet-4-5';
 
     const dimensionContext = DIMENSION_CONTEXT[dimension] || `You are identifying research gaps for ${dimension} analysis.`;
 
