@@ -49,18 +49,19 @@ const CFG = {
   PASS5_ENABLED: true,
   PASS5_WEAK_THRESHOLD_CHARS: 15000, // dims with < this many chars get a second pass
   PASS5_EXTRA_QUERIES: 5,            // extra queries for weak dims
-  // Synthesis: 50K chars per dimension (reduced from 90K)
-  // WHY: synthesis function uses claude-sonnet which can handle 40K evidence in 8-15s.
-  // Feeding 90K was causing Netlify 26s hard timeout → synthesis always failed.
-  // 50K gives plenty of evidence while staying within safe time budget.
-  SYNTH_MAX_CHARS: 50000,
+  // Synthesis: 30K chars per dimension (reduced from 50K)
+  // WHY: Sonnet on 30K evidence completes in 6-10s, leaving 16s headroom inside
+  // Netlify's 26s hard timeout. The synthesis function's own retry ladder then has
+  // room to run a 2nd attempt at 20K (4-7s) or 3rd at 10K on Haiku (2-3s) if needed.
+  // Quality impact: minimal — synthesis briefs are 800-1200 words regardless of input size.
+  SYNTH_MAX_CHARS: 30000,
   // Pack call timeout — well under Netlify's 26s hard limit
   PACK_TIMEOUT_MS: 24000,
-  // Synthesis call timeout — synthesis-function retries with smaller evidence so
-  // give it the full 24s. The Netlify 26s hard timeout is the real constraint.
-  SYNTH_TIMEOUT_MS: 24000,
+  // Synthesis call timeout — give slightly more than default 25s so the 3rd
+  // haiku-fallback attempt has time to complete before client aborts.
+  SYNTH_TIMEOUT_MS: 28000,
   // Gap-fill call timeout
-  GAPFILL_TIMEOUT_MS: 24000,
+  GAPFILL_TIMEOUT_MS: 22000,
   // Delay between search batches — 800ms to avoid Tavily rate limits
   SEARCH_BATCH_DELAY_MS: 800,
   // Delay between crawl requests — respectful crawling
@@ -265,15 +266,22 @@ async function synthesizeDimension(
     }, CFG.SYNTH_TIMEOUT_MS);
 
     if (data.fallback) {
-      log({ message: `  ⚠ ${dimension} synthesis fell back to raw evidence (${data.fallback_reason?.slice(0,60)})`, level: 'warning' });
+      log({ message: `  ⚠ ${dimension} synthesis fell back to raw evidence — reason: ${data.fallback_reason?.slice(0,80) || 'unknown'}. Packs will work from raw text.`, level: 'warning' });
     } else {
       const synthKB = Math.round((data.synthesis_chars || 0) / 1000);
       const model = data.model_used || 'unknown';
-      log({ message: `  ✓ ${dimension} synthesized → ${synthKB}K chars (${model}, attempt ${data.attempt_number || 1})`, level: 'success' });
+      const attemptStr = data.attempt_number > 1 ? ` (needed ${data.attempt_number} attempts)` : '';
+      log({ message: `  ✓ ${dimension} synthesized → ${synthKB}K chars (${model}${attemptStr}, ${data.elapsed_ms || 0}ms)`, level: 'success' });
     }
 
-    // If synthesis returned a failure marker, still use it — packs can parse it
-    return data.synthesis || rawEvidence.slice(0, 20000);
+    // Quality guard: if synthesis returned fewer than 300 chars it likely timed out silently
+    const brief = data.synthesis || '';
+    if (brief.length < 300 && !data.fallback) {
+      log({ message: `  ⚠ ${dimension} synthesis brief is suspiciously short (${brief.length} chars) — using raw evidence instead`, level: 'warning' });
+      return `[SYNTHESIS TOO SHORT — falling back]\n\nRAW EVIDENCE:\n${rawEvidence.slice(0, 20000)}`;
+    }
+
+    return brief || rawEvidence.slice(0, 20000);
   } catch (err: any) {
     const errMsg = err?.message?.slice(0, 80) || 'unknown error';
     log({ message: `  ✗ ${dimension} synthesis call failed: ${errMsg}. Using raw evidence.`, level: 'error' });
@@ -691,36 +699,31 @@ export async function runScreening(
 
   // Synthesize all 7 dimensions SEQUENTIALLY (not parallel) to avoid hammering
   // Claude's API rate limits and to give each call the full context window.
-  // Each synthesis call = one Netlify function call (24s timeout).
-  // Sequential means 7 × ~15s = ~2 min total for synthesis — acceptable trade-off for quality.
+  // Each synthesis call = one Netlify function call (28s client timeout, 26s Netlify hard limit).
+  // Sequential means 7 × ~8-12s = ~70-90s total for synthesis on 30K evidence with Sonnet.
+  // NO sleeps between synthesis calls — every second counts, and Sonnet doesn't need cooldown.
   log({ message: `  Running synthesis sequentially (1/7): company_profile...`, level: 'info' });
   const profileSynth = await synthesizeDimension('company_profile',      co, v, profileFull, log);
-  await sleep(1000);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   log({ message: `  Running synthesis (2/7): competitive_landscape...`, level: 'info' });
   const compSynth = await synthesizeDimension('competitive_landscape',    co, v, compFull, log);
-  await sleep(1000);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   log({ message: `  Running synthesis (3/7): team_capability...`, level: 'info' });
   const teamSynth = await synthesizeDimension('team_capability',          co, v, teamFull, log);
-  await sleep(1000);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   log({ message: `  Running synthesis (4/7): regulatory_moat...`, level: 'info' });
   const regSynth = await synthesizeDimension('regulatory_moat',           co, v, regFull, log);
-  await sleep(1000);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   log({ message: `  Running synthesis (5/7): workflow_product...`, level: 'info' });
   const workSynth = await synthesizeDimension('workflow_product',          co, v, workFull, log);
-  await sleep(1000);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   log({ message: `  Running synthesis (6/7): data_architecture...`, level: 'info' });
   const dataSynth = await synthesizeDimension('data_architecture',         co, v, dataFull, log);
-  await sleep(1000);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   log({ message: `  Running synthesis (7/7): market_timing...`, level: 'info' });

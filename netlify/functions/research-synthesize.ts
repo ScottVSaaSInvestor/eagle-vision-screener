@@ -29,10 +29,11 @@ const SYNTHESIS_MODEL = 'claude-sonnet-4-5';
 const SYNTHESIS_FALLBACK_MODEL = 'claude-haiku-3-5';
 
 // Max chars to feed synthesizer per attempt.
-// Attempt 1: 40K chars  — ~8-12s on Sonnet, leaves 14s headroom
-// Attempt 2: 20K chars  — ~4-6s, ultra-reliable fallback
-// Attempt 3: 10K chars  — ~2-3s on Haiku, guaranteed completion
-const EVIDENCE_CAPS = [40000, 20000, 10000];
+// Orchestrator now caps evidence at 30K before sending, so attempt 1 sees ≤30K.
+// Attempt 1: 30K chars  — ~6-10s on Sonnet, leaves 16s headroom inside 26s Netlify limit
+// Attempt 2: 15K chars  — ~3-5s, ultra-reliable fallback
+// Attempt 3: 8K chars   — ~2-3s on Haiku, guaranteed completion
+const EVIDENCE_CAPS = [30000, 15000, 8000];
 
 // What each dimension's synthesis should focus on extracting
 const SYNTHESIS_FOCUS: Record<string, string> = {
