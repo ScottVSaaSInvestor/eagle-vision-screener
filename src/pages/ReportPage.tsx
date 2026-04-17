@@ -76,10 +76,10 @@ function getVerdictNarrative(record: ScreeningRecord): string {
   const quad = sb.quadrant;
 
   const QUAD_NARRATIVE: Record<string, string> = {
-    BUILD_MODE: `Eagle Vision's 17-factor analysis places ${co} in the BUILD quadrant — the most attractive posture for a patient buyer with operational AI expertise. The AI Threat Level is ${tl} (risk score ${sb.risk_score.toFixed(0)}/100): the competitive window is open, AI-native entrants in ${v} have limited traction, and incumbents are not deploying AI aggressively in this specific segment. The company is at ${sb.stage_assessment?.stage_label ?? `Stage ${stage}`} on the SOR→SOA journey: the System of Record position is established, but the AI transformation is ahead of it, not behind it. This is not a weakness — it is the investment opportunity. The capital-and-operator question is whether the company can close the readiness gaps and reach Stage 3 (AI-Native) within a standard 3-5 year hold period. Based on available evidence, that path is credible.`,
-    EXECUTE: `Eagle Vision's 17-factor analysis places ${co} in the EXECUTE quadrant — the most compelling posture for an AI-era investment. The AI Threat Level is ${tl} (risk score ${sb.risk_score.toFixed(0)}/100) and the company is at ${sb.stage_assessment?.stage_label ?? `Stage ${stage}`}: the competitive window is open and the AI foundation is in place. This is a high-conviction opportunity where timing is favorable and the key question is not whether to act, but how fast to move.`,
-    RACE_MODE: `Eagle Vision's 17-factor analysis places ${co} in RACE MODE — a high-conviction thesis with a time-sensitive execution imperative. The AI Threat Level is ${tl} (risk score ${sb.risk_score.toFixed(0)}/100): AI-native entrants are active in ${v} and incumbents are deploying AI features. However, the company is at ${sb.stage_assessment?.stage_label ?? `Stage ${stage}`}, indicating the technical and organizational foundation exists to outpace these threats — provided the investment closes and the AI roadmap accelerates without delay.`,
-    DANGER_ZONE: `Eagle Vision's 17-factor analysis places ${co} in the DANGER ZONE — a structurally challenging position. The AI Threat Level is ${tl} (risk score ${sb.risk_score.toFixed(0)}/100): the competitive environment in ${v} is intensifying rapidly. The company is at ${sb.stage_assessment?.stage_label ?? `Stage ${stage}`}, and the combination of elevated threat and readiness gaps compounds the risk. Investment conviction at this stage requires specific, high-confidence evidence that identified gaps can be closed before the competitive window narrows further.`,
+    BUILD_MODE: `Perch's 17-factor SOAR analysis places ${co} in BUILD MODE — the most attractive posture for a patient buyer with operational AI expertise. The AI Threat Level is ${tl} (risk score ${sb.risk_score.toFixed(0)}/100): the competitive window is open, AI-native entrants in ${v} have limited traction, and incumbents are not deploying AI aggressively in this specific segment. The company is at ${sb.stage_assessment?.stage_label ?? `Stage ${stage}`} on the SOR→SOA journey: the System of Record position is established, but the AI transformation is ahead of it, not behind it. This is not a weakness — it is the investment opportunity. The capital-and-operator question is whether the company can close the readiness gaps and reach Stage 3 (AI-Native) within a standard 3-5 year hold period. Based on available evidence, that path is credible.`,
+    EXECUTE: `Perch's 17-factor SOAR analysis places ${co} in the EXECUTE quadrant — the most compelling posture for an AI-era investment. The AI Threat Level is ${tl} (risk score ${sb.risk_score.toFixed(0)}/100) and the company is at ${sb.stage_assessment?.stage_label ?? `Stage ${stage}`}: the competitive window is open and the AI foundation is in place. This is a high-conviction opportunity where timing is favorable and the key question is not whether to act, but how fast to move.`,
+    RACE_MODE: `Perch's 17-factor SOAR analysis places ${co} in RACE MODE — a high-conviction thesis with a time-sensitive execution imperative. The AI Threat Level is ${tl} (risk score ${sb.risk_score.toFixed(0)}/100): AI-native entrants are active in ${v} and incumbents are deploying AI features. However, the company is at ${sb.stage_assessment?.stage_label ?? `Stage ${stage}`}, indicating the technical and organizational foundation exists to outpace these threats — provided the investment closes and the AI roadmap accelerates without delay.`,
+    DANGER_ZONE: `Perch's 17-factor SOAR analysis places ${co} in the DANGER ZONE — a structurally challenging position. The AI Threat Level is ${tl} (risk score ${sb.risk_score.toFixed(0)}/100): the competitive environment in ${v} is intensifying rapidly. The company is at ${sb.stage_assessment?.stage_label ?? `Stage ${stage}`}, and the combination of elevated threat and readiness gaps compounds the risk. Investment conviction at this stage requires specific, high-confidence evidence that identified gaps can be closed before the competitive window narrows further.`,
   };
 
   const confText = sb.confidence_overall === 'H'
@@ -388,8 +388,8 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
             <div
               className="text-xl font-black mb-1 px-4 py-2 rounded-lg"
               style={{
-                color: sb.quadrant === 'EXECUTE' ? '#1DB954' : sb.quadrant === 'RACE_MODE' ? '#FFB300' : sb.quadrant === 'BUILD_MODE' ? '#C5A572' : '#D32F2F',
-                background: sb.quadrant === 'EXECUTE' ? 'rgba(29,185,84,0.1)' : sb.quadrant === 'RACE_MODE' ? 'rgba(255,179,0,0.1)' : sb.quadrant === 'BUILD_MODE' ? 'rgba(197,165,114,0.1)' : 'rgba(211,47,47,0.1)',
+                color: sb.quadrant === 'EXECUTE' ? '#1DB954' : sb.quadrant === 'RACE_MODE' ? '#FFB300' : sb.quadrant === 'BUILD_MODE' ? '#00C8DC' : '#D32F2F',
+                background: sb.quadrant === 'EXECUTE' ? 'rgba(29,185,84,0.1)' : sb.quadrant === 'RACE_MODE' ? 'rgba(255,179,0,0.1)' : sb.quadrant === 'BUILD_MODE' ? 'rgba(0,200,220,0.1)' : 'rgba(211,47,47,0.1)',
                 fontFamily: 'Montserrat',
               }}
             >
@@ -433,7 +433,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
         <div className="flex items-center gap-2 mb-4">
           <span className="text-lg">🦅</span>
           <div className="text-xs font-semibold tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
-            EAGLE VISION EXECUTIVE SUMMARY
+            PERCH EXECUTIVE SUMMARY
           </div>
           <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded" style={{
             background: sb.confidence_overall === 'H' ? 'rgba(29,185,84,0.15)' : sb.confidence_overall === 'M' ? 'rgba(255,179,0,0.15)' : 'rgba(211,47,47,0.15)',
@@ -458,10 +458,10 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
           />
           <div className="mt-3 text-center">
             <p className="text-xs text-gray-500 mt-1" style={{ fontFamily: 'Inter' }}>
-              {sb.quadrant === 'EXECUTE' && 'Low risk + high readiness = act now'}
-              {sb.quadrant === 'RACE_MODE' && 'High risk + high readiness = move fast'}
-              {sb.quadrant === 'BUILD_MODE' && 'Low risk + readiness gaps = build to win'}
-              {sb.quadrant === 'DANGER_ZONE' && 'High risk + readiness gaps = requires specific conviction'}
+              {sb.quadrant === 'EXECUTE' && 'Low risk · High readiness · Highest conviction posture'}
+              {sb.quadrant === 'RACE_MODE' && 'High risk · High readiness · Strong thesis, time-sensitive'}
+              {sb.quadrant === 'BUILD_MODE' && '🏗️ Low risk · Open window · Patient capital opportunity'}
+              {sb.quadrant === 'DANGER_ZONE' && 'High risk · Readiness gaps · Requires specific conviction'}
             </p>
           </div>
         </Card>
@@ -500,6 +500,27 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
           </ul>
         </Card>
       </div>
+
+      {/* BUILD MODE Explainer — only shown when quadrant is BUILD_MODE */}
+      {sb.quadrant === 'BUILD_MODE' && (
+        <div className="rounded-xl px-5 py-4 flex gap-4 items-start" style={{
+          background: 'rgba(0,200,220,0.06)',
+          border: '1px solid rgba(0,200,220,0.3)',
+        }}>
+          <div className="text-2xl flex-shrink-0">🏗️</div>
+          <div>
+            <div className="text-sm font-bold mb-1" style={{ color: '#00C8DC', fontFamily: 'Montserrat' }}>
+              BUILD MODE — Why This Is a Positive Signal
+            </div>
+            <p className="text-xs text-gray-300" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>
+              <strong style={{ color: '#00C8DC' }}>Low Risk</strong> means the AI-disruption clock hasn't started yet — incumbents and AI-native entrants haven't captured the market, and the competitive window remains open.{' '}
+              <strong style={{ color: '#00C8DC' }}>Low Readiness</strong> doesn't mean the company is weak — it means they own the workflow (System of Record) but haven't yet built the AI layer.{' '}
+              That gap is exactly where patient PE capital creates value: <em>buy before the AI premium is priced in, build the AI layer, and exit at a meaningfully higher multiple</em>.{' '}
+              BUILD MODE is never a NO-GO — the investment question is simply: <strong style={{ color: '#E0E0E0' }}>"Can we close the readiness gaps within a 3-5 year hold period?"</strong>
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* What to Fix — Investment Roadmap */}
       {sb.what_to_fix && sb.what_to_fix.length > 0 && (

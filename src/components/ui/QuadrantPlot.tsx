@@ -8,11 +8,11 @@ interface QuadrantPlotProps {
   companyName: string;
 }
 
-const QUADRANT_CONFIG: Record<Quadrant, { label: string; color: string; bg: string }> = {
-  EXECUTE: { label: 'EXECUTE', color: '#1DB954', bg: 'rgba(29,185,84,0.08)' },
-  RACE_MODE: { label: 'RACE MODE', color: '#FFB300', bg: 'rgba(255,179,0,0.08)' },
-  BUILD_MODE: { label: 'BUILD MODE', color: '#94A3B8', bg: 'rgba(100,116,139,0.08)' },
-  DANGER_ZONE: { label: 'DANGER ZONE', color: '#D32F2F', bg: 'rgba(211,47,47,0.08)' },
+const QUADRANT_CONFIG: Record<Quadrant, { label: string; color: string; bg: string; sublabel: string }> = {
+  EXECUTE:    { label: 'EXECUTE',     color: '#1DB954', bg: 'rgba(29,185,84,0.08)',   sublabel: 'Low risk · High readiness · Act now' },
+  RACE_MODE:  { label: 'RACE MODE',   color: '#FFB300', bg: 'rgba(255,179,0,0.08)',   sublabel: 'High risk · High readiness · Move fast' },
+  BUILD_MODE: { label: 'BUILD MODE',  color: '#00C8DC', bg: 'rgba(0,200,220,0.08)',   sublabel: 'Low risk · Open window · Build the AI layer' },
+  DANGER_ZONE:{ label: 'DANGER ZONE', color: '#D32F2F', bg: 'rgba(211,47,47,0.08)',   sublabel: 'High risk · Readiness gaps · Deep diligence required' },
 };
 
 export function QuadrantPlot({ riskScore, readinessScore, quadrant, companyName }: QuadrantPlotProps) {
@@ -39,7 +39,7 @@ export function QuadrantPlot({ riskScore, readinessScore, quadrant, companyName 
           {/* Q1: EXECUTE (bottom-right, low risk, high readiness) */}
           <rect x={plotSize/2} y={plotSize/2} width={inner/2} height={inner/2} fill="rgba(29,185,84,0.07)" />
           {/* Q3: BUILD MODE (bottom-left, low risk, low readiness) */}
-          <rect x={padding} y={plotSize/2} width={inner/2} height={inner/2} fill="rgba(100,116,139,0.07)" />
+          <rect x={padding} y={plotSize/2} width={inner/2} height={inner/2} fill="rgba(0,200,220,0.06)" />
           {/* Q4: DANGER ZONE (top-left, high risk, low readiness) */}
           <rect x={padding} y={padding} width={inner/2} height={inner/2} fill="rgba(211,47,47,0.07)" />
 
@@ -53,7 +53,7 @@ export function QuadrantPlot({ riskScore, readinessScore, quadrant, companyName 
           {/* Quadrant labels */}
           <text x={plotSize*0.75} y={plotSize*0.25+4} textAnchor="middle" fill="#FFB300" fontSize="8" fontFamily="Montserrat" fontWeight="700" opacity="0.8">RACE MODE</text>
           <text x={plotSize*0.75} y={plotSize*0.75+4} textAnchor="middle" fill="#1DB954" fontSize="8" fontFamily="Montserrat" fontWeight="700" opacity="0.8">EXECUTE</text>
-          <text x={plotSize*0.25} y={plotSize*0.75+4} textAnchor="middle" fill="#94A3B8" fontSize="8" fontFamily="Montserrat" fontWeight="700" opacity="0.8">BUILD MODE</text>
+          <text x={plotSize*0.25} y={plotSize*0.75+4} textAnchor="middle" fill="#00C8DC" fontSize="8" fontFamily="Montserrat" fontWeight="700" opacity="0.8">BUILD MODE</text>
           <text x={plotSize*0.25} y={plotSize*0.25+4} textAnchor="middle" fill="#D32F2F" fontSize="8" fontFamily="Montserrat" fontWeight="700" opacity="0.8">DANGER ZONE</text>
 
           {/* Axis labels */}
@@ -93,16 +93,21 @@ export function QuadrantPlot({ riskScore, readinessScore, quadrant, companyName 
       </div>
 
       {/* Quadrant label below */}
-      <div
-        className="px-4 py-1.5 rounded-lg text-sm font-bold tracking-widest"
-        style={{
-          background: QUADRANT_CONFIG[quadrant].bg,
-          border: `1px solid ${QUADRANT_CONFIG[quadrant].color}`,
-          color: QUADRANT_CONFIG[quadrant].color,
-          fontFamily: 'Montserrat',
-        }}
-      >
-        {QUADRANT_CONFIG[quadrant].label}
+      <div className="flex flex-col items-center gap-1">
+        <div
+          className="px-4 py-1.5 rounded-lg text-sm font-bold tracking-widest"
+          style={{
+            background: QUADRANT_CONFIG[quadrant].bg,
+            border: `1px solid ${QUADRANT_CONFIG[quadrant].color}`,
+            color: QUADRANT_CONFIG[quadrant].color,
+            fontFamily: 'Montserrat',
+          }}
+        >
+          {QUADRANT_CONFIG[quadrant].label}
+        </div>
+        <div className="text-xs opacity-60 text-center" style={{ color: QUADRANT_CONFIG[quadrant].color, fontFamily: 'Montserrat' }}>
+          {QUADRANT_CONFIG[quadrant].sublabel}
+        </div>
       </div>
     </div>
   );
