@@ -10156,7 +10156,7 @@ var handler = async (event) => {
     if (!company_name) {
       return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
     }
-    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
+    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-7";
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const docContext = document_text ? `
 
@@ -10171,7 +10171,8 @@ CRITICAL INSTRUCTIONS:
 3. For funding stage, infer from company age, size, and any known investors
 4. Be specific about pricing models \u2014 seat-based, per-patient, per-visit, usage-based, etc.
 5. Pricing flexibility (A5) is critical \u2014 can they charge outcome-based or AI-usage-based fees?
-6. Red flags should be material investment risks, not minor data gaps`;
+6. Red flags should be material investment risks, not minor data gaps
+7. TODAY IS APRIL 17, 2026. Your knowledge extends through early 2026. Use this as the anchor date for all assessments.`;
     const userPrompt = `Build a structured company profile for Eagle Vision investment screening.
 
 COMPANY: ${company_name}
@@ -10254,7 +10255,7 @@ Return ONLY valid JSON with NO markdown fences:
       "key": "growth_and_momentum",
       "value": {
         "growth_signals": ["<any evidence of growth \u2014 new customers, revenue announcements, headcount growth>"],
-        "recent_milestones": ["<product launches, partnerships, expansions, awards in last 2 years>"],
+        "recent_milestones": ["<product launches, partnerships, expansions, awards in last 18 months (through April 2026)>"],
         "press_coverage": ["<notable press, analyst coverage, or awards>"]
       },
       "confidence": "H"|"M"|"L",

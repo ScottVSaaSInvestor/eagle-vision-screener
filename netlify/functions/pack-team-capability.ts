@@ -63,7 +63,7 @@ const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'company_name required' }) };
     }
 
-    const model = process.env.ANTHROPIC_MODEL || 'claude-opus-4-5';
+    const model = process.env.ANTHROPIC_MODEL || 'claude-opus-4-7';
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const hasRichEvidence = evidenceContext.length > 1000;
 
@@ -75,7 +75,8 @@ CRITICAL INSTRUCTIONS:
 3. Be specific — name actual people, their backgrounds, and what they've built
 4. Distinguish between "AI features" (product) and "AI capability" (team that can build AI)
 5. A company hiring AI engineers shows intent; a company that HAS shipped AI features shows execution
-6. Never give 0.5 neutral defaults — make a real assessment with real reasoning`;
+6. Never give 0.5 neutral defaults — make a real assessment with real reasoning
+7. TODAY IS APRIL 17, 2026. Your knowledge extends through early 2026 — use it for all assessments.`;
 
     const userPrompt = `Assess the AI/ML team capability and leadership AI clarity for this vertical SaaS company.
 

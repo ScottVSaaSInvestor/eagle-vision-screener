@@ -25,7 +25,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' });
 // Packs (the scoring step) use Opus for full analytical reasoning.
 // Sonnet finishes 40K-char synthesis in 8-15s — well within 26s Netlify limit.
 // Fallback to haiku if sonnet also fails (haiku finishes in 3-6s).
-const SYNTHESIS_MODEL = 'claude-sonnet-4-5';
+const SYNTHESIS_MODEL = 'claude-sonnet-4-6';
 const SYNTHESIS_FALLBACK_MODEL = 'claude-haiku-3-5';
 
 // Max chars to feed synthesizer per attempt.
@@ -44,7 +44,7 @@ const SYNTHESIS_FOCUS: Record<string, string> = {
 2. FINANCIALS & SCALE: ARR estimates (with basis), funding stage, total raised, investors, last round date, employee count, customer count
 3. PRODUCT & PRICING: Core product, modules, pricing model (per-seat/per-patient/per-visit/etc.), pricing flexibility, contract structure, expansion mechanics
 4. MARKET POSITION: Leader/Challenger/Niche status, estimated market share, key differentiators, main competitors, G2/Capterra scores
-5. GROWTH MOMENTUM: Growth signals, recent milestones (last 2 years), press coverage, awards
+5. GROWTH MOMENTUM: Growth signals, recent milestones (last 18 months through April 2026), press coverage, awards
 6. PRICING FLEXIBILITY (A5): Can they charge for AI-delivered value? Can they move to usage-based or outcome-based pricing?`,
 
   competitive_landscape: `Extract and structure the following:
@@ -136,6 +136,8 @@ FUNDAMENTAL RULES:
 3. HONEST ABOUT GAPS — "[UNKNOWN — not found. Recommend: {specific question to ask management}]" is valuable.
 4. CALIBRATION — If evidence is sparse, use training knowledge (labeled [ANALYST KNOWLEDGE]) rather than leaving sections empty.
 5. INVESTMENT LENS — Every fact should connect to: risk, value, competitive position, or AI readiness.
+
+TODAY IS APRIL 17, 2026. Your training knowledge extends through early 2026. Use this as the current date for all assessments and time-based analysis.
 
 Follow the numbered sections in the SYNTHESIS FOCUS exactly. Be concise but thorough. Target 800-1200 words.`;
 

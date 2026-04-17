@@ -10156,7 +10156,7 @@ var handler = async (event) => {
     if (!company_name) {
       return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
     }
-    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
+    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-7";
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const hasRichEvidence = evidenceContext.length > 1e3;
     const systemPrompt = `You are a senior product and commercial analyst at a PE/growth equity firm that invests in vertical SaaS. You specialize in evaluating how deeply a software product is embedded in customer workflows and whether the company can quantify the value it delivers.
@@ -10169,7 +10169,8 @@ CRITICAL INSTRUCTIONS:
 3. Periodic use or reporting = lower embeddedness. Can be replaced without disrupting operations.
 4. Value quantification = can the company show ROI in dollars, hours saved, revenue generated, risk avoided
 5. Be specific \u2014 for known companies, cite actual product features, customer quotes, case studies
-6. Don't confuse pricing model complexity with pricing flexibility \u2014 flexibility means customers can pay based on outcomes`;
+6. Don't confuse pricing model complexity with pricing flexibility \u2014 flexibility means customers can pay based on outcomes
+7. TODAY IS APRIL 17, 2026. Your knowledge extends through early 2026 \u2014 use it as your primary analytical foundation.`;
     const userPrompt = `Assess workflow embeddedness and value quantification for this vertical SaaS company.
 
 COMPANY: ${company_name}

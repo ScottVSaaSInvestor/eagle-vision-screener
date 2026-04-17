@@ -63,7 +63,7 @@ const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'company_name required' }) };
     }
 
-    const model = process.env.ANTHROPIC_MODEL || 'claude-opus-4-5';
+    const model = process.env.ANTHROPIC_MODEL || 'claude-opus-4-7';
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const hasRichEvidence = evidenceContext.length > 1000;
 
@@ -79,7 +79,8 @@ CRITICAL INSTRUCTIONS:
 2. Infer data richness from the product description — a home health SOR collects visit notes, medications, outcomes, billing codes, etc.
 3. Distinguish between "we have data" and "we have AI-training-ready labeled outcome data"
 4. Architecture signals: job postings for ML engineers, cloud infrastructure, APIs, engineering blogs
-5. Be specific — name the types of data, the architecture signals, the AI features shipped`;
+5. Be specific — name the types of data, the architecture signals, the AI features shipped
+6. TODAY IS APRIL 17, 2026. Your knowledge extends through early 2026 — treat this as the current date.`;
 
     const userPrompt = `Assess data foundation quality, outcome-labeled data assets, and architecture readiness for AI at this vertical SaaS company.
 

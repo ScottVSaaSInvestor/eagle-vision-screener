@@ -10207,7 +10207,7 @@ var handler = async (event) => {
         body: JSON.stringify({ error: "dimension and company_name required" })
       };
     }
-    const model = "claude-sonnet-4-5";
+    const model = "claude-sonnet-4-6";
     const dimensionContext = DIMENSION_CONTEXT[dimension] || `You are identifying research gaps for ${dimension} analysis.`;
     const systemPrompt = `You are a senior investment research analyst at a PE/growth equity firm. Your job is to analyze partial research evidence and identify the most critical gaps that prevent a thorough investment-grade assessment.
 
@@ -10219,7 +10219,8 @@ RULES:
 3. Prioritize queries most likely to yield investable signal
 4. Queries should be Google-searchable (include company name, specific terms)
 5. Vary query structure: include some with quotes for exact phrases, some without
-6. Do NOT generate queries for things already well-covered in the evidence`;
+6. Do NOT generate queries for things already well-covered in the evidence
+7. TODAY IS APRIL 17, 2026. Your knowledge extends through early 2026 \u2014 use current date context when generating queries.`;
     const evidenceLen = (raw_evidence || "").length;
     const userPrompt = `Analyze this research evidence for ${company_name} (${vertical || "vertical SaaS"}) in the "${dimension}" dimension.
 

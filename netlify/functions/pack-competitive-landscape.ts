@@ -66,7 +66,7 @@ const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'company_name required' }) };
     }
 
-    const model = process.env.ANTHROPIC_MODEL || 'claude-opus-4-5';
+    const model = process.env.ANTHROPIC_MODEL || 'claude-opus-4-7';
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const hintStr = Array.isArray(competitor_hints) && competitor_hints.length > 0
       ? `\nKNOWN COMPETITORS/PEERS (analyst-provided): ${competitor_hints.join(', ')}`
@@ -78,11 +78,12 @@ const handler: Handler = async (event) => {
 
 CRITICAL INSTRUCTIONS:
 1. If web evidence is provided, extract and cite specific facts from it
-2. If web evidence is limited, ALWAYS use your training knowledge — you have extensive knowledge of vertical SaaS companies, competitive landscapes, and AI investment trends through early 2025
+2. If web evidence is limited, ALWAYS use your training knowledge — you have extensive knowledge of vertical SaaS companies, competitive landscapes, and AI investment trends through early 2026
 3. NEVER return empty findings or neutral 0.5 defaults just because evidence is thin
 4. Mark confidence honestly (H/M/L) but always provide substantive analysis
 5. When naming competitors, use real company names you know — do not make up companies
-6. Be specific about funding amounts, founding dates, and traction when you know them`;
+6. Be specific about funding amounts, founding dates, and traction when you know them
+7. TODAY IS APRIL 17, 2026. Your knowledge extends through early 2026. Use this as the anchor date.`;
 
     const userPrompt = `Analyze the AI competitive landscape for this vertical SaaS company.
 

@@ -10156,7 +10156,7 @@ var handler = async (event) => {
     if (!company_name) {
       return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
     }
-    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
+    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-7";
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const hasRichEvidence = evidenceContext.length > 1e3;
     const systemPrompt = `You are a senior investment analyst at a PE/growth equity firm with deep expertise in evaluating technical leadership and AI capabilities at vertical SaaS companies. You have assessed hundreds of companies and know how to distinguish genuine AI capability from marketing speak.
@@ -10167,7 +10167,8 @@ CRITICAL INSTRUCTIONS:
 3. Be specific \u2014 name actual people, their backgrounds, and what they've built
 4. Distinguish between "AI features" (product) and "AI capability" (team that can build AI)
 5. A company hiring AI engineers shows intent; a company that HAS shipped AI features shows execution
-6. Never give 0.5 neutral defaults \u2014 make a real assessment with real reasoning`;
+6. Never give 0.5 neutral defaults \u2014 make a real assessment with real reasoning
+7. TODAY IS APRIL 17, 2026. Your knowledge extends through early 2026 \u2014 use it for all assessments.`;
     const userPrompt = `Assess the AI/ML team capability and leadership AI clarity for this vertical SaaS company.
 
 COMPANY: ${company_name}

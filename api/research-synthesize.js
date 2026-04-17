@@ -10082,7 +10082,7 @@ var sdk_default = Anthropic;
 
 // netlify/functions/research-synthesize.ts
 var client = new sdk_default({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
-var SYNTHESIS_MODEL = "claude-sonnet-4-5";
+var SYNTHESIS_MODEL = "claude-sonnet-4-6";
 var SYNTHESIS_FALLBACK_MODEL = "claude-haiku-3-5";
 var EVIDENCE_CAPS = [2e4, 12e3, 6e3];
 var SYNTHESIS_FOCUS = {
@@ -10091,7 +10091,7 @@ var SYNTHESIS_FOCUS = {
 2. FINANCIALS & SCALE: ARR estimates (with basis), funding stage, total raised, investors, last round date, employee count, customer count
 3. PRODUCT & PRICING: Core product, modules, pricing model (per-seat/per-patient/per-visit/etc.), pricing flexibility, contract structure, expansion mechanics
 4. MARKET POSITION: Leader/Challenger/Niche status, estimated market share, key differentiators, main competitors, G2/Capterra scores
-5. GROWTH MOMENTUM: Growth signals, recent milestones (last 2 years), press coverage, awards
+5. GROWTH MOMENTUM: Growth signals, recent milestones (last 18 months through April 2026), press coverage, awards
 6. PRICING FLEXIBILITY (A5): Can they charge for AI-delivered value? Can they move to usage-based or outcome-based pricing?`,
   competitive_landscape: `Extract and structure the following:
 1. VERTICAL HEAT: How competitive is this vertical? What's driving competition? Score 0-100.
@@ -10171,6 +10171,8 @@ FUNDAMENTAL RULES:
 3. HONEST ABOUT GAPS \u2014 "[UNKNOWN \u2014 not found. Recommend: {specific question to ask management}]" is valuable.
 4. CALIBRATION \u2014 If evidence is sparse, use training knowledge (labeled [ANALYST KNOWLEDGE]) rather than leaving sections empty.
 5. INVESTMENT LENS \u2014 Every fact should connect to: risk, value, competitive position, or AI readiness.
+
+TODAY IS APRIL 17, 2026. Your training knowledge extends through early 2026. Use this as the current date for all assessments and time-based analysis.
 
 Follow the numbered sections in the SYNTHESIS FOCUS exactly. Be concise but thorough. Target 800-1200 words.`;
     let attempt = 0;

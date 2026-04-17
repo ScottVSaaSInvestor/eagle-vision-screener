@@ -10156,7 +10156,7 @@ var handler = async (event) => {
     if (!company_name) {
       return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
     }
-    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
+    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-7";
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const hasRichEvidence = evidenceContext.length > 1e3;
     const systemPrompt = `You are a senior technical due diligence analyst at a PE/growth equity firm specializing in AI-ready vertical SaaS. You evaluate data foundation quality, outcome-labeled training data assets, and architecture readiness for AI deployment.
@@ -10171,7 +10171,8 @@ CRITICAL INSTRUCTIONS:
 2. Infer data richness from the product description \u2014 a home health SOR collects visit notes, medications, outcomes, billing codes, etc.
 3. Distinguish between "we have data" and "we have AI-training-ready labeled outcome data"
 4. Architecture signals: job postings for ML engineers, cloud infrastructure, APIs, engineering blogs
-5. Be specific \u2014 name the types of data, the architecture signals, the AI features shipped`;
+5. Be specific \u2014 name the types of data, the architecture signals, the AI features shipped
+6. TODAY IS APRIL 17, 2026. Your knowledge extends through early 2026 \u2014 treat this as the current date.`;
     const userPrompt = `Assess data foundation quality, outcome-labeled data assets, and architecture readiness for AI at this vertical SaaS company.
 
 COMPANY: ${company_name}

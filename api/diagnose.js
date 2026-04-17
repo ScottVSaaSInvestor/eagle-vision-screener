@@ -10089,7 +10089,7 @@ var handler = async (event) => {
     checks: {}
   };
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  const anthropicModel = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
+  const anthropicModel = process.env.ANTHROPIC_MODEL || "claude-opus-4-7";
   if (!anthropicKey) {
     results.checks.anthropic = { status: "MISSING", message: "ANTHROPIC_API_KEY env var not set" };
   } else {

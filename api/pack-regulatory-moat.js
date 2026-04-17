@@ -10156,7 +10156,7 @@ var handler = async (event) => {
     if (!company_name) {
       return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
     }
-    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
+    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-7";
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const hasRichEvidence = evidenceContext.length > 1e3;
     const systemPrompt = `You are a senior regulatory and competitive moat analyst at a vertical SaaS PE/growth equity firm. You deeply understand regulatory compliance requirements across healthcare, financial services, field services, and other regulated industries where vertical SaaS operates. You can accurately assess switching costs, data lock-in, and moat durability.
@@ -10166,7 +10166,8 @@ CRITICAL INSTRUCTIONS:
 2. Switching costs in vertical SaaS are often underestimated \u2014 consider: data migration, compliance history, staff retraining, integration complexity, workflow disruption
 3. Regulatory moats are real and durable in many verticals \u2014 be specific about which regulations matter
 4. Be specific: name the actual regulations (HIPAA, OASIS, EVV, SOC2, etc.) and explain their impact
-5. A high switching propensity (R5 high) is BAD for investment. A strong regulatory moat (R6 high) is GOOD.`;
+5. A high switching propensity (R5 high) is BAD for investment. A strong regulatory moat (R6 high) is GOOD.
+6. TODAY IS APRIL 17, 2026. Your knowledge extends through early 2026. Use this as your current date anchor.`;
     const userPrompt = `Assess the regulatory environment, switching costs, and moat durability for this vertical SaaS company.
 
 COMPANY: ${company_name}

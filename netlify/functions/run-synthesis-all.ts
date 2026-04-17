@@ -42,7 +42,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' });
 
-const SYNTHESIS_MODEL         = 'claude-sonnet-4-5';
+const SYNTHESIS_MODEL         = 'claude-sonnet-4-6';
 const SYNTHESIS_FALLBACK_MODEL = 'claude-haiku-3-5';
 
 // Per-attempt evidence caps. Server-side so we can be more generous than browser version.
@@ -67,7 +67,7 @@ const SYNTHESIS_FOCUS: Record<Dimension, string> = {
 2. FINANCIALS & SCALE: ARR estimates (with basis), funding stage, total raised, investors, last round date, employee count, customer count
 3. PRODUCT & PRICING: Core product, modules, pricing model (per-seat/per-patient/per-visit/etc.), pricing flexibility, contract structure, expansion mechanics
 4. MARKET POSITION: Leader/Challenger/Niche status, estimated market share, key differentiators, main competitors, G2/Capterra scores
-5. GROWTH MOMENTUM: Growth signals, recent milestones (last 2 years), press coverage, awards
+5. GROWTH MOMENTUM: Growth signals, recent milestones (last 18 months through April 2026), press coverage, awards
 6. PRICING FLEXIBILITY (A5): Can they charge for AI-delivered value? Can they move to usage-based or outcome-based pricing?`,
 
   competitive_landscape: `Extract and structure the following:
@@ -133,6 +133,8 @@ FUNDAMENTAL RULES:
 3. HONEST ABOUT GAPS — "[UNKNOWN — not found. Recommend: {specific question to ask management}]" is valuable.
 4. CALIBRATION — If evidence is sparse, use training knowledge (labeled [ANALYST KNOWLEDGE]) rather than leaving sections empty.
 5. INVESTMENT LENS — Every fact should connect to: AI risk, AI readiness, competitive position, or value creation potential.
+
+TODAY IS APRIL 17, 2026. Your training knowledge extends through early 2026. Treat this as the current date for all assessments, timeline analysis, and recent event references.
 
 Follow the numbered sections in the SYNTHESIS FOCUS exactly. Be concise but thorough. Target 800-1200 words per brief.`;
 

@@ -10156,7 +10156,7 @@ var handler = async (event) => {
     if (!company_name) {
       return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
     }
-    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-5";
+    const model = process.env.ANTHROPIC_MODEL || "claude-opus-4-7";
     const evidenceContext = buildEvidenceContext(evidence_texts || []);
     const hasRichEvidence = evidenceContext.length > 1e3;
     const systemPrompt = `You are a senior market analyst at a PE/growth equity firm specializing in vertical SaaS AI investments. You have deep knowledge of vertical SaaS market sizes, growth rates, PE deal activity, and AI adoption curves across industries.
@@ -10164,12 +10164,12 @@ var handler = async (event) => {
 You evaluate market timing risk \u2014 the risk that an investment is either too early (no market yet) or too late (market already consolidated with AI-native winners emerging). The ideal window is when AI adoption is beginning but before consolidation.
 
 CRITICAL INSTRUCTIONS:
-1. You have extensive knowledge of market sizes and PE deal activity through early 2025 \u2014 use it
+1. You have extensive knowledge of market sizes and PE deal activity through early 2026 \u2014 use it
 2. For well-known verticals (home health, dental, HVAC, legal, restaurant, etc.) you know the TAM, CAGR, and investment activity
 3. "Window open" means: AI adoption just beginning, clear market growth, PE deals active, no dominant AI-native winner yet
 4. "Window closing" means: major AI-native Series C+ companies emerging, market consolidating
 5. Be specific about TAM numbers, CAGR estimates, and recent deals you know about
-6. Today is April 2026 \u2014 your knowledge extends to early 2025, so factor in 1-year time progression`;
+6. TODAY IS APRIL 17, 2026. Your knowledge extends through early 2026 \u2014 use it as your primary analytical foundation`;
     const userPrompt = `Assess market timing risk for an AI investment in this vertical SaaS company's market.
 
 COMPANY: ${company_name}
@@ -10192,7 +10192,7 @@ Return ONLY valid JSON with NO markdown fences:
     {
       "key": "market_size_and_growth",
       "value": {
-        "tam_estimate": "<specific dollar figure with basis \u2014 e.g. '$2.1B US home health software market (Mordor Intelligence 2024)'>",
+        "tam_estimate": "<specific dollar figure with basis \u2014 e.g. '$2.1B US home health software market (Mordor Intelligence 2025-2026)'>",
         "sam_estimate": "<serviceable addressable market \u2014 the target company's realistic addressable portion>",
         "cagr_estimate": "<CAGR % for this vertical software market>",
         "growth_drivers": ["<specific factors driving market growth>"],
