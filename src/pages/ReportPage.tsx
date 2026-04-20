@@ -145,7 +145,7 @@ export function ReportPage() {
             >
               ← Dashboard
             </button>
-            <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Montserrat' }}>
+            <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem' }}>
               {inputs.company_name}
             </h1>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
@@ -172,7 +172,7 @@ export function ReportPage() {
                   background: sb.disposition === 'ADVANCE' ? 'rgba(29,185,84,0.15)' : sb.disposition === 'PASS' ? 'rgba(211,47,47,0.15)' : 'rgba(0,200,220,0.15)',
                   color: sb.disposition === 'ADVANCE' ? '#1DB954' : sb.disposition === 'PASS' ? '#D32F2F' : '#00C8DC',
                   border: `1px solid ${sb.disposition === 'ADVANCE' ? 'rgba(29,185,84,0.3)' : sb.disposition === 'PASS' ? 'rgba(211,47,47,0.3)' : 'rgba(0,200,220,0.3)'}`,
-                  fontFamily: 'Montserrat',
+                  fontFamily: 'JetBrains Mono, monospace',
                 }}>
                   {sb.disposition}
                 </span>
@@ -200,7 +200,7 @@ export function ReportPage() {
               onClick={() => setActiveTab(tab.id)}
               className="px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors"
               style={{
-                fontFamily: 'Montserrat',
+                fontFamily: 'JetBrains Mono, monospace',
                 color: activeTab === tab.id ? '#C5A572' : '#64748B',
                 background: 'transparent',
                 border: 'none',
@@ -252,7 +252,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
         <Card variant="elevated" padding="sm">
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1">
-              <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>COMPANY BRIEF</div>
+              <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>COMPANY BRIEF</div>
               <p className="text-sm text-gray-200 mb-3" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>
                 {profileOverview.description || `${record.inputs.company_name} is a ${profileOverview.vertical || 'vertical SaaS'} company.`}
               </p>
@@ -274,7 +274,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
 
         {/* Left: AI Threat Level */}
         <Card variant="elevated" className="flex flex-col">
-          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
             AI THREAT LEVEL
           </div>
           <div className="flex flex-col items-center py-4 flex-1 justify-center">
@@ -284,7 +284,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
               style={{
                 color: THREAT_COLOR[threatLevel],
                 background: THREAT_BG[threatLevel],
-                fontFamily: 'Montserrat',
+                fontFamily: 'JetBrains Mono, monospace',
                 border: `2px solid ${THREAT_COLOR[threatLevel]}40`,
               }}
             >
@@ -325,7 +325,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
 
         {/* Center: AI Readiness Stage */}
         <Card variant="elevated" className="flex flex-col">
-          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
             AI READINESS STAGE
           </div>
           <div className="flex flex-col items-center py-2 flex-1">
@@ -333,7 +333,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
             <div className="flex items-center gap-3 mb-3">
               <span className="text-3xl">{STAGE_ICON[stage as ReadinessStage]}</span>
               <div>
-                <div className="text-lg font-black" style={{ color: STAGE_COLOR[stage as ReadinessStage], fontFamily: 'Montserrat' }}>
+                <div className="text-lg font-black" style={{ color: STAGE_COLOR[stage as ReadinessStage], fontFamily: 'JetBrains Mono, monospace' }}>
                   {stageAssessment?.stage_label ?? `Stage ${stage}`}
                 </div>
                 <div className="text-xs text-gray-500 font-mono">{sb.readiness_score.toFixed(0)}/100 readiness</div>
@@ -367,7 +367,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
                 background: stageAssessment?.hold_period_achievable !== false ? 'rgba(29,185,84,0.1)' : 'rgba(211,47,47,0.1)',
                 border: `1px solid ${stageAssessment?.hold_period_achievable !== false ? 'rgba(29,185,84,0.3)' : 'rgba(211,47,47,0.3)'}`,
                 color: stageAssessment?.hold_period_achievable !== false ? '#1DB954' : '#EF5350',
-                fontFamily: 'Montserrat',
+                fontFamily: 'JetBrains Mono, monospace',
                 fontWeight: 600,
               }}>
                 {stageAssessment?.hold_period_achievable !== false
@@ -380,7 +380,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
 
         {/* Right: Investment Verdict */}
         <Card variant="elevated" className="flex flex-col">
-          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
             INVESTMENT VERDICT
           </div>
           <div className="flex flex-col items-center py-4 flex-1 justify-center">
@@ -390,7 +390,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
               style={{
                 color: sb.quadrant === 'EXECUTE' ? '#1DB954' : sb.quadrant === 'RACE_MODE' ? '#FFB300' : sb.quadrant === 'BUILD_MODE' ? '#00C8DC' : '#D32F2F',
                 background: sb.quadrant === 'EXECUTE' ? 'rgba(29,185,84,0.1)' : sb.quadrant === 'RACE_MODE' ? 'rgba(255,179,0,0.1)' : sb.quadrant === 'BUILD_MODE' ? 'rgba(0,200,220,0.1)' : 'rgba(211,47,47,0.1)',
-                fontFamily: 'Montserrat',
+                fontFamily: 'JetBrains Mono, monospace',
               }}
             >
               {sb.quadrant.replace('_', ' ')}
@@ -401,7 +401,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
               className="text-3xl font-black mt-2 mb-1"
               style={{
                 color: sb.disposition === 'ADVANCE' ? '#1DB954' : sb.disposition === 'PASS' ? '#D32F2F' : '#00C8DC',
-                fontFamily: 'Montserrat',
+                fontFamily: 'JetBrains Mono, monospace',
               }}
             >
               {sb.disposition}
@@ -420,7 +420,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
 
             {sb.critical_gaps.length > 0 && (
               <div className="px-3 py-2 rounded-lg w-full" style={{ background: 'rgba(245,124,0,0.08)', border: '1px solid rgba(245,124,0,0.3)' }}>
-                <div className="text-xs font-semibold text-center" style={{ color: '#F57C00', fontFamily: 'Montserrat' }}>
+                <div className="text-xs font-semibold text-center" style={{ color: '#F57C00', fontFamily: 'JetBrains Mono, monospace' }}>
                   {sb.critical_gaps.length} readiness gap{sb.critical_gaps.length > 1 ? 's' : ''} to close on the path to SOA: {sb.critical_gaps.join(', ')}
                 </div>
               </div>
@@ -433,7 +433,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
       <Card variant="elevated">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-lg">🦅</span>
-          <div className="text-xs font-semibold tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
             PERCH EXECUTIVE SUMMARY
           </div>
           <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded" style={{
@@ -470,7 +470,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
         <Card variant="navy">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-green-400 text-lg">✓</span>
-            <span className="text-sm font-bold" style={{ color: '#1DB954', fontFamily: 'Montserrat' }}>Investment Positives</span>
+            <span className="text-sm font-bold" style={{ color: '#1DB954', fontFamily: 'JetBrains Mono, monospace' }}>Investment Positives</span>
           </div>
           <ul className="space-y-3">
             {sb.lean_in_reasons.length > 0 ? sb.lean_in_reasons.map((r, i) => (
@@ -487,7 +487,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
         <Card variant="navy">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-yellow-400 text-lg">⚠</span>
-            <span className="text-sm font-bold" style={{ color: '#FFB300', fontFamily: 'Montserrat' }}>Risk & Hesitation Signals</span>
+            <span className="text-sm font-bold" style={{ color: '#FFB300', fontFamily: 'JetBrains Mono, monospace' }}>Risk & Hesitation Signals</span>
           </div>
           <ul className="space-y-3">
             {sb.hesitate_reasons.length > 0 ? sb.hesitate_reasons.map((r, i) => (
@@ -510,7 +510,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
         }}>
           <div className="text-2xl flex-shrink-0">🏗️</div>
           <div>
-            <div className="text-sm font-bold mb-1" style={{ color: '#00C8DC', fontFamily: 'Montserrat' }}>
+            <div className="text-sm font-bold mb-1" style={{ color: '#00C8DC', fontFamily: 'JetBrains Mono, monospace' }}>
               BUILD MODE — Why This Is a Positive Signal
             </div>
             <p className="text-xs text-gray-300" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>
@@ -528,7 +528,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
         <Card variant="navy">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-lg">🛠</span>
-            <span className="text-sm font-bold" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>Post-Close AI Roadmap</span>
+            <span className="text-sm font-bold" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>Post-Close AI Roadmap</span>
             <span className="text-xs text-gray-500 ml-2" style={{ fontFamily: 'Inter' }}>Close these gaps to reach Stage 3 in the hold period</span>
           </div>
           <ul className="space-y-2">
@@ -550,7 +550,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {stageAssessment.evidence_for_stage.length > 0 && (
             <Card variant="navy">
-              <div className="text-xs font-semibold tracking-widest mb-3" style={{ color: '#1DB954', fontFamily: 'Montserrat' }}>
+              <div className="text-xs font-semibold tracking-widest mb-3" style={{ color: '#1DB954', fontFamily: 'JetBrains Mono, monospace' }}>
                 EVIDENCE FOR {stageAssessment.stage_label.toUpperCase()}
               </div>
               <ul className="space-y-2">
@@ -565,7 +565,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
           )}
           {stageAssessment.gaps_to_next_stage.length > 0 && (
             <Card variant="navy">
-              <div className="text-xs font-semibold tracking-widest mb-3" style={{ color: '#F57C00', fontFamily: 'Montserrat' }}>
+              <div className="text-xs font-semibold tracking-widest mb-3" style={{ color: '#F57C00', fontFamily: 'JetBrains Mono, monospace' }}>
                 GAPS TO NEXT STAGE
               </div>
               <ul className="space-y-2">
@@ -584,14 +584,14 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
       {/* Company Profile Snapshot */}
       {companyProfile && (profileFinancials || profileProduct || profileMarket) && (
         <Card variant="navy">
-          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
             COMPANY PROFILE SNAPSHOT
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {profileFinancials?.arr_range_estimate && (
               <div className="p-3 rounded-lg" style={{ background: 'rgba(0,58,99,0.4)' }}>
-                <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: 'Montserrat' }}>EST. ARR</div>
-                <div className="text-sm font-bold text-white" style={{ fontFamily: 'Montserrat' }}>{profileFinancials.arr_range_estimate}</div>
+                <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>EST. ARR</div>
+                <div className="text-sm font-bold text-white" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{profileFinancials.arr_range_estimate}</div>
                 {profileFinancials.arr_estimation_basis && (
                   <div className="text-xs text-gray-500 mt-1">{profileFinancials.arr_estimation_basis}</div>
                 )}
@@ -599,26 +599,26 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
             )}
             {profileFinancials?.funding_stage && (
               <div className="p-3 rounded-lg" style={{ background: 'rgba(0,58,99,0.4)' }}>
-                <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: 'Montserrat' }}>FUNDING</div>
-                <div className="text-sm font-bold text-white" style={{ fontFamily: 'Montserrat' }}>{profileFinancials.funding_stage}</div>
+                <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>FUNDING</div>
+                <div className="text-sm font-bold text-white" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{profileFinancials.funding_stage}</div>
               </div>
             )}
             {profileProduct?.pricing_model && (
               <div className="p-3 rounded-lg" style={{ background: 'rgba(0,58,99,0.4)' }}>
-                <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: 'Montserrat' }}>PRICING MODEL</div>
-                <div className="text-sm font-bold text-white" style={{ fontFamily: 'Montserrat' }}>{profileProduct.pricing_model}</div>
+                <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>PRICING MODEL</div>
+                <div className="text-sm font-bold text-white" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{profileProduct.pricing_model}</div>
               </div>
             )}
             {profileMarket?.market_position_category && (
               <div className="p-3 rounded-lg" style={{ background: 'rgba(0,58,99,0.4)' }}>
-                <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: 'Montserrat' }}>MARKET POSITION</div>
-                <div className="text-sm font-bold text-white" style={{ fontFamily: 'Montserrat' }}>{profileMarket.market_position_category}</div>
+                <div className="text-xs text-gray-500 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>MARKET POSITION</div>
+                <div className="text-sm font-bold text-white" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{profileMarket.market_position_category}</div>
               </div>
             )}
           </div>
           {profileMarket?.key_differentiators?.length > 0 && (
             <div className="mt-4">
-              <div className="text-xs text-gray-500 mb-2" style={{ fontFamily: 'Montserrat' }}>KEY DIFFERENTIATORS</div>
+              <div className="text-xs text-gray-500 mb-2" style={{ fontFamily: 'JetBrains Mono, monospace' }}>KEY DIFFERENTIATORS</div>
               <div className="flex flex-wrap gap-2">
                 {profileMarket.key_differentiators.slice(0, 5).map((d: string, i: number) => (
                   <span key={i} className="text-xs px-2 py-1 rounded font-mono" style={{ background: 'rgba(197,165,114,0.1)', color: '#C5A572' }}>
@@ -630,7 +630,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
           )}
           {profileGrowth?.growth_signals?.length > 0 && (
             <div className="mt-4">
-              <div className="text-xs text-gray-500 mb-2" style={{ fontFamily: 'Montserrat' }}>GROWTH SIGNALS</div>
+              <div className="text-xs text-gray-500 mb-2" style={{ fontFamily: 'JetBrains Mono, monospace' }}>GROWTH SIGNALS</div>
               <ul className="space-y-1">
                 {profileGrowth.growth_signals.slice(0, 4).map((s: string, i: number) => (
                   <li key={i} className="text-xs text-gray-400 flex gap-2">
@@ -649,7 +649,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
         <Card variant="navy">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-green-400 text-lg">✦</span>
-            <span className="text-sm font-bold" style={{ color: '#1DB954', fontFamily: 'Montserrat' }}>Green Flag Intelligence</span>
+            <span className="text-sm font-bold" style={{ color: '#1DB954', fontFamily: 'JetBrains Mono, monospace' }}>Green Flag Intelligence</span>
           </div>
           <div className="space-y-2">
             {allGreenFlags.map((flag: string, i: number) => (
@@ -667,7 +667,7 @@ function VerdictTab({ record }: { record: ScreeningRecord }) {
         <Card variant="navy" goldAccent>
           <div className="flex items-center gap-2 mb-4">
             <span className="text-red-400 text-lg">🚨</span>
-            <span className="text-sm font-bold" style={{ color: '#D32F2F', fontFamily: 'Montserrat' }}>Red Flag Radar</span>
+            <span className="text-sm font-bold" style={{ color: '#D32F2F', fontFamily: 'JetBrains Mono, monospace' }}>Red Flag Radar</span>
           </div>
           <div className="space-y-2">
             {allRedFlags.map((flag: string, i: number) => (
@@ -705,7 +705,7 @@ function ThreatTab({ record, expandedFactor, setExpandedFactor, noteMap, setNote
         <div className="flex items-start gap-6">
           <div className="shrink-0 text-center">
             <div className="text-5xl font-black px-6 py-4 rounded-xl mb-2"
-              style={{ color: THREAT_COLOR[threatLevel], background: THREAT_BG[threatLevel], fontFamily: 'Montserrat' }}>
+              style={{ color: THREAT_COLOR[threatLevel], background: THREAT_BG[threatLevel], fontFamily: 'JetBrains Mono, monospace' }}>
               {threatLevel}
             </div>
             <div className="text-2xl font-mono" style={{ color: THREAT_COLOR[threatLevel] }}>{sb.risk_score.toFixed(0)}/100</div>
@@ -713,7 +713,7 @@ function ThreatTab({ record, expandedFactor, setExpandedFactor, noteMap, setNote
             <div className="text-xs text-gray-600 mt-1">Lower = safer</div>
           </div>
           <div className="flex-1">
-            <div className="text-xs font-semibold tracking-widest mb-3" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+            <div className="text-xs font-semibold tracking-widest mb-3" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
               THREAT ENVIRONMENT ANALYSIS
             </div>
             <p className="text-sm text-gray-300" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>
@@ -725,7 +725,7 @@ function ThreatTab({ record, expandedFactor, setExpandedFactor, noteMap, setNote
 
       {/* Risk Factor Breakdown */}
       <div>
-        <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+        <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
           THREAT FACTORS — R1 through R7
         </div>
         <p className="text-xs text-gray-500 mb-4" style={{ fontFamily: 'Inter', lineHeight: 1.6 }}>
@@ -784,7 +784,7 @@ function ThreatFactorRow({ factor, isEven, isExpanded, onToggle, note, onNoteCha
       >
         <div className="text-xs font-bold font-mono w-8" style={{ color: '#C5A572' }}>{factor.factor_id}</div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-white mb-1" style={{ fontFamily: 'Montserrat' }}>
+          <div className="text-sm font-semibold text-white mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
             {factor.factor_name}
           </div>
           {/* Threat meter bar */}
@@ -796,7 +796,7 @@ function ThreatFactorRow({ factor, isEven, isExpanded, onToggle, note, onNoteCha
             <span className="text-xs font-bold px-2 py-0.5 rounded" style={{
               background: `${threatColor}20`,
               color: threatColor,
-              fontFamily: 'Montserrat',
+              fontFamily: 'JetBrains Mono, monospace',
               width: '72px',
               textAlign: 'center',
             }}>
@@ -819,7 +819,7 @@ function ThreatFactorRow({ factor, isEven, isExpanded, onToggle, note, onNoteCha
         <div className="px-6 pb-6 pt-2 space-y-4" style={{ background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(197,165,114,0.1)' }}>
           {/* Evidence */}
           <div>
-            <div className="text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>EVIDENCE FROM RESEARCH</div>
+            <div className="text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>EVIDENCE FROM RESEARCH</div>
             {hasRealEvidence ? (
               <p className="text-xs text-gray-300 p-3 rounded-lg" style={{ background: 'rgba(0,43,73,0.4)', fontFamily: 'Inter', lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
                 {factor.evidence_summary}
@@ -833,19 +833,19 @@ function ThreatFactorRow({ factor, isEven, isExpanded, onToggle, note, onNoteCha
           {/* Scoring details */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'Montserrat' }}>SCORING MATH</div>
+              <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace' }}>SCORING MATH</div>
               <div className="p-2 rounded font-mono text-xs" style={{ background: 'rgba(0,0,0,0.3)', color: '#C5A572' }}>
                 {score.toFixed(1)} × {(factor.weight * 100).toFixed(0)}% = {factor.weighted_contribution.toFixed(1)} pts → risk total
               </div>
             </div>
             <div>
-              <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'Montserrat' }}>RUBRIC APPLIED</div>
+              <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace' }}>RUBRIC APPLIED</div>
               <p className="text-xs text-gray-500 font-mono" style={{ lineHeight: 1.5, fontSize: '10px' }}>{factor.rubric_applied}</p>
             </div>
           </div>
           {/* Partner Note */}
           <div>
-            <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'Montserrat' }}>PARTNER ANNOTATION</div>
+            <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace' }}>PARTNER ANNOTATION</div>
             <textarea
               value={note || ''}
               onChange={(e) => onNoteChange(e.target.value)}
@@ -890,13 +890,13 @@ function ReadinessTab({ record, expandedFactor, setExpandedFactor, noteMap, setN
         <div className="flex items-start gap-6">
           <div className="shrink-0 text-center px-4">
             <div className="text-4xl mb-1">{STAGE_ICON[stage as ReadinessStage]}</div>
-            <div className="text-2xl font-black" style={{ color: STAGE_COLOR[stage as ReadinessStage], fontFamily: 'Montserrat' }}>
+            <div className="text-2xl font-black" style={{ color: STAGE_COLOR[stage as ReadinessStage], fontFamily: 'JetBrains Mono, monospace' }}>
               Stage {stage}
             </div>
             <div className="text-xs text-gray-500">{sb.readiness_score.toFixed(0)}/100</div>
           </div>
           <div className="flex-1">
-            <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+            <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
               {stageAssessment?.stage_label?.toUpperCase() ?? `STAGE ${stage}`}
             </div>
             <p className="text-sm text-gray-300 mb-3" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>
@@ -910,7 +910,7 @@ function ReadinessTab({ record, expandedFactor, setExpandedFactor, noteMap, setN
                     background: s === stage ? STAGE_COLOR[stage as ReadinessStage] : s < stage ? `${STAGE_COLOR[stage as ReadinessStage]}40` : 'rgba(255,255,255,0.06)',
                     color: s <= stage ? '#fff' : '#64748B',
                     border: s === stage ? `2px solid ${STAGE_COLOR[stage as ReadinessStage]}` : '1px solid rgba(255,255,255,0.1)',
-                    fontFamily: 'Montserrat',
+                    fontFamily: 'JetBrains Mono, monospace',
                   }}>
                     {s}
                   </div>
@@ -921,7 +921,7 @@ function ReadinessTab({ record, expandedFactor, setExpandedFactor, noteMap, setN
                 <div className={`text-xs px-2 py-1 rounded font-bold`} style={{
                   background: stageAssessment?.hold_period_achievable !== false ? 'rgba(29,185,84,0.1)' : 'rgba(211,47,47,0.1)',
                   color: stageAssessment?.hold_period_achievable !== false ? '#1DB954' : '#EF5350',
-                  fontFamily: 'Montserrat',
+                  fontFamily: 'JetBrains Mono, monospace',
                 }}>
                   {stageAssessment?.hold_period_achievable !== false ? '✓ Stage 3 in hold period' : '⚠ Stage 3 needs >5yr'}
                 </div>
@@ -942,7 +942,7 @@ function ReadinessTab({ record, expandedFactor, setExpandedFactor, noteMap, setN
         return (
           <div key={group.label}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="text-sm font-bold text-white" style={{ fontFamily: 'Montserrat' }}>{group.label}</div>
+              <div className="text-sm font-bold text-white" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{group.label}</div>
               <div className="text-xs px-2 py-0.5 rounded font-mono" style={{ background: `${groupColor}20`, color: groupColor }}>
                 avg {groupAvg}/100
               </div>
@@ -1004,11 +1004,11 @@ function ReadinessFactorRow({ factor, isEven, isExpanded, onToggle, note, onNote
         <div className="text-xs font-bold font-mono w-8" style={{ color: '#C5A572' }}>{factor.factor_id}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-semibold text-white" style={{ fontFamily: 'Montserrat' }}>
+            <span className="text-sm font-semibold text-white" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
               {factor.factor_name}
             </span>
             {factor.is_critical_gap && (
-              <span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{ background: 'rgba(245,124,0,0.2)', color: '#F57C00', fontFamily: 'Montserrat' }}>
+              <span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{ background: 'rgba(245,124,0,0.2)', color: '#F57C00', fontFamily: 'JetBrains Mono, monospace' }}>
                 CRITICAL GAP
               </span>
             )}
@@ -1022,7 +1022,7 @@ function ReadinessFactorRow({ factor, isEven, isExpanded, onToggle, note, onNote
             <span className="text-xs font-bold px-2 py-0.5 rounded" style={{
               background: `${readinessColor}20`,
               color: readinessColor,
-              fontFamily: 'Montserrat',
+              fontFamily: 'JetBrains Mono, monospace',
               width: '88px',
               textAlign: 'center',
             }}>
@@ -1044,7 +1044,7 @@ function ReadinessFactorRow({ factor, isEven, isExpanded, onToggle, note, onNote
       {isExpanded && (
         <div className="px-6 pb-6 pt-2 space-y-4" style={{ background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(197,165,114,0.1)' }}>
           <div>
-            <div className="text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>EVIDENCE FROM RESEARCH</div>
+            <div className="text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>EVIDENCE FROM RESEARCH</div>
             {hasRealEvidence ? (
               <p className="text-xs text-gray-300 p-3 rounded-lg" style={{ background: 'rgba(0,43,73,0.4)', fontFamily: 'Inter', lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
                 {factor.evidence_summary}
@@ -1057,18 +1057,18 @@ function ReadinessFactorRow({ factor, isEven, isExpanded, onToggle, note, onNote
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'Montserrat' }}>SCORING MATH</div>
+              <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace' }}>SCORING MATH</div>
               <div className="p-2 rounded font-mono text-xs" style={{ background: 'rgba(0,0,0,0.3)', color: '#C5A572' }}>
                 {score.toFixed(1)} × {(factor.weight * 100).toFixed(0)}% = {factor.weighted_contribution.toFixed(1)} pts → readiness total
               </div>
             </div>
             <div>
-              <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'Montserrat' }}>RUBRIC APPLIED</div>
+              <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace' }}>RUBRIC APPLIED</div>
               <p className="text-xs text-gray-500 font-mono" style={{ lineHeight: 1.5, fontSize: '10px' }}>{factor.rubric_applied}</p>
             </div>
           </div>
           <div>
-            <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'Montserrat' }}>PARTNER ANNOTATION</div>
+            <div className="text-xs font-semibold mb-1 tracking-widest" style={{ color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace' }}>PARTNER ANNOTATION</div>
             <textarea
               value={note || ''}
               onChange={(e) => onNoteChange(e.target.value)}
@@ -1112,7 +1112,7 @@ function CompetitiveTab({ record }: { record: ScreeningRecord }) {
     <div className="space-y-6 report-page">
       {(r1Evidence || r2Evidence) && (
         <Card variant="elevated">
-          <div className="text-xs font-semibold tracking-widest mb-3" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest mb-3" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
             COMPETITIVE LANDSCAPE BRIEF
           </div>
           <div className="space-y-3">
@@ -1123,7 +1123,7 @@ function CompetitiveTab({ record }: { record: ScreeningRecord }) {
               return (
                 <div key={ev.factor_id} className="pt-3" style={{ borderTop: '1px solid rgba(197,165,114,0.1)' }}>
                   <div className="flex items-center gap-2 mb-1">
-                    <div className="text-xs font-semibold" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+                    <div className="text-xs font-semibold" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
                       {ev.factor_name}
                     </div>
                     <div className="text-xs px-2 py-0.5 rounded font-mono" style={{ background: `${tc}20`, color: tc }}>
@@ -1140,12 +1140,12 @@ function CompetitiveTab({ record }: { record: ScreeningRecord }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card variant="elevated">
-          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
             VERTICAL AI HEAT INDEX
           </div>
           {heatIndex ? (
             <div className="text-center py-4">
-              <div className="text-5xl font-bold mb-2" style={{ color: heatIndex.score > 70 ? '#D32F2F' : heatIndex.score > 50 ? '#FFB300' : '#1DB954', fontFamily: 'Montserrat' }}>
+              <div className="text-5xl font-bold mb-2" style={{ color: heatIndex.score > 70 ? '#D32F2F' : heatIndex.score > 50 ? '#FFB300' : '#1DB954', fontFamily: 'JetBrains Mono, monospace' }}>
                 {heatIndex.grade}
               </div>
               <div className="text-2xl font-mono mb-3" style={{ color: heatIndex.score > 70 ? '#D32F2F' : heatIndex.score > 50 ? '#FFB300' : '#1DB954' }}>
@@ -1165,7 +1165,7 @@ function CompetitiveTab({ record }: { record: ScreeningRecord }) {
         </Card>
 
         <Card variant="navy" className="lg:col-span-2">
-          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
             HORIZONTAL AI ENCROACHMENT
           </div>
           {horizontalThreat ? (
@@ -1174,7 +1174,7 @@ function CompetitiveTab({ record }: { record: ScreeningRecord }) {
                 <span className="px-3 py-1.5 rounded-lg text-sm font-bold" style={{
                   background: horizontalThreat.level === 'HIGH' ? 'rgba(211,47,47,0.15)' : horizontalThreat.level === 'MEDIUM' ? 'rgba(255,179,0,0.15)' : 'rgba(29,185,84,0.15)',
                   color: horizontalThreat.level === 'HIGH' ? '#D32F2F' : horizontalThreat.level === 'MEDIUM' ? '#FFB300' : '#1DB954',
-                  fontFamily: 'Montserrat',
+                  fontFamily: 'JetBrains Mono, monospace',
                 }}>
                   {horizontalThreat.level} RISK
                 </span>
@@ -1205,7 +1205,7 @@ function CompetitiveTab({ record }: { record: ScreeningRecord }) {
 
       {incumbents.length > 0 && (
         <Card variant="navy">
-          <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
             INCUMBENT AI POSTURE ({incumbents.length} tracked)
           </div>
           <p className="text-xs text-gray-500 mb-4" style={{ fontFamily: 'Inter', lineHeight: 1.5 }}>
@@ -1218,11 +1218,11 @@ function CompetitiveTab({ record }: { record: ScreeningRecord }) {
                 border: `1px solid ${inc.status === 'ACTIVE' ? 'rgba(211,47,47,0.4)' : inc.status === 'SIGNALING' ? 'rgba(255,179,0,0.4)' : 'rgba(100,116,139,0.3)'}`,
               }}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-bold text-white" style={{ fontFamily: 'Montserrat' }}>{inc.company}</span>
+                  <span className="text-sm font-bold text-white" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{inc.company}</span>
                   <span className="text-xs px-2 py-0.5 rounded font-bold" style={{
                     background: inc.status === 'ACTIVE' ? 'rgba(211,47,47,0.2)' : inc.status === 'SIGNALING' ? 'rgba(255,179,0,0.2)' : 'rgba(100,116,139,0.2)',
                     color: inc.status === 'ACTIVE' ? '#D32F2F' : inc.status === 'SIGNALING' ? '#FFB300' : '#64748B',
-                    fontFamily: 'Montserrat',
+                    fontFamily: 'JetBrains Mono, monospace',
                   }}>
                     {inc.status}
                   </span>
@@ -1236,7 +1236,7 @@ function CompetitiveTab({ record }: { record: ScreeningRecord }) {
 
       {entrants.length > 0 && (
         <Card variant="navy">
-          <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
             AI-NATIVE ENTRANT THREAT MATRIX ({entrants.length} identified)
           </div>
           <div className="overflow-x-auto">
@@ -1244,7 +1244,7 @@ function CompetitiveTab({ record }: { record: ScreeningRecord }) {
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(197,165,114,0.2)' }}>
                   {['Company', 'Founded', 'Stage', 'Last Raise', 'Traction Signal', 'Threat Level'].map(h => (
-                    <th key={h} className="px-3 py-2 text-left text-xs font-semibold tracking-wider" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>{h}</th>
+                    <th key={h} className="px-3 py-2 text-left text-xs font-semibold tracking-wider" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1252,7 +1252,7 @@ function CompetitiveTab({ record }: { record: ScreeningRecord }) {
                 {entrants.map((e: any, i: number) => (
                   <tr key={i} style={{ borderBottom: '1px solid rgba(197,165,114,0.1)' }}>
                     <td className="px-3 py-2.5">
-                      <div className="font-semibold text-white text-xs" style={{ fontFamily: 'Montserrat' }}>{e.company}</div>
+                      <div className="font-semibold text-white text-xs" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{e.company}</div>
                     </td>
                     <td className="px-3 py-2.5 text-xs text-gray-400 font-mono">{e.founded || '—'}</td>
                     <td className="px-3 py-2.5 text-xs text-gray-300">{e.stage || '—'}</td>
@@ -1262,7 +1262,7 @@ function CompetitiveTab({ record }: { record: ScreeningRecord }) {
                       <span className="text-xs px-2 py-0.5 rounded font-bold" style={{
                         background: e.threat_level === 'HIGH' ? 'rgba(211,47,47,0.2)' : e.threat_level === 'MEDIUM' ? 'rgba(255,179,0,0.2)' : 'rgba(29,185,84,0.2)',
                         color: e.threat_level === 'HIGH' ? '#D32F2F' : e.threat_level === 'MEDIUM' ? '#FFB300' : '#1DB954',
-                        fontFamily: 'Montserrat',
+                        fontFamily: 'JetBrains Mono, monospace',
                       }}>
                         {e.threat_level}
                       </span>
@@ -1277,7 +1277,7 @@ function CompetitiveTab({ record }: { record: ScreeningRecord }) {
 
       {news.length > 0 && (
         <Card variant="navy">
-          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
             VERTICAL AI NEWS & DEAL FEED
           </div>
           <div className="space-y-3">
@@ -1337,8 +1337,8 @@ function EvidenceTab({ record, search, setSearch }: {
           { label: 'Coverage', value: `${Math.round((packCoverage / 7) * 100)}%` },
         ].map((stat) => (
           <Card key={stat.label} variant="navy" padding="sm" className="text-center">
-            <div className="text-2xl font-bold text-white mb-1" style={{ fontFamily: 'Montserrat' }}>{stat.value}</div>
-            <div className="text-xs text-gray-500 tracking-wider" style={{ fontFamily: 'Montserrat' }}>{stat.label.toUpperCase()}</div>
+            <div className="text-2xl font-bold text-white mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{stat.value}</div>
+            <div className="text-xs text-gray-500 tracking-wider" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{stat.label.toUpperCase()}</div>
           </Card>
         ))}
       </div>
@@ -1365,7 +1365,7 @@ function EvidenceTab({ record, search, setSearch }: {
             <thead>
               <tr style={{ background: '#001A2E', borderBottom: '1px solid rgba(197,165,114,0.2)' }}>
                 {['Source URL', 'Pack', 'Confidence', 'Excerpt'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left font-semibold tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>{h.toUpperCase()}</th>
+                  <th key={h} className="px-4 py-3 text-left font-semibold tracking-widest" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>{h.toUpperCase()}</th>
                 ))}
               </tr>
             </thead>
@@ -1394,7 +1394,7 @@ function EvidenceTab({ record, search, setSearch }: {
         if (unknowns.length === 0) return null;
         return (
           <Card variant="navy">
-            <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+            <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
               KNOWN UNKNOWNS — DATA GAPS FOR DILIGENCE
             </div>
             <div className="space-y-2">
@@ -1424,7 +1424,7 @@ function DiligenceTab({ record }: { record: ScreeningRecord }) {
         <Card variant="elevated">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">🎯</span>
-            <div className="text-xs font-semibold tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>DILIGENCE FRAMING</div>
+            <div className="text-xs font-semibold tracking-widest" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>DILIGENCE FRAMING</div>
           </div>
           <p className="text-sm text-gray-300" style={{ fontFamily: 'Inter', lineHeight: 1.8 }}>
             Perch is a 30-50 minute fast-pass screener — not a final verdict. The items below are the highest-priority questions to resolve as you move from screen to full diligence. Every company in this output is on a journey toward System of Action. The question is where they are on that journey and what it takes to get there.
@@ -1433,18 +1433,18 @@ function DiligenceTab({ record }: { record: ScreeningRecord }) {
             <div className="text-center p-3 rounded-lg" style={{ background: 'rgba(0,43,73,0.4)' }}>
               <div className="text-lg font-bold" style={{
                 color: sb.disposition === 'ADVANCE' ? '#1DB954' : sb.disposition === 'PASS' ? '#D32F2F' : '#00C8DC',
-                fontFamily: 'Montserrat',
+                fontFamily: 'JetBrains Mono, monospace',
               }}>{sb.disposition}</div>
               <div className="text-xs text-gray-500 mt-1">Perch Signal</div>
             </div>
             <div className="text-center p-3 rounded-lg" style={{ background: 'rgba(0,43,73,0.4)' }}>
-              <div className="text-lg font-bold" style={{ color: THREAT_COLOR[sb.threat_level ?? 'MODERATE'], fontFamily: 'Montserrat' }}>
+              <div className="text-lg font-bold" style={{ color: THREAT_COLOR[sb.threat_level ?? 'MODERATE'], fontFamily: 'JetBrains Mono, monospace' }}>
                 {sb.threat_level ?? 'MODERATE'}
               </div>
               <div className="text-xs text-gray-500 mt-1">Threat Level</div>
             </div>
             <div className="text-center p-3 rounded-lg" style={{ background: 'rgba(0,43,73,0.4)' }}>
-              <div className="text-lg font-bold" style={{ color: STAGE_COLOR[sb.readiness_stage ?? 2], fontFamily: 'Montserrat' }}>
+              <div className="text-lg font-bold" style={{ color: STAGE_COLOR[sb.readiness_stage ?? 2], fontFamily: 'JetBrains Mono, monospace' }}>
                 Stage {sb.readiness_stage ?? 2}
               </div>
               <div className="text-xs text-gray-500 mt-1">AI Readiness</div>
@@ -1454,7 +1454,7 @@ function DiligenceTab({ record }: { record: ScreeningRecord }) {
       )}
 
       <div>
-        <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+        <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
           DILIGENCE FOCUS AREAS
         </div>
         {areas.length === 0 ? (
@@ -1466,27 +1466,27 @@ function DiligenceTab({ record }: { record: ScreeningRecord }) {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
-                      <span className="text-xl font-bold" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>#{area.rank}</span>
-                      <h3 className="text-base font-bold text-white" style={{ fontFamily: 'Montserrat' }}>{area.title}</h3>
+                      <span className="text-xl font-bold" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>#{area.rank}</span>
+                      <h3 className="text-base font-bold text-white" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 600 }}>{area.title}</h3>
                       <span className="text-xs px-2 py-0.5 rounded font-bold ml-auto" style={{
                         background: area.priority === 'HIGH' ? 'rgba(211,47,47,0.2)' : area.priority === 'MEDIUM' ? 'rgba(255,179,0,0.2)' : 'rgba(29,185,84,0.2)',
                         color: area.priority === 'HIGH' ? '#D32F2F' : area.priority === 'MEDIUM' ? '#FFB300' : '#1DB954',
-                        fontFamily: 'Montserrat',
+                        fontFamily: 'JetBrains Mono, monospace',
                       }}>
                         {area.priority}
                       </span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <div className="text-xs font-semibold mb-2" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>WHY IT MATTERS</div>
+                        <div className="text-xs font-semibold mb-2" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>WHY IT MATTERS</div>
                         <p className="text-xs text-gray-400" style={{ fontFamily: 'Inter', lineHeight: 1.7 }}>{area.why_it_matters}</p>
                       </div>
                       <div>
-                        <div className="text-xs font-semibold mb-2" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>WHAT TO TEST</div>
+                        <div className="text-xs font-semibold mb-2" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>WHAT TO TEST</div>
                         <p className="text-xs text-gray-400" style={{ fontFamily: 'Inter', lineHeight: 1.7 }}>{area.what_to_test}</p>
                       </div>
                       <div>
-                        <div className="text-xs font-semibold mb-2" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>EVIDENCE TO REQUEST</div>
+                        <div className="text-xs font-semibold mb-2" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>EVIDENCE TO REQUEST</div>
                         <p className="text-xs text-gray-400" style={{ fontFamily: 'Inter', lineHeight: 1.7 }}>{area.evidence_to_request}</p>
                       </div>
                     </div>
@@ -1500,12 +1500,12 @@ function DiligenceTab({ record }: { record: ScreeningRecord }) {
 
       {conditions && (
         <div>
-          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest mb-4" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
             DILIGENCE ROADMAP
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card variant="navy" padding="sm">
-              <div className="text-xs font-bold mb-3 tracking-widest" style={{ color: '#1DB954', fontFamily: 'Montserrat' }}>✓ SIGNALS THAT BUILD CONVICTION</div>
+              <div className="text-xs font-bold mb-3 tracking-widest" style={{ color: '#1DB954', fontFamily: 'JetBrains Mono, monospace' }}>✓ SIGNALS THAT BUILD CONVICTION</div>
               <ul className="space-y-3">
                 {conditions.advance_signals.map((c, i) => (
                   <li key={i} className="text-xs text-gray-400 flex gap-2" style={{ fontFamily: 'Inter', lineHeight: 1.6 }}>
@@ -1515,7 +1515,7 @@ function DiligenceTab({ record }: { record: ScreeningRecord }) {
               </ul>
             </Card>
             <Card variant="navy" padding="sm">
-              <div className="text-xs font-bold mb-3 tracking-widest" style={{ color: '#00C8DC', fontFamily: 'Montserrat' }}>? KEY QUESTIONS TO RESOLVE</div>
+              <div className="text-xs font-bold mb-3 tracking-widest" style={{ color: '#00C8DC', fontFamily: 'JetBrains Mono, monospace' }}>? KEY QUESTIONS TO RESOLVE</div>
               <ul className="space-y-3">
                 {conditions.key_questions.map((c, i) => (
                   <li key={i} className="text-xs text-gray-400 flex gap-2" style={{ fontFamily: 'Inter', lineHeight: 1.6 }}>
@@ -1525,7 +1525,7 @@ function DiligenceTab({ record }: { record: ScreeningRecord }) {
               </ul>
             </Card>
             <Card variant="navy" padding="sm">
-              <div className="text-xs font-bold mb-3 tracking-widest" style={{ color: '#FFB300', fontFamily: 'Montserrat' }}>⚠ WATCH LIST</div>
+              <div className="text-xs font-bold mb-3 tracking-widest" style={{ color: '#FFB300', fontFamily: 'JetBrains Mono, monospace' }}>⚠ WATCH LIST</div>
               <ul className="space-y-3">
                 {conditions.watch_list.map((c, i) => (
                   <li key={i} className="text-xs text-gray-400 flex gap-2" style={{ fontFamily: 'Inter', lineHeight: 1.6 }}>
@@ -1539,16 +1539,16 @@ function DiligenceTab({ record }: { record: ScreeningRecord }) {
       )}
 
       <Card variant="elevated" className="text-center py-8">
-        <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>NEXT STEP</div>
-        <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Montserrat' }}>Take This to the Next Stage</h3>
+        <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>NEXT STEP</div>
+        <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', fontWeight: 500 }}>Take This to the Next Stage</h3>
         <p className="text-sm text-gray-400 mb-6 max-w-lg mx-auto" style={{ fontFamily: 'Inter', lineHeight: 1.7 }}>
           Perch is a 30-50 minute fast-pass screener. The diligence questions above are designed to focus your management meeting, data room request, and customer reference calls. Full conviction requires 2-3 weeks of structured diligence.
         </p>
         <div className="flex justify-center gap-3 flex-wrap">
-          <button onClick={() => exportToPDF()} className="px-6 py-2.5 rounded-lg font-bold text-sm" style={{ background: '#CFFF04', color: '#002B49', fontFamily: 'Montserrat' }}>
+          <button onClick={() => exportToPDF()} className="px-6 py-2.5 rounded-lg font-bold text-sm" style={{ background: 'var(--gold)', color: 'var(--navy)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.08em' }}>
             Download Report PDF
           </button>
-          <button onClick={() => exportToJSON(record)} className="px-6 py-2.5 rounded-lg font-bold text-sm" style={{ background: 'rgba(197,165,114,0.15)', color: '#C5A572', border: '1px solid rgba(197,165,114,0.3)', fontFamily: 'Montserrat' }}>
+          <button onClick={() => exportToJSON(record)} className="px-6 py-2.5 rounded-lg font-bold text-sm" style={{ background: 'rgba(197,165,114,0.15)', color: '#C5A572', border: '1px solid rgba(197,165,114,0.3)', fontFamily: 'JetBrains Mono, monospace' }}>
             Export JSON
           </button>
         </div>
