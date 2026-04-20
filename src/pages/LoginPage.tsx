@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-
-// Eagle image hosted on Genspark
-const EAGLE_IMG = 'https://www.genspark.ai/api/files/s/Ntlkg11C';
+import { EagleIcon } from '@/components/brand/EagleIcon';
 
 export function LoginPage() {
   const [passcode, setPasscode] = useState('');
@@ -49,14 +47,11 @@ export function LoginPage() {
           }}
         />
 
-        {/* Eagle image — centred, large */}
+        {/* Eagle icon — centred, large */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <img
-            src={EAGLE_IMG}
-            alt="Perch — AI Investment Screener"
-            className="w-[480px] max-w-[80%] opacity-90"
-            style={{ filter: 'drop-shadow(0 0 60px rgba(0,200,220,0.35))' }}
-          />
+          <div style={{ filter: 'drop-shadow(0 0 60px rgba(0,200,220,0.45)) drop-shadow(0 0 120px rgba(0,200,220,0.2))' }}>
+            <EagleIcon size={320} color="rgba(0,200,220,0.85)" />
+          </div>
         </div>
 
         {/* Top wordmark */}
