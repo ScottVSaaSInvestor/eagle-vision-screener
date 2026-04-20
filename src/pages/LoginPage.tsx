@@ -1,7 +1,57 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { EagleIcon } from '@/components/brand/EagleIcon';
+
+// Placeholder — kept so TypeScript doesn't complain if referenced elsewhere
+function HeroEagle({ color = 'rgba(0,200,220,0.85)' }: { color?: string }) {
+  return (
+    <svg viewBox="0 0 400 340" width="420" height="357" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ filter: 'drop-shadow(0 0 40px rgba(0,200,220,0.5)) drop-shadow(0 0 80px rgba(0,200,220,0.2))' }}>
+      {/* ── Left wing — broad spread ── */}
+      <path d="M200 170 L20 80 L10 110 L60 125 L5 140 L15 165 L70 155 L10 185 L30 205 L90 185 L45 220 L70 235 L130 200 L160 210 Z"
+        fill={color} opacity="0.9"/>
+      {/* Left wing feather tips */}
+      <path d="M20 80 L0 60 L25 75 L10 110Z" fill={color} opacity="0.6"/>
+      <path d="M5 140 L-10 125 L20 132 L15 165Z" fill={color} opacity="0.5"/>
+      <path d="M10 185 L-5 175 L25 178 L30 205Z" fill={color} opacity="0.5"/>
+      <path d="M45 220 L28 215 L55 210 L70 235Z" fill={color} opacity="0.6"/>
+      {/* ── Right wing ── */}
+      <path d="M200 170 L380 80 L390 110 L340 125 L395 140 L385 165 L330 155 L390 185 L370 205 L310 185 L355 220 L330 235 L270 200 L240 210 Z"
+        fill={color} opacity="0.9"/>
+      {/* Right wing feather tips */}
+      <path d="M380 80 L400 60 L375 75 L390 110Z" fill={color} opacity="0.6"/>
+      <path d="M395 140 L410 125 L380 132 L385 165Z" fill={color} opacity="0.5"/>
+      <path d="M390 185 L405 175 L375 178 L370 205Z" fill={color} opacity="0.5"/>
+      <path d="M355 220 L372 215 L345 210 L330 235Z" fill={color} opacity="0.6"/>
+      {/* ── Body ── */}
+      <ellipse cx="200" cy="195" rx="32" ry="52" fill={color} opacity="0.95"/>
+      {/* ── Neck ── */}
+      <ellipse cx="200" cy="150" rx="16" ry="22" fill={color} opacity="0.95"/>
+      {/* ── Head ── */}
+      <ellipse cx="200" cy="118" rx="22" ry="20" fill={color} opacity="0.95"/>
+      {/* ── Beak ── */}
+      <path d="M218 116 L242 124 L226 132 L218 122 Z" fill={color} opacity="0.95"/>
+      <path d="M218 122 L235 130 L226 132 Z" fill="rgba(0,20,40,0.6)"/>
+      {/* ── Eye ── */}
+      <circle cx="212" cy="112" r="5" fill="rgba(0,10,20,0.8)"/>
+      <circle cx="212" cy="112" r="3.5" fill="#C9A961"/>
+      <circle cx="213" cy="111" r="1.5" fill="rgba(0,10,20,0.9)"/>
+      <circle cx="213.5" cy="110.5" r="0.7" fill="rgba(255,255,255,0.8)"/>
+      {/* ── Tail feathers ── */}
+      <path d="M184 242 L170 295 L185 280 L200 300 L215 280 L230 295 L216 242 Z" fill={color} opacity="0.85"/>
+      <path d="M178 248 L158 310 L172 290 Z" fill={color} opacity="0.6"/>
+      <path d="M222 248 L242 310 L228 290 Z" fill={color} opacity="0.6"/>
+      {/* ── Talons ── */}
+      <path d="M185 242 L165 268 L170 258 L155 270 L162 260 L148 268" stroke={color} strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.8"/>
+      <path d="M215 242 L235 268 L230 258 L245 270 L238 260 L252 268" stroke={color} strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.8"/>
+      {/* Wing structure lines — give depth */}
+      <path d="M200 170 L80 128 M200 170 L110 158 M200 170 L95 185" stroke="rgba(0,30,50,0.35)" strokeWidth="1.5" fill="none"/>
+      <path d="M200 170 L320 128 M200 170 L290 158 M200 170 L305 185" stroke="rgba(0,30,50,0.35)" strokeWidth="1.5" fill="none"/>
+      {/* Chest detail */}
+      <path d="M185 168 Q200 180 215 168 Q210 210 200 230 Q190 210 185 168Z" fill="rgba(0,30,50,0.2)"/>
+    </svg>
+  );
+}
 
 export function LoginPage() {
   const [passcode, setPasscode] = useState('');
@@ -47,11 +97,18 @@ export function LoginPage() {
           }}
         />
 
-        {/* Eagle icon — centred, large */}
+        {/* Eagle hero — centred, large */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div style={{ filter: 'drop-shadow(0 0 60px rgba(0,200,220,0.45)) drop-shadow(0 0 120px rgba(0,200,220,0.2))' }}>
-            <EagleIcon size={320} color="rgba(0,200,220,0.85)" />
-          </div>
+          <img
+            src="/static/eagle-hero.png"
+            alt=""
+            aria-hidden="true"
+            className="w-[460px] max-w-[80%]"
+            style={{
+              filter: 'drop-shadow(0 0 50px rgba(0,200,220,0.55)) drop-shadow(0 0 100px rgba(0,200,220,0.25))',
+              opacity: 0.93,
+            }}
+          />
         </div>
 
         {/* Top wordmark */}
