@@ -33,44 +33,39 @@ type AbortChecker = () => boolean;
 // ─── Tunables ────────────────────────────────────────────────────────────────
 // V4: ALL limits raised for investment-grade accuracy. Speed is not a goal.
 const CFG = {
-  // Search: 10 results per query (Tavily max on advanced plan)
-  SEARCH_RESULTS_PER_QUERY: 10,
-  // Crawl: 20K chars per page (up from 12K) — captures more page content
-  MAX_CRAWL_CHARS: 20000,
-  // Pass 1: 12 queries per dimension (up from 8) = ~84 total searches
-  PASS1_QUERIES_PER_DIM: 12,
-  // Pass 2: crawl top 10 URLs per dimension (up from 6) = ~70 additional pages
-  PASS2_MAX_URLS_PER_DIM: 10,
-  // Pass 3: generate 8 targeted gap-fill queries (up from 5) per dimension
-  PASS3_GAP_QUERIES: 8,
-  // Pass 4: 10 results per gap query (up from 8) — more evidence per gap
-  PASS4_RESULTS_PER_GAP: 10,
-  // Pass 5: second gap-fill round on weak dimensions (NEW)
-  PASS5_ENABLED: true,
-  PASS5_WEAK_THRESHOLD_CHARS: 15000, // dims with < this many chars get a second pass
-  PASS5_EXTRA_QUERIES: 5,            // extra queries for weak dims
-  // Synthesis: 50K chars per dimension
-  // On Vercel Pro (300s timeout) we can feed full evidence to Sonnet comfortably.
-  // Sonnet on 50K chars: ~15-25s. Well within 300s budget.
-  // On Vercel (300s): synthesis can handle up to 50K chars per call comfortably.
-  SYNTH_MAX_CHARS: 20000,  // Kept low so browser fetch completes in <15s (50K was causing browser abort)
-  // Pack call timeout — Vercel Pro allows 300s. Opus on 8K input tokens: ~60-90s.
-  // Set to 180s to allow Opus to fully reason through complex evidence.
+  // Search: 5 results per query — enough signal, fraction of the cost
+  SEARCH_RESULTS_PER_QUERY: 5,
+  // Crawl: 15K chars per page — good coverage without excess
+  MAX_CRAWL_CHARS: 15000,
+  // Pass 1: 5 queries per dimension = ~35 total searches (was 84)
+  PASS1_QUERIES_PER_DIM: 5,
+  // Pass 2: crawl top 5 URLs per dimension = ~35 pages (was 70)
+  PASS2_MAX_URLS_PER_DIM: 5,
+  // Pass 3: generate 4 targeted gap-fill queries per dimension (was 8)
+  PASS3_GAP_QUERIES: 4,
+  // Pass 4: 5 results per gap query (was 10)
+  PASS4_RESULTS_PER_GAP: 5,
+  // Pass 5: DISABLED — saves ~35 searches per run
+  PASS5_ENABLED: false,
+  PASS5_WEAK_THRESHOLD_CHARS: 15000,
+  PASS5_EXTRA_QUERIES: 3,
+  // Synthesis: 20K chars per dimension
+  SYNTH_MAX_CHARS: 20000,
+  // Pack call timeout
   PACK_TIMEOUT_MS: 180000,
-  // Synthesis call timeout — Sonnet finishes in 15-25s on 50K chars.
-  // Set to 90s to give 3 retry attempts comfortable room.
-  SYNTH_TIMEOUT_MS: 55000,  // 55s client timeout — synthesis at 20K chars takes ~8-12s on Sonnet
-  // Gap-fill call timeout — Sonnet generates queries in 5-10s.
+  // Synthesis call timeout
+  SYNTH_TIMEOUT_MS: 55000,
+  // Gap-fill call timeout
   GAPFILL_TIMEOUT_MS: 45000,
-  // Delay between search batches — 800ms to avoid Tavily rate limits
-  SEARCH_BATCH_DELAY_MS: 800,
-  // Delay between crawl requests — respectful crawling
-  CRAWL_DELAY_MS: 400,
-  // How many company site pages to attempt (up from 10)
-  SITE_CRAWL_MAX_PAGES: 20,
+  // Delay between search batches — avoid Tavily rate limits
+  SEARCH_BATCH_DELAY_MS: 500,
+  // Delay between crawl requests
+  CRAWL_DELAY_MS: 300,
+  // Company site pages to crawl (was 20)
+  SITE_CRAWL_MAX_PAGES: 8,
   // Total URL crawl cap per phase
-  PHASE2_MAX_CRAWL: 55,
-  PHASE4_MAX_CRAWL: 30,
+  PHASE2_MAX_CRAWL: 25,
+  PHASE4_MAX_CRAWL: 15,
 };
 
 // ─── API helpers ─────────────────────────────────────────────────────────────
@@ -326,9 +321,9 @@ export async function runScreening(
   const v = inputs.vertical || 'vertical SaaS';
   const hints = inputs.competitor_hints || [];
 
-  log({ message: `🦅 Eagle Vision DEEP RESEARCH v4 — ${co}`, level: 'info' });
-  log({ message: `Mode: Maximum-depth investment research. Expected time: 25-50 minutes. Accuracy over speed.`, level: 'info' });
-  log({ message: `Phases: Broad Search (84 queries) → Deep Crawl (~75 pages) → Gap Analysis → Gap Fill → Second Pass → Synthesis → Pack Scoring`, level: 'info' });
+  log({ message: `🦅 PERCH Analysis — ${co}`, level: 'info' });
+  log({ message: `Mode: Focused investment research. Expected time: 8-15 minutes.`, level: 'info' });
+  log({ message: `Phases: Broad Search (35 queries) → Web Crawl → Gap Analysis → Gap Fill → Synthesis → Pack Scoring`, level: 'info' });
 
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
@@ -344,7 +339,7 @@ export async function runScreening(
   ]);
 
   // COMPANY PROFILE dimension — 12 queries
-  log({ message: `📡 Searching: Company Profile (12 queries)...`, level: 'info' });
+  log({ message: `📡 Searching: Company Profile (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
   const profileResults1 = await searchSequential([
     `"${co}" software company overview history founded headquarters`,
     `"${co}" annual recurring revenue ARR growth 2024 2025 2026`,
@@ -358,11 +353,11 @@ export async function runScreening(
     `"${co}" revenue growth ARR MRR churn retention metrics`,
     `"${co}" partnership channel reseller distribution strategy`,
     `"${co}" IPO acquisition exit M&A rumor strategic`,
-  ], CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   // COMPETITIVE dimension — 12 queries
-  log({ message: `📡 Searching: Competitive Landscape (12 queries)...`, level: 'info' });
+  log({ message: `📡 Searching: Competitive Landscape (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
   const compResults1 = await searchSequential([
     `"${co}" competitors alternatives vs comparison 2025 2026`,
     `${v} software top companies market leaders 2025 2026`,
@@ -376,11 +371,11 @@ export async function runScreening(
     `${v} competitive moat defensibility differentiation`,
     `"${co}" win rate vs competitors customer wins losses`,
     ...competitorQueryExtras.slice(0, 2),
-  ], CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   // TEAM dimension — 12 queries
-  log({ message: `📡 Searching: Team & Leadership (12 queries)...`, level: 'info' });
+  log({ message: `📡 Searching: Team & Leadership (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
   const teamResults1 = await searchSequential([
     `"${co}" CEO founder background LinkedIn history prior companies`,
     `"${co}" CTO chief technology officer engineering team background`,
@@ -394,11 +389,11 @@ export async function runScreening(
     `"${co}" team culture glassdoor review employee experience`,
     `"${co}" advisor board investor operating partner domain`,
     `"${co}" AI head of AI ML director hire appointment`,
-  ], CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   // REGULATORY / MOAT dimension — 12 queries
-  log({ message: `📡 Searching: Regulatory & Moat (12 queries)...`, level: 'info' });
+  log({ message: `📡 Searching: Regulatory & Moat (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
   const regResults1 = await searchSequential([
     `"${co}" HIPAA SOC2 compliance certification security audit`,
     `"${co}" integration EHR EMR API partners ecosystem connectors`,
@@ -412,11 +407,11 @@ export async function runScreening(
     `${v} compliance penalty enforcement action regulatory risk 2025 2026`,
     `"${co}" integration depth API workflow embedded sticky`,
     `${v} proprietary data advantage network effect accumulation`,
-  ], CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   // WORKFLOW / PRODUCT dimension — 12 queries
-  log({ message: `📡 Searching: Workflow & Product (12 queries)...`, level: 'info' });
+  log({ message: `📡 Searching: Workflow & Product (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
   const workResults1 = await searchSequential([
     `"${co}" product features workflow daily operations overview`,
     `"${co}" system of record core platform mission critical`,
@@ -430,11 +425,11 @@ export async function runScreening(
     `"${co}" mobile app iOS Android field worker clinician`,
     `"${co}" workflow automation time savings productivity gain`,
     `"${co}" customer expansion upsell cross-sell module`,
-  ], CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   // DATA / ARCHITECTURE dimension — 12 queries
-  log({ message: `📡 Searching: Data & Architecture (12 queries)...`, level: 'info' });
+  log({ message: `📡 Searching: Data & Architecture (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
   const dataResults1 = await searchSequential([
     `"${co}" AI features machine learning analytics predictive launch`,
     `"${co}" data platform cloud AWS Azure GCP architecture infrastructure`,
@@ -448,11 +443,11 @@ export async function runScreening(
     `"${co}" AI copilot assistant automation feature product`,
     `"${co}" data lake warehouse analytics platform architecture`,
     `"${co}" technical architecture whitepaper security compliance engineering`,
-  ], CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   // MARKET TIMING dimension — 12 queries
-  log({ message: `📡 Searching: Market Timing (12 queries)...`, level: 'info' });
+  log({ message: `📡 Searching: Market Timing (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
   const marketResults1 = await searchSequential([
     `${v} market size TAM total addressable market 2025 2026 estimate`,
     `${v} market growth rate CAGR forecast 2026 2031`,
@@ -466,7 +461,7 @@ export async function runScreening(
     `${v} consolidation platform vendor market structure dynamics`,
     `${v} buyer survey willingness-to-pay software budget 2026`,
     `${v} recession sensitivity budget cycle software spending trend`,
-  ], CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   log({ message: `✓ Phase 1 complete. ${[profileResults1, compResults1, teamResults1, regResults1, workResults1, dataResults1, marketResults1].reduce((s,r)=>s+r.length,0)} search results collected.`, level: 'success' });
