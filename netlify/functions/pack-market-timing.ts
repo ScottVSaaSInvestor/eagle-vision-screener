@@ -229,7 +229,8 @@ R7 SIGNAL STRENGTH CALIBRATION (Market Timing Risk):
           system: systemPrompt,
           messages: [{ role: 'user', content: promptToUse }],
         });
-        const text = response.content[0].type === 'text' ? response.content[0].text : '';
+        const text = response.content.find((b: any) => b.type === 'text')?.text ?? '';
+        if (response.stop_reason === 'max_tokens') { console.warn('[pack] WARNING: truncated at max_tokens — retrying'); continue; }
         console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now()-startTime}ms`);
         const parsed = extractJSONObject(text);
         if (parsed) {

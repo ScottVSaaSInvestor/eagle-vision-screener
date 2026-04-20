@@ -191,7 +191,7 @@ Generate exactly ${num_queries} queries in the "queries" array. Make them:
         messages: [{ role: 'user', content: userPrompt }],
       });
 
-      const text = response.content[0].type === 'text' ? response.content[0].text : '';
+      const text = response.content.find((b: any) => b.type === 'text')?.text ?? '';
       const parsed = extractJSONObject(text);
 
       if (parsed) {

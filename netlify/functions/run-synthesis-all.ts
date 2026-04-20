@@ -177,7 +177,8 @@ Write a structured analyst brief following the numbered sections above. Label ev
         messages: [{ role: 'user', content: userPrompt }],
       });
 
-      const text = response.content[0].type === 'text' ? response.content[0].text : '';
+      const text = response.content.find((b: any) => b.type === 'text')?.text ?? '';
+      if (response.stop_reason === 'max_tokens') { console.warn(`[synth-all] WARNING: ${dimension} truncated at max_tokens — retrying`); continue; }
       const elapsed = Date.now() - start;
       console.log(`[synth-all] ${dimension} attempt ${attempt + 1} OK: ${text.length} chars in ${elapsed}ms`);
 

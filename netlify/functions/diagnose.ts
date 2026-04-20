@@ -31,7 +31,7 @@ const handler: Handler = async (event) => {
         max_tokens: 50,
         messages: [{ role: 'user', content: 'Reply with only the word "OK"' }],
       });
-      const reply = response.content[0].type === 'text' ? response.content[0].text : '';
+      const reply = response.content.find((b: any) => b.type === 'text')?.text ?? '';
       results.checks.anthropic = {
         status: 'OK',
         model: anthropicModel,
