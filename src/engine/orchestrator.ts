@@ -328,8 +328,44 @@ export async function runScreening(
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PHASE 1 — BROAD SEARCH PASS
-  // Run every query we know to ask upfront. Sequential per dimension.
+  // PHASE 0 — CLAUDE RESEARCH PLAN
+  // Claude generates company-specific queries for all 7 dimensions FIRST.
+  // Tavily searches are driven by Claude's investment reasoning, not hardcoded lists.
+  // ═══════════════════════════════════════════════════════════════════════════
+  log({ message: `\n━━━ PHASE 0: Claude Research Planning ━━━`, level: 'info' });
+  log({ message: `Claude is generating targeted search queries for ${co}...`, level: 'info' });
+
+  let claudePlan: Record<string, string[]> = {};
+  try {
+    const planResult = await apiCall('research-plan', {
+      company_name: co,
+      company_url: url,
+      vertical: v,
+      competitor_hints: hints,
+      document_summary: inputs.documents.map(d => d.name).join(', '),
+      queries_per_dim: CFG.PASS1_QUERIES_PER_DIM,
+    }, 30000);
+    if (planResult?.plan && Object.keys(planResult.plan).length > 0) {
+      claudePlan = planResult.plan;
+      log({ message: `✓ Claude generated ${planResult.total_queries} targeted queries across 7 dimensions`, level: 'success' });
+    } else {
+      log({ message: `⚠ Claude plan returned empty — using fallback queries`, level: 'warning' });
+    }
+  } catch (e: any) {
+    log({ message: `⚠ Claude planning failed (${e?.message}) — using fallback queries`, level: 'warning' });
+  }
+
+  if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
+
+  // Helper: get Claude's queries for a dim, falling back to hardcoded list
+  function getPlanQueries(dim: string, fallback: string[]): string[] {
+    const qs = claudePlan[dim];
+    if (Array.isArray(qs) && qs.length >= 3) return qs.slice(0, CFG.PASS1_QUERIES_PER_DIM);
+    return fallback.slice(0, CFG.PASS1_QUERIES_PER_DIM);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PHASE 1 — BROAD SEARCH PASS (queries directed by Claude's research plan)
   // ═══════════════════════════════════════════════════════════════════════════
   log({ message: `\n━━━ PHASE 1: Broad Search Pass (Pass 1 of 4) ━━━`, level: 'info' });
 
@@ -338,9 +374,9 @@ export async function runScreening(
     `"${h}" AI features product 2025 2026`,
   ]);
 
-  // COMPANY PROFILE dimension — 12 queries
+  // COMPANY PROFILE
   log({ message: `📡 Searching: Company Profile (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
-  const profileResults1 = await searchSequential([
+  const profileResults1 = await searchSequential(getPlanQueries('company_profile', [
     `"${co}" software company overview history founded headquarters`,
     `"${co}" annual recurring revenue ARR growth 2024 2025 2026`,
     `"${co}" funding investors venture capital private equity raise`,
@@ -353,30 +389,31 @@ export async function runScreening(
     `"${co}" revenue growth ARR MRR churn retention metrics`,
     `"${co}" partnership channel reseller distribution strategy`,
     `"${co}" IPO acquisition exit M&A rumor strategic`,
-  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ]), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
-  // COMPETITIVE dimension — 12 queries
+  // COMPETITIVE
   log({ message: `📡 Searching: Competitive Landscape (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
-  const compResults1 = await searchSequential([
+  const compFallbackQueries = [
     `"${co}" competitors alternatives vs comparison 2025 2026`,
     `${v} software top companies market leaders 2025 2026`,
     `${v} AI startup funding Series A B C 2024 2025 2026`,
     `${v} artificial intelligence software disruption threat`,
+    `${v} ChatGPT OpenAI Microsoft Copilot automation threat impact`,
     `${v} private equity investment acquisition deal 2024 2025 2026`,
     `${v} market share competitive analysis landscape`,
-    `${v} ChatGPT OpenAI Microsoft Copilot automation threat impact`,
     `${v} incumbent player existing vendor platform consolidation`,
     `${v} new entrant venture-backed startup disruption 2024 2025 2026`,
     `${v} competitive moat defensibility differentiation`,
     `"${co}" win rate vs competitors customer wins losses`,
     ...competitorQueryExtras.slice(0, 2),
-  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ];
+  const compResults1 = await searchSequential(getPlanQueries('competitive_landscape', compFallbackQueries), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
-  // TEAM dimension — 12 queries
+  // TEAM
   log({ message: `📡 Searching: Team & Leadership (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
-  const teamResults1 = await searchSequential([
+  const teamResults1 = await searchSequential(getPlanQueries('team_capability', [
     `"${co}" CEO founder background LinkedIn history prior companies`,
     `"${co}" CTO chief technology officer engineering team background`,
     `"${co}" executive leadership team management org chart`,
@@ -389,12 +426,12 @@ export async function runScreening(
     `"${co}" team culture glassdoor review employee experience`,
     `"${co}" advisor board investor operating partner domain`,
     `"${co}" AI head of AI ML director hire appointment`,
-  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ]), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
-  // REGULATORY / MOAT dimension — 12 queries
+  // REGULATORY / MOAT
   log({ message: `📡 Searching: Regulatory & Moat (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
-  const regResults1 = await searchSequential([
+  const regResults1 = await searchSequential(getPlanQueries('regulatory_moat', [
     `"${co}" HIPAA SOC2 compliance certification security audit`,
     `"${co}" integration EHR EMR API partners ecosystem connectors`,
     `"${co}" customer switching cost retention churn contract`,
@@ -407,12 +444,12 @@ export async function runScreening(
     `${v} compliance penalty enforcement action regulatory risk 2025 2026`,
     `"${co}" integration depth API workflow embedded sticky`,
     `${v} proprietary data advantage network effect accumulation`,
-  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ]), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
-  // WORKFLOW / PRODUCT dimension — 12 queries
+  // WORKFLOW / PRODUCT
   log({ message: `📡 Searching: Workflow & Product (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
-  const workResults1 = await searchSequential([
+  const workResults1 = await searchSequential(getPlanQueries('workflow_product', [
     `"${co}" product features workflow daily operations overview`,
     `"${co}" system of record core platform mission critical`,
     `"${co}" ROI case study value outcome results savings`,
@@ -425,12 +462,12 @@ export async function runScreening(
     `"${co}" mobile app iOS Android field worker clinician`,
     `"${co}" workflow automation time savings productivity gain`,
     `"${co}" customer expansion upsell cross-sell module`,
-  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ]), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
-  // DATA / ARCHITECTURE dimension — 12 queries
+  // DATA / ARCHITECTURE
   log({ message: `📡 Searching: Data & Architecture (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
-  const dataResults1 = await searchSequential([
+  const dataResults1 = await searchSequential(getPlanQueries('data_architecture', [
     `"${co}" AI features machine learning analytics predictive launch`,
     `"${co}" data platform cloud AWS Azure GCP architecture infrastructure`,
     `"${co}" API integration technology stack developer`,
@@ -443,12 +480,12 @@ export async function runScreening(
     `"${co}" AI copilot assistant automation feature product`,
     `"${co}" data lake warehouse analytics platform architecture`,
     `"${co}" technical architecture whitepaper security compliance engineering`,
-  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ]), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
-  // MARKET TIMING dimension — 12 queries
+  // MARKET TIMING
   log({ message: `📡 Searching: Market Timing (${CFG.PASS1_QUERIES_PER_DIM} queries)...`, level: 'info' });
-  const marketResults1 = await searchSequential([
+  const marketResults1 = await searchSequential(getPlanQueries('market_timing', [
     `${v} market size TAM total addressable market 2025 2026 estimate`,
     `${v} market growth rate CAGR forecast 2026 2031`,
     `${v} private equity deal volume activity count 2024 2025 2026`,
@@ -461,7 +498,7 @@ export async function runScreening(
     `${v} consolidation platform vendor market structure dynamics`,
     `${v} buyer survey willingness-to-pay software budget 2026`,
     `${v} recession sensitivity budget cycle software spending trend`,
-  ].slice(0, CFG.PASS1_QUERIES_PER_DIM), CFG.SEARCH_RESULTS_PER_QUERY, log);
+  ]), CFG.SEARCH_RESULTS_PER_QUERY, log);
   if (isAborted()) return { data_packs: dataPacks, evidence_log: evidenceLog };
 
   log({ message: `✓ Phase 1 complete. ${[profileResults1, compResults1, teamResults1, regResults1, workResults1, dataResults1, marketResults1].reduce((s,r)=>s+r.length,0)} search results collected.`, level: 'success' });
