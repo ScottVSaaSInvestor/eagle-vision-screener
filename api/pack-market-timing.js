@@ -10294,7 +10294,7 @@ R7 SIGNAL STRENGTH CALIBRATION (Market Timing Risk):
 0.8 = Very late \u2014 multiple well-funded AI-native companies with traction, window mostly closed
 0.9 = Poor timing \u2014 either market already consolidated OR market is too nascent/tiny
 1.0 = Worst timing \u2014 market declining OR AI-native winner has clearly emerged`;
-    const PACK_FALLBACK_MODEL = "claude-haiku-3-5";
+    const PACK_FALLBACK_MODEL = "claude-haiku-3-5-20241022";
     let attempts = 0;
     while (attempts < 3) {
       attempts++;
@@ -10310,7 +10310,11 @@ R7 SIGNAL STRENGTH CALIBRATION (Market Timing Risk):
           system: systemPrompt,
           messages: [{ role: "user", content: promptToUse }]
         });
-        const text = response.content[0].type === "text" ? response.content[0].text : "";
+        const text = response.content.find((b2) => b2.type === "text")?.text ?? "";
+        if (response.stop_reason === "max_tokens") {
+          console.warn("[pack] WARNING: truncated at max_tokens \u2014 retrying");
+          continue;
+        }
         console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now() - startTime}ms`);
         const parsed = extractJSONObject(text);
         if (parsed) {

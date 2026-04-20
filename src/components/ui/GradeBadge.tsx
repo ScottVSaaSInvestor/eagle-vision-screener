@@ -27,13 +27,13 @@ export function GradeBadge({ grade, score, label, size = 'md' }: GradeBadgeProps
   return (
     <div className="flex flex-col items-center gap-1">
       {label && (
-        <div className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+        <div className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
           {label}
         </div>
       )}
       <div
         className={`${sizeCls} rounded-xl flex items-center justify-center font-bold`}
-        style={{ background: bg, border: `2px solid ${border}`, color: text, fontFamily: 'Montserrat' }}
+        style={{ background: bg, border: `2px solid ${border}`, color: text, fontFamily: 'JetBrains Mono, monospace' }}
       >
         {grade}
       </div>

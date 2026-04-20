@@ -26,7 +26,7 @@ export function DispositionBadge({ disposition, confidence, size = 'md' }: Dispo
           background: config.bg,
           border: `2px solid ${config.border}`,
           color: config.text,
-          fontFamily: 'Montserrat',
+          fontFamily: 'JetBrains Mono, monospace',
           letterSpacing: '0.15em',
         }}
       >

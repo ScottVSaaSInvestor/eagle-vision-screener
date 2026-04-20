@@ -914,7 +914,7 @@ export async function runScreening(
     // Non-critical — vertical detection failure doesn't block scoring
   }
 
-  log({ message: `\n🦅 Eagle Vision Deep Research v4 complete.`, level: 'success' });
+  log({ message: `\n🦅 PERCH Analysis complete.`, level: 'success' });
   log({ message: `Evidence collected: ~${Math.round(totalEvidence/1000)}K chars across 5 research passes.`, level: 'info' });
 
   return {

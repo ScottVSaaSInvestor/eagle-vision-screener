@@ -35,7 +35,7 @@ async function adapt(handler, req, res) {
 }
 
 
-// Bundled function: research-gap-fill
+// Bundled function: research-plan
 let _netlifyExports = {};
 "use strict";
 var __create = Object.create;
@@ -6472,12 +6472,12 @@ var init_fileFromPath = __esm({
   }
 });
 
-// netlify/functions/research-gap-fill.ts
-var research_gap_fill_exports = {};
-__export(research_gap_fill_exports, {
+// netlify/functions/research-plan.ts
+var research_plan_exports = {};
+__export(research_plan_exports, {
   handler: () => handler
 });
-_netlifyExports = __toCommonJS(research_gap_fill_exports);
+_netlifyExports = __toCommonJS(research_plan_exports);
 
 // node_modules/@anthropic-ai/sdk/version.mjs
 var VERSION = "0.40.1";
@@ -10080,7 +10080,7 @@ Anthropic.Beta = Beta;
 var { HUMAN_PROMPT, AI_PROMPT } = Anthropic;
 var sdk_default = Anthropic;
 
-// netlify/functions/research-gap-fill.ts
+// netlify/functions/research-plan.ts
 var client = new sdk_default({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
 function extractJSONObject(text) {
   if (!text || text.length < 2) return null;
@@ -10131,62 +10131,6 @@ function extractJSONObject(text) {
   }
   return null;
 }
-var DIMENSION_CONTEXT = {
-  company_profile: `You are identifying gaps in company profile research. Critical unknowns that need gap-fill include:
-- Exact ARR or revenue range (look for press releases, job postings with pay ranges that imply scale, customer count \xD7 ASP estimates)
-- Funding round details (exact amounts, lead investors, dates)
-- Employee count and growth trajectory (LinkedIn, job boards)
-- Customer logos and case studies (press releases, award submissions)
-- G2/Capterra review scores and volume
-- Founding team background and prior exits`,
-  competitive_landscape: `You are identifying gaps in competitive landscape research. Critical unknowns that need gap-fill include:
-- Specific AI-native entrants: name, funding, traction, differentiator
-- Incumbent AI roadmaps: what specific features have incumbents shipped vs announced?
-- Recent funding rounds in the vertical (last 12 months)
-- Acquisition activity in the vertical (who is buying whom?)
-- Horizontal AI tools (ChatGPT, Copilot) adoption in this vertical among operators
-- Head-to-head comparison articles or analyst reports`,
-  team_capability: `You are identifying gaps in team capability research. Critical unknowns that need gap-fill include:
-- CEO and CTO names, backgrounds, prior companies
-- Head of AI/ML role if exists \u2014 who holds it?
-- Specific AI features that have been shipped to production
-- Job postings for AI/ML roles (signal of AI investment)
-- Engineering blog posts or technical talks
-- CEO public statements on AI strategy (podcasts, press interviews)
-- LinkedIn profiles of key technical leaders`,
-  workflow_product: `You are identifying gaps in workflow/product research. Critical unknowns that need gap-fill include:
-- Specific product modules and what workflows they own
-- Whether it is genuinely a system of record vs an add-on tool
-- Customer ROI metrics, time-savings, revenue impact quantification
-- Specific case studies with named customers and measurable outcomes
-- Daily active use evidence (users describe daily workflow)
-- Integration depth: how many integrations, with what systems?
-- G2/Capterra reviews that describe actual day-to-day product usage`,
-  data_architecture: `You are identifying gaps in data architecture research. Critical unknowns that need gap-fill include:
-- Technology stack: cloud provider, database choices, API architecture
-- Specific AI/ML features already in production (not roadmap)
-- Data volume: how many records, customers, longitudinal years of data
-- Outcome labeling: does the software capture what happened after the service/product was delivered?
-- Engineering blog posts describing AI/ML systems
-- Whether they are building AI internally or wrapping third-party APIs
-- Architecture readiness: cloud-native, microservices, data lake, ML pipeline`,
-  regulatory_moat: `You are identifying gaps in regulatory moat research. Critical unknowns that need gap-fill include:
-- Specific compliance certifications held (SOC2 Type II, HIPAA BAA, HITRUST, ISO 27001)
-- Regulatory framework details for this vertical (specific agencies, requirements)
-- Customer switching cost evidence (migration complexity, compliance history, integration complexity)
-- Data portability and export capabilities
-- Contract term lengths and exit provisions
-- Evidence of actual customer longevity (multi-year case studies, customer anniversary announcements)
-- New or emerging regulations that strengthen the moat`,
-  market_timing: `You are identifying gaps in market timing research. Critical unknowns that need gap-fill include:
-- Specific market size estimates with source and methodology
-- Recent PE/VC deal flow in this vertical (last 12-18 months)
-- AI adoption statistics for this vertical (survey data, operator reports)
-- Comparable transaction multiples and recent M&A deals
-- Macro tailwinds: demographic trends, reimbursement changes, labor shortages
-- Industry analyst reports (Gartner, Forrester, CB Insights, Pitchbook) on this vertical
-- Conference keynote themes from vertical-specific conferences`
-};
 var handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
@@ -10195,110 +10139,141 @@ var handler = async (event) => {
   try {
     const body = JSON.parse(event.body || "{}");
     const {
-      dimension,
       company_name,
+      company_url,
       vertical,
-      raw_evidence,
-      num_queries = 5
+      competitor_hints = [],
+      document_summary = "",
+      queries_per_dim = 5
     } = body;
-    if (!dimension || !company_name) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "dimension and company_name required" })
-      };
+    if (!company_name) {
+      return { statusCode: 400, body: JSON.stringify({ error: "company_name required" }) };
     }
-    const model = "claude-sonnet-4-6";
-    const dimensionContext = DIMENSION_CONTEXT[dimension] || `You are identifying research gaps for ${dimension} analysis.`;
-    const systemPrompt = `You are a senior investment research analyst at a PE/growth equity firm. Your job is to analyze partial research evidence and identify the most critical gaps that prevent a thorough investment-grade assessment.
+    const competitorContext = competitor_hints.length > 0 ? `
+Known competitors to research: ${competitor_hints.join(", ")}` : "";
+    const docContext = document_summary ? `
+Document context provided: ${document_summary.slice(0, 500)}` : "";
+    const systemPrompt = `You are a senior investment analyst at a PE/growth equity firm specializing in vertical SaaS.
+Your job is to design a targeted research plan for PERCH \u2014 an AI-powered investment screening tool.
 
-${dimensionContext}
+Given a company name, URL, and vertical, generate the most valuable search queries across 7 investment dimensions.
+These queries will be sent to Tavily (a web search API) to gather investment-grade evidence.
 
-RULES:
-1. Generate SPECIFIC, searchable queries \u2014 not vague ones
-2. Each query should target a specific unknown that would materially change the investment assessment
-3. Prioritize queries most likely to yield investable signal
-4. Queries should be Google-searchable (include company name, specific terms)
-5. Vary query structure: include some with quotes for exact phrases, some without
-6. Do NOT generate queries for things already well-covered in the evidence
-7. TODAY IS APRIL 17, 2026. Your knowledge extends through early 2026 \u2014 use current date context when generating queries.`;
-    const evidenceLen = (raw_evidence || "").length;
-    const userPrompt = `Analyze this research evidence for ${company_name} (${vertical || "vertical SaaS"}) in the "${dimension}" dimension.
+TODAY IS APRIL 2026. Generate queries with current date context.
 
-EVIDENCE COLLECTED SO FAR (${Math.round(evidenceLen / 1e3)}K chars from multi-pass deep research):
-${(raw_evidence || "").slice(0, 2e4)}
-${evidenceLen > 2e4 ? `
-[... ${Math.round((evidenceLen - 2e4) / 1e3)}K more chars truncated for gap analysis focus ...]` : ""}
+QUERY QUALITY RULES:
+1. Be SPECIFIC \u2014 include the company name in most queries
+2. Target INVESTMENT-CRITICAL information: ARR, growth, AI features, competitive position, team
+3. Include varied query types: news searches, G2/review searches, LinkedIn signals, job postings, technical content
+4. For competitive/market dims, include vertical-specific terms AND company-specific comparisons
+5. Queries should complement each other \u2014 don't repeat the same search in different words
+6. Make queries that a top-tier investment bank analyst would run on day 1 of diligence`;
+    const userPrompt = `Generate a targeted research plan for:
 
-Based on this evidence, identify the MOST CRITICAL GAPS that prevent an investment-grade assessment of this dimension. Focus on:
-1. Missing financial metrics that affect valuation (ARR, growth rate, churn, NRR)
-2. Missing competitive intelligence that affects risk assessment
-3. Missing technical/product facts that affect readiness scoring
-4. Missing people/team facts that affect conviction
-5. Missing market/timing data that affects entry attractiveness
+COMPANY: ${company_name}
+URL: ${company_url || "unknown"}
+VERTICAL: ${vertical || "vertical SaaS"}${competitorContext}${docContext}
 
-Return ONLY valid JSON (no markdown, no extra text):
+Generate exactly ${queries_per_dim} search queries for each of the 7 investment dimensions below.
+Each query must be specific, concrete, and investment-grade.
+
+Return ONLY valid JSON (no markdown, no explanation):
 {
-  "gaps_identified": [
-    "<specific gap 1 - what we don't know, why it materially affects the investment decision>",
-    "<specific gap 2>",
-    "<specific gap 3>"
+  "company_profile": [
+    "query 1 \u2014 company overview, history, scale",
+    "query 2 \u2014 ARR, revenue, growth metrics",
+    "query 3 \u2014 funding, investors, raise history",
+    "query 4 \u2014 customers, case studies, market presence",
+    "query 5 \u2014 recent news, press releases, announcements"
   ],
-  "queries": [
-    "<targeted search query 1 - specific, searchable, designed to fill gap>",
-    "<targeted search query 2>",
-    "<targeted search query 3>",
-    "<targeted search query 4>",
-    "<targeted search query 5>",
-    "<targeted search query 6>",
-    "<targeted search query 7>",
-    "<targeted search query 8>"
+  "competitive_landscape": [
+    "query 1 \u2014 direct competitors and alternatives",
+    "query 2 \u2014 AI-native entrants in ${vertical || "vertical SaaS"}",
+    "query 3 \u2014 market leaders and recent funding in ${vertical || "vertical SaaS"}",
+    "query 4 \u2014 AI disruption threat to ${vertical || "vertical SaaS"} incumbents",
+    "query 5 \u2014 PE/M&A activity in ${vertical || "vertical SaaS"} 2024 2025 2026"
+  ],
+  "team_capability": [
+    "query 1 \u2014 CEO/founder background and prior companies",
+    "query 2 \u2014 technical leadership, CTO, AI/ML hires",
+    "query 3 \u2014 AI product roadmap and strategy statements",
+    "query 4 \u2014 engineering culture, job postings for AI/ML roles",
+    "query 5 \u2014 team depth and advisor/investor operating partners"
+  ],
+  "regulatory_moat": [
+    "query 1 \u2014 compliance certifications HIPAA SOC2",
+    "query 2 \u2014 integration depth and switching costs",
+    "query 3 \u2014 regulatory requirements in ${vertical || "vertical SaaS"}",
+    "query 4 \u2014 customer contract terms and retention evidence",
+    "query 5 \u2014 data moat and proprietary advantage"
+  ],
+  "workflow_product": [
+    "query 1 \u2014 core product features and daily workflow",
+    "query 2 \u2014 system of record evidence and mission criticality",
+    "query 3 \u2014 customer ROI and outcome metrics",
+    "query 4 \u2014 G2 or Capterra reviews describing actual usage",
+    "query 5 \u2014 recent product updates, releases, new features"
+  ],
+  "data_architecture": [
+    "query 1 \u2014 AI features and machine learning capabilities",
+    "query 2 \u2014 technology stack and cloud infrastructure",
+    "query 3 \u2014 data assets, longitudinal records, proprietary dataset",
+    "query 4 \u2014 AI product announcements and launches 2024 2025 2026",
+    "query 5 \u2014 engineering blog, technical architecture, API integrations"
+  ],
+  "market_timing": [
+    "query 1 \u2014 market size TAM and growth rate for ${vertical || "vertical SaaS"}",
+    "query 2 \u2014 AI adoption trends and statistics in ${vertical || "vertical SaaS"}",
+    "query 3 \u2014 PE deal volume and M&A multiples in ${vertical || "vertical SaaS"}",
+    "query 4 \u2014 macro tailwinds: demographics, labor, reimbursement for ${vertical || "vertical SaaS"}",
+    "query 5 \u2014 investor and analyst reports on ${vertical || "vertical SaaS"} 2025 2026"
   ]
 }
 
-Generate exactly ${num_queries} queries in the "queries" array. Make them:
-- Specific and concrete (include company name, exact search terms)
-- Varied in approach (news, LinkedIn, job boards, G2, analyst reports, Crunchbase)
-- Targeted at the most investment-critical gaps first
-- NOT duplicating queries already answered by the evidence above`;
-    try {
-      const response = await client.messages.create({
-        model,
-        max_tokens: 2048,
-        // Larger budget for richer gap analysis and more queries
-        system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }]
-      });
-      const text = response.content.find((b2) => b2.type === "text")?.text ?? "";
-      const parsed = extractJSONObject(text);
-      if (parsed) {
-        return {
-          statusCode: 200,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            queries: Array.isArray(parsed.queries) ? parsed.queries : [],
-            gaps_identified: Array.isArray(parsed.gaps_identified) ? parsed.gaps_identified : [],
-            dimension,
-            elapsed_ms: Date.now() - startTime
-          })
-        };
+IMPORTANT: Replace the placeholder descriptions above with REAL, SPECIFIC queries for ${company_name} in ${vertical || "vertical SaaS"}.
+Every query in company_profile, team_capability, regulatory_moat, workflow_product, and data_architecture should include "${company_name}" by name.
+Market and competitive queries should include "${vertical || "vertical SaaS"}" vertical-specific terms.`;
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      // Sonnet is fast and sharp for query generation
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }]
+    });
+    const text = response.content.find((b2) => b2.type === "text")?.text ?? "";
+    const parsed = extractJSONObject(text);
+    if (parsed) {
+      const dims = ["company_profile", "competitive_landscape", "team_capability", "regulatory_moat", "workflow_product", "data_architecture", "market_timing"];
+      const validPlan = {};
+      for (const dim of dims) {
+        validPlan[dim] = Array.isArray(parsed[dim]) ? parsed[dim].slice(0, queries_per_dim) : [];
       }
-    } catch (e2) {
-      console.error("Gap fill generation failed:", e2?.message);
+      const totalQueries = Object.values(validPlan).reduce((s2, qs) => s2 + qs.length, 0);
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: validPlan,
+          total_queries: totalQueries,
+          model_used: "claude-sonnet-4-6",
+          elapsed_ms: Date.now() - startTime
+        })
+      };
     }
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        queries: [],
-        gaps_identified: ["Gap analysis failed \u2014 proceeding with available evidence"],
-        dimension,
+        plan: {},
+        total_queries: 0,
+        error: "Claude did not return valid JSON \u2014 orchestrator will use fallback queries",
         elapsed_ms: Date.now() - startTime
       })
     };
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err?.message || "Gap fill failed" })
+      body: JSON.stringify({ error: err?.message || "Research plan generation failed" })
     };
   }
 };
@@ -10338,7 +10313,7 @@ const _netlifyHandler = (_netlifyExports && (_netlifyExports.handler || _netlify
 // Vercel API route export
 module.exports = async function vercelHandler(req, res) {
   if (!_netlifyHandler) {
-    res.status(500).json({ error: 'Handler not found in bundle', bundle: 'research-gap-fill' });
+    res.status(500).json({ error: 'Handler not found in bundle', bundle: 'research-plan' });
     return;
   }
   await adapt(_netlifyHandler, req, res);

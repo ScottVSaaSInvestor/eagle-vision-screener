@@ -1,43 +1,45 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 @import "./styles/brand.css";
 @import "./styles/print.css";
 
 :root {
-  /* Core Brand Colors */
-  --navy:        #020F1A;
-  --navy-mid:    #041828;
-  --navy-card:   #071E30;
-  --navy-raised: #0A2540;
-  --navy-border: rgba(0, 200, 220, 0.12);
+  /* Core Brand Colors — matching perch-index.html palette */
+  --navy:        #0a1424;
+  --navy-mid:    #0f1b2d;
+  --navy-card:   #17263d;
+  --navy-raised: #1e3352;
+  --navy-border: rgba(255, 255, 255, 0.08);
 
-  /* Teal / Cyan — primary accent (from eagle glow) */
-  --teal:        #00C8DC;
-  --teal-dim:    rgba(0, 200, 220, 0.18);
-  --teal-glow:   rgba(0, 200, 220, 0.08);
+  /* Teal — primary accent */
+  --teal:        #0d9488;
+  --teal-bright: #2dd4bf;
+  --teal-dim:    rgba(45, 212, 191, 0.18);
+  --teal-glow:   rgba(45, 212, 191, 0.08);
 
   /* Gold — secondary accent */
-  --gold:        #C5A572;
-  --gold-dim:    rgba(197, 165, 114, 0.18);
+  --gold:        #c9a961;
+  --gold-bright: #e6c580;
+  --gold-dim:    rgba(201, 169, 97, 0.18);
 
-  /* Lime — CTA */
-  --lime:        #CFFF04;
-  --lime-dark:   #A8CC00;
+  /* Lime — CTA (keep for existing buttons) */
+  --lime:        #c9a961;
+  --lime-dark:   #b8922a;
 
   /* Signal */
-  --go:          #1DB954;
-  --maybe:       #FFB300;
-  --gap:         #F57C00;
-  --nogo:        #E53935;
+  --go:          #4ade80;
+  --maybe:       #f0b73d;
+  --gap:         #f0b73d;
+  --nogo:        #ef4444;
 
   /* Text */
-  --text-primary:   #F0F4F8;
-  --text-secondary: #7A90A4;
-  --text-muted:     #3D5166;
+  --text-primary:   #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted:     rgba(255, 255, 255, 0.45);
 
-  /* Typography */
-  --font-display: 'Space Grotesk', sans-serif;
-  --font-body:    'Space Grotesk', sans-serif;
+  /* Typography — Cormorant Garamond for display, Inter for body, JetBrains Mono for labels */
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body:    'Inter', sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
 }
 
@@ -45,18 +47,24 @@
 
 body {
   font-family: var(--font-body);
-  background-color: var(--navy);
+  background:
+    radial-gradient(ellipse at top left, rgba(13, 148, 136, 0.08), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(201, 169, 97, 0.06), transparent 50%),
+    var(--navy);
   color: var(--text-primary);
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
+  font-weight: 500;
 }
 
 code, pre, .mono {

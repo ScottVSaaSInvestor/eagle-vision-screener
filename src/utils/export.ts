@@ -10,7 +10,7 @@ export function exportToJSON(record: ScreeningRecord) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `eagle-vision-${record.inputs.company_name.replace(/\s+/g, '-').toLowerCase()}-${record.job_id}.json`;
+  a.download = `perch-${record.inputs.company_name.replace(/\s+/g, '-').toLowerCase()}-${record.job_id}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

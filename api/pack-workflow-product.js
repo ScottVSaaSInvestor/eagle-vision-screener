@@ -10303,7 +10303,7 @@ R5 (Customer Switching Propensity) \u2014 LOWER IS BETTER:
 0.5 = Moderate \u2014 feasible but takes months and significant budget
 0.7 = Low cost \u2014 could switch in 2-4 weeks with minimal disruption
 0.9 = Trivial \u2014 competitor offers free migration, all data in standard formats`;
-    const PACK_FALLBACK_MODEL = "claude-haiku-3-5";
+    const PACK_FALLBACK_MODEL = "claude-haiku-3-5-20241022";
     let attempts = 0;
     while (attempts < 3) {
       attempts++;
@@ -10319,7 +10319,11 @@ R5 (Customer Switching Propensity) \u2014 LOWER IS BETTER:
           system: systemPrompt,
           messages: [{ role: "user", content: promptToUse }]
         });
-        const text = response.content[0].type === "text" ? response.content[0].text : "";
+        const text = response.content.find((b2) => b2.type === "text")?.text ?? "";
+        if (response.stop_reason === "max_tokens") {
+          console.warn("[pack] WARNING: truncated at max_tokens \u2014 retrying");
+          continue;
+        }
         console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now() - startTime}ms`);
         const parsed = extractJSONObject(text);
         if (parsed) {

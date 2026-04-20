@@ -1,83 +1,240 @@
-/* Perch / AQL Brand CSS */
+/* Perch / AQL Brand CSS — styled to match perch-index.html v2026.04 */
 
 /* ── Grade Colors ── */
-.grade-a { color: #1DB954; }
-.grade-b { color: #4CAF8A; }
-.grade-c { color: #FFB300; }
-.grade-d { color: #F57C00; }
-.grade-f { color: #E53935; }
+.grade-a { color: #4ade80; }
+.grade-b { color: #4ade80; }
+.grade-c { color: #f0b73d; }
+.grade-d { color: #f0b73d; }
+.grade-f { color: #ef4444; }
 
-.grade-bg-a { background-color: #1DB954; }
-.grade-bg-b { background-color: #4CAF8A; }
-.grade-bg-c { background-color: #FFB300; }
-.grade-bg-d { background-color: #F57C00; }
-.grade-bg-f { background-color: #E53935; }
+.grade-bg-a { background-color: #4ade80; }
+.grade-bg-b { background-color: #4ade80; }
+.grade-bg-c { background-color: #f0b73d; }
+.grade-bg-d { background-color: #f0b73d; }
+.grade-bg-f { background-color: #ef4444; }
 
 /* ── Disposition Badges ── */
 .badge-go {
-  background: rgba(29, 185, 84, 0.12);
-  border: 1px solid rgba(29, 185, 84, 0.5);
-  color: #1DB954;
-  box-shadow: 0 0 12px rgba(29,185,84,0.15);
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  color: #4ade80;
 }
 .badge-maybe {
-  background: rgba(255, 179, 0, 0.12);
-  border: 1px solid rgba(255, 179, 0, 0.5);
-  color: #FFB300;
+  background: rgba(45, 212, 191, 0.12);
+  border: 1px solid rgba(45, 212, 191, 0.4);
+  color: #2dd4bf;
 }
 .badge-nogo {
-  background: rgba(229, 57, 53, 0.12);
-  border: 1px solid rgba(229, 57, 53, 0.5);
-  color: #E53935;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
 }
 
 /* ── Card styles ── */
 .card-navy {
-  background: #071E30;
-  border: 1px solid rgba(0, 200, 220, 0.12);
-  border-radius: 14px;
+  background: #17263d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
 }
 .card-navy-light {
-  background: #0A2540;
-  border: 1px solid rgba(0, 200, 220, 0.15);
-  border-radius: 14px;
+  background: #1e3352;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
 }
 
-/* ── Teal accent line ── */
-.teal-line { border-left: 3px solid #00C8DC; }
-.gold-line  { border-left: 3px solid #C5A572; }
+/* ── Accent lines ── */
+.teal-line { border-left: 3px solid #2dd4bf; }
+.gold-line  { border-left: 3px solid #c9a961; }
 
 /* ── Glass card ── */
 .glass-card {
-  background: rgba(4, 24, 40, 0.75);
+  background: rgba(23, 38, 61, 0.85);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(0, 200, 220, 0.18);
-  border-radius: 16px;
+  border: 1px solid rgba(45, 212, 191, 0.15);
+  border-radius: 8px;
 }
 
 /* ── Critical gap row ── */
 .critical-gap-row {
-  border-left: 3px solid #F57C00;
-  background: rgba(245, 124, 0, 0.07);
+  border-left: 3px solid #f0b73d;
+  background: rgba(240, 183, 61, 0.07);
 }
 
 /* ── Typography ── */
 .text-display {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Cormorant Garamond', serif;
   font-size: 3.5rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.03em;
+  font-weight: 500;
+  line-height: 1.05;
 }
 .text-headline {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Cormorant Garamond', serif;
   font-size: 1.75rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 500;
+}
+.text-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+.text-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #2dd4bf;
 }
 
 /* ── Quadrant colors ── */
-.quadrant-execute { background: rgba(29, 185, 84, 0.07); }
-.quadrant-race    { background: rgba(255, 179, 0, 0.07); }
-.quadrant-build   { background: rgba(0, 200, 220, 0.05); }
-.quadrant-danger  { background: rgba(229, 57, 53, 0.07); }
+.quadrant-execute { background: rgba(74, 222, 128, 0.08); border-color: rgba(74, 222, 128, 0.3); }
+.quadrant-race    { background: rgba(240, 183, 61, 0.08); border-color: rgba(240, 183, 61, 0.3); }
+.quadrant-build   { background: rgba(45, 212, 191, 0.08); border-color: rgba(45, 212, 191, 0.3); }
+.quadrant-danger  { background: rgba(239, 68, 68, 0.08);  border-color: rgba(239, 68, 68, 0.3); }
+
+/* ── Form inputs ── */
+.perch-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(10, 20, 36, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  transition: border-color 0.15s ease;
+}
+.perch-input:focus {
+  outline: none;
+  border-color: #2dd4bf;
+}
+
+/* ── Primary button ── */
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: #c9a961;
+  color: #0a1424;
+  border: none;
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.btn-gold:hover { background: #e6c580; }
+.btn-gold:disabled { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.5); cursor: not-allowed; }
+
+/* ── Secondary button ── */
+.btn-teal-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: transparent;
+  color: #2dd4bf;
+  border: 1px solid rgba(45, 212, 191, 0.4);
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-teal-outline:hover { background: rgba(45, 212, 191, 0.1); }
+
+/* ── Meta badge ── */
+.meta-badge {
+  padding: 6px 12px;
+  background: rgba(45, 212, 191, 0.1);
+  border: 1px solid rgba(45, 212, 191, 0.25);
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: #2dd4bf;
+  text-transform: uppercase;
+}
+
+/* Keep old btn-lime for backward compat with existing buttons */
+.btn-lime {
+  background: #c9a961;
+  color: #0a1424;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  letter-spacing: 0.03em;
+}
+.btn-lime:hover { background: #e6c580; }
+.btn-lime:active { transform: scale(0.98); }
+
+.btn-teal {
+  background: #0d9488;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-teal:hover { background: #2dd4bf; color: #0a1424; }
+
+/* ── Pack animations ── */
+@keyframes pulse-teal {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(45, 212, 191, 0.3); }
+  50% { opacity: 0.6; box-shadow: 0 0 20px rgba(45, 212, 191, 0.6); }
+}
+.pack-running { animation: pulse-teal 1.5s ease-in-out infinite; }
+
+/* ── Card base ── */
+.perch-card {
+  background: #17263d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+.perch-card-raised {
+  background: #1e3352;
+  border: 1px solid rgba(45, 212, 191, 0.15);
+  border-radius: 8px;
+}
+
+/* ── Gradient text ── */
+.gradient-text-teal {
+  background: linear-gradient(135deg, #2dd4bf 0%, #5eead4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-gold {
+  background: linear-gradient(135deg, #c9a961 0%, #e6c580 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Teal glow utility ── */
+.teal-glow {
+  box-shadow: 0 0 24px rgba(45, 212, 191, 0.15), 0 0 60px rgba(45, 212, 191, 0.06);
+}
+.teal-text-glow {
+  text-shadow: 0 0 20px rgba(45, 212, 191, 0.5);
+}
+
+/* ── Scanline bg texture ── */
+.scanline-bg {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(45, 212, 191, 0.015) 2px,
+    rgba(45, 212, 191, 0.015) 4px
+  );
+}

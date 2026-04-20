@@ -10293,7 +10293,7 @@ R6 (Regulatory Moat Durability) \u2014 HIGHER IS BETTER FOR INVESTMENT:
 0.8 = Very strong moat \u2014 regulators actively favor established compliant vendors
 0.9 = Exceptional moat \u2014 regulatory framework essentially requires long-term vendor relationships
 1.0 = Maximum regulatory protection \u2014 switching away requires regulatory re-approval`;
-    const PACK_FALLBACK_MODEL = "claude-haiku-3-5";
+    const PACK_FALLBACK_MODEL = "claude-haiku-3-5-20241022";
     let attempts = 0;
     while (attempts < 3) {
       attempts++;
@@ -10309,7 +10309,11 @@ R6 (Regulatory Moat Durability) \u2014 HIGHER IS BETTER FOR INVESTMENT:
           system: systemPrompt,
           messages: [{ role: "user", content: promptToUse }]
         });
-        const text = response.content[0].type === "text" ? response.content[0].text : "";
+        const text = response.content.find((b2) => b2.type === "text")?.text ?? "";
+        if (response.stop_reason === "max_tokens") {
+          console.warn("[pack] WARNING: truncated at max_tokens \u2014 retrying");
+          continue;
+        }
         console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now() - startTime}ms`);
         const parsed = extractJSONObject(text);
         if (parsed) {

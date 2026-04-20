@@ -18,13 +18,13 @@ export function AQLLogo({ size = 'md', showWordmark = true, className = '' }: AQ
         <div>
           <div
             className={`${titleSize} font-bold tracking-wider text-white`}
-            style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.12em' }}
+            style={{ fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.12em' }}
           >
             AQL GROWTH
           </div>
           <div
             className={`${subtitleSize} tracking-widest`}
-            style={{ color: '#C5A572', fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.2em', fontWeight: 500 }}
+            style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.2em', fontWeight: 500 }}
           >
             EAGLE VISION
           </div>

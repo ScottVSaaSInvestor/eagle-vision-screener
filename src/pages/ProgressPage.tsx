@@ -29,7 +29,7 @@ const STATUS_CONFIG = {
   stubbed: { dot: '#C5A572', label: 'V2 Stub', bg: 'rgba(197,165,114,0.08)' },
 };
 
-const STAGES = ['Broad Search (84q)', 'Deep Crawl (~75p)', 'Gap Fill ×2', 'Synthesize (7 dims)', 'Pack Analysis', 'Score'];
+const STAGES = ['Claude Plan + Search', 'Deep Crawl', 'Gap Analysis + Fill', 'Synthesize', 'Pack Analysis', 'Score'];
 
 export function ProgressPage() {
   const { jobId } = useParams<{ jobId: string }>();
@@ -105,7 +105,7 @@ export function ProgressPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'Montserrat' }}>
+            <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', fontWeight: 500 }}>
               {store.currentRecord?.inputs.company_name || 'Loading...'}
             </h1>
             <div className="flex items-center gap-3 mt-1">
@@ -133,12 +133,12 @@ export function ProgressPage() {
                   style={{
                     background: i < stageIndex ? '#1DB954' : i === stageIndex ? '#FFB300' : 'rgba(71,85,105,0.3)',
                     color: i <= stageIndex ? '#002B49' : '#475569',
-                    fontFamily: 'Montserrat',
+                    fontFamily: 'JetBrains Mono, monospace',
                   }}
                 >
                   {i < stageIndex ? '✓' : i + 1}
                 </div>
-                <span className="text-xs" style={{ color: i <= stageIndex ? '#C5A572' : '#475569', fontFamily: 'Montserrat' }}>
+                <span className="text-xs" style={{ color: i <= stageIndex ? '#C5A572' : '#475569', fontFamily: 'JetBrains Mono, monospace' }}>
                   {stage}
                 </span>
               </div>
@@ -168,7 +168,7 @@ export function ProgressPage() {
                 }}
               >
                 {info.priority && (
-                  <div className="absolute -top-2 -right-2 text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: '#C5A572', color: '#002B49', fontFamily: 'Montserrat' }}>
+                  <div className="absolute -top-2 -right-2 text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: '#C5A572', color: '#002B49', fontFamily: 'JetBrains Mono, monospace' }}>
                     PRIORITY
                   </div>
                 )}
@@ -179,7 +179,7 @@ export function ProgressPage() {
                     style={{ background: config.dot }}
                   />
                 </div>
-                <div className="text-xs font-semibold text-white" style={{ fontFamily: 'Montserrat' }}>
+                <div className="text-xs font-semibold text-white" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                   {info.label}
                 </div>
                 <div className="text-xs mt-1" style={{ color: config.dot, fontFamily: 'Inter' }}>
@@ -201,7 +201,7 @@ export function ProgressPage() {
           style={{ background: '#001A2E', border: '1px solid rgba(197,165,114,0.2)' }}
         >
           <div className="px-4 py-3 border-b border-[rgba(197,165,114,0.1)] flex items-center justify-between">
-            <span className="text-xs font-semibold tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+            <span className="text-xs font-semibold tracking-widest" style={{ color: '#C5A572', fontFamily: 'JetBrains Mono, monospace' }}>
               LIVE RESEARCH LOG
             </span>
             <span className="text-xs font-mono text-gray-500">{store.progressLog.length} events</span>
@@ -244,7 +244,7 @@ export function ProgressPage() {
             className="rounded-xl p-8 max-w-sm w-full mx-4"
             style={{ background: '#001A2E', border: '1px solid rgba(211,47,47,0.4)' }}
           >
-            <h3 className="text-lg font-bold text-white mb-3" style={{ fontFamily: 'Montserrat' }}>Abort Screening?</h3>
+            <h3 className="text-lg font-bold text-white mb-3" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 500 }}>Abort Screening?</h3>
             <p className="text-sm text-gray-400 mb-6" style={{ fontFamily: 'Inter' }}>
               This will stop the current screening. A partial report will be saved with LOW confidence flags.
             </p>

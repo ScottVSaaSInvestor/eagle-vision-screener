@@ -10083,7 +10083,7 @@ var sdk_default = Anthropic;
 // netlify/functions/research-synthesize.ts
 var client = new sdk_default({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
 var SYNTHESIS_MODEL = "claude-sonnet-4-6";
-var SYNTHESIS_FALLBACK_MODEL = "claude-haiku-3-5";
+var SYNTHESIS_FALLBACK_MODEL = "claude-haiku-3-5-20241022";
 var EVIDENCE_CAPS = [2e4, 12e3, 6e3];
 var SYNTHESIS_FOCUS = {
   company_profile: `Extract and structure the following:
@@ -10205,7 +10205,11 @@ Write a structured analyst brief following the numbered sections above. Label ev
           system: systemPrompt,
           messages: [{ role: "user", content: userPrompt }]
         });
-        const text = response.content[0].type === "text" ? response.content[0].text : "";
+        const text = response.content.find((b2) => b2.type === "text")?.text ?? "";
+        if (response.stop_reason === "max_tokens") {
+          console.warn("[pack] WARNING: truncated at max_tokens \u2014 retrying");
+          continue;
+        }
         const elapsed = Date.now() - startTime;
         console.log(`[synthesize] attempt ${attempt} succeeded: ${text.length} chars in ${elapsed}ms`);
         if (text && text.length > 200) {

@@ -10313,7 +10313,7 @@ A7 (Architecture Readiness):
 0.8 = Modern ML stack \u2014 MLOps, feature stores, model serving
 0.9 = AI-native architecture, purpose-built for ML deployment
 1.0 = Best-in-class ML infrastructure, production AI at scale`;
-    const PACK_FALLBACK_MODEL = "claude-haiku-3-5";
+    const PACK_FALLBACK_MODEL = "claude-haiku-3-5-20241022";
     let attempts = 0;
     while (attempts < 3) {
       attempts++;
@@ -10329,7 +10329,11 @@ A7 (Architecture Readiness):
           system: systemPrompt,
           messages: [{ role: "user", content: promptToUse }]
         });
-        const text = response.content[0].type === "text" ? response.content[0].text : "";
+        const text = response.content.find((b2) => b2.type === "text")?.text ?? "";
+        if (response.stop_reason === "max_tokens") {
+          console.warn("[pack] WARNING: truncated at max_tokens \u2014 retrying");
+          continue;
+        }
         console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now() - startTime}ms`);
         const parsed = extractJSONObject(text);
         if (parsed) {

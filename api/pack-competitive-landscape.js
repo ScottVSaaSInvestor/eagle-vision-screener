@@ -10326,7 +10326,7 @@ SIGNAL STRENGTH CALIBRATION \u2014 BE PRECISE, NOT MIDDLE:
 - R3: If incumbents have shipped AI features, score 0.5+. If only roadmap, 0.3-0.4.
 - R4: For most vertical SaaS, horizontal AI threat is moderate (0.3-0.5). Score 0.7+ only if operators are actively using ChatGPT instead of the SaaS.
 - A8: Most vertical SaaS has some flywheel potential (0.3-0.6). Score 0.8+ only if there's clear evidence of data network effects.`;
-    const PACK_FALLBACK_MODEL = "claude-haiku-3-5";
+    const PACK_FALLBACK_MODEL = "claude-haiku-3-5-20241022";
     let attempts = 0;
     while (attempts < 3) {
       attempts++;
@@ -10342,7 +10342,11 @@ SIGNAL STRENGTH CALIBRATION \u2014 BE PRECISE, NOT MIDDLE:
           system: systemPrompt,
           messages: [{ role: "user", content: promptToUse }]
         });
-        const text = response.content[0].type === "text" ? response.content[0].text : "";
+        const text = response.content.find((b2) => b2.type === "text")?.text ?? "";
+        if (response.stop_reason === "max_tokens") {
+          console.warn("[pack] WARNING: truncated at max_tokens \u2014 retrying");
+          continue;
+        }
         console.log(`[pack] attempt ${attempts}: response length ${text.length} chars in ${Date.now() - startTime}ms`);
         const parsed = extractJSONObject(text);
         if (parsed) {

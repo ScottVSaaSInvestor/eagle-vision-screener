@@ -10083,7 +10083,7 @@ var sdk_default = Anthropic;
 // netlify/functions/run-synthesis-all.ts
 var client = new sdk_default({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
 var SYNTHESIS_MODEL = "claude-sonnet-4-6";
-var SYNTHESIS_FALLBACK_MODEL = "claude-haiku-3-5";
+var SYNTHESIS_FALLBACK_MODEL = "claude-haiku-3-5-20241022";
 var EVIDENCE_CAPS = [3e4, 15e3, 8e3];
 var DIMENSIONS = [
   "company_profile",
@@ -10193,7 +10193,11 @@ Write a structured analyst brief following the numbered sections above. Label ev
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userPrompt }]
       });
-      const text = response.content[0].type === "text" ? response.content[0].text : "";
+      const text = response.content.find((b2) => b2.type === "text")?.text ?? "";
+      if (response.stop_reason === "max_tokens") {
+        console.warn(`[synth-all] WARNING: ${dimension} truncated at max_tokens \u2014 retrying`);
+        continue;
+      }
       const elapsed = Date.now() - start;
       console.log(`[synth-all] ${dimension} attempt ${attempt + 1} OK: ${text.length} chars in ${elapsed}ms`);
       if (text && text.length > 200) {
