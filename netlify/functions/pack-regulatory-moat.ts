@@ -211,7 +211,7 @@ R6 (Regulatory Moat Durability) — HIGHER IS BETTER FOR INVESTMENT:
     //   Attempt 2 (Sonnet, shorter prompt): ~6-10s — ultra-reliable
     //   Attempt 3 (Haiku, minimal prompt): ~2-4s — guaranteed completion
     // Never wait between retries — we're racing the 26s clock.
-    const PACK_FALLBACK_MODEL = 'claude-haiku-3-5';
+    const PACK_FALLBACK_MODEL = 'claude-haiku-3-5-20241022';
     let attempts = 0;
     while (attempts < 3) {
       attempts++;

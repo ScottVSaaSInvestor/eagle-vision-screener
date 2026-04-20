@@ -26,7 +26,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' });
 // Sonnet finishes 40K-char synthesis in 8-15s — well within 26s Netlify limit.
 // Fallback to haiku if sonnet also fails (haiku finishes in 3-6s).
 const SYNTHESIS_MODEL = 'claude-sonnet-4-6';
-const SYNTHESIS_FALLBACK_MODEL = 'claude-haiku-3-5';
+const SYNTHESIS_FALLBACK_MODEL = 'claude-haiku-3-5-20241022';
 
 // Max chars to feed synthesizer per attempt.
 // On Vercel Pro (300s): attempt 1 gets full 50K — Sonnet finishes in 15-25s.

@@ -43,7 +43,7 @@ import Anthropic from '@anthropic-ai/sdk';
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' });
 
 const SYNTHESIS_MODEL         = 'claude-sonnet-4-6';
-const SYNTHESIS_FALLBACK_MODEL = 'claude-haiku-3-5';
+const SYNTHESIS_FALLBACK_MODEL = 'claude-haiku-3-5-20241022';
 
 // Per-attempt evidence caps. Server-side so we can be more generous than browser version.
 // Sonnet handles 30K in ~12-18s. 3 attempts × 7 dims = worst case ~7min still under 300s.
