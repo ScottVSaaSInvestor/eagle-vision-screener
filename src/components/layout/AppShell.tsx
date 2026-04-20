@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { AQLLogo } from '../brand/AQLLogo';
 import { useAuthStore } from '@/store/authStore';
 
 interface AppShellProps {
@@ -18,34 +17,65 @@ export function AppShell({ children }: AppShellProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#002B49' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--navy)' }}>
       {/* Header */}
-      <header className="app-header border-b border-[rgba(197,165,114,0.2)] px-6 py-3 flex items-center justify-between sticky top-0 z-50" style={{ background: '#001A2E' }}>
-        <Link to="/dashboard" className="no-underline">
-          <AQLLogo size="sm" />
+      <header
+        className="no-print sticky top-0 z-50 px-8 py-4 flex items-center justify-between"
+        style={{
+          background: 'var(--navy-mid)',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        {/* Brand mark */}
+        <Link to="/dashboard" className="no-underline flex items-center gap-3">
+          <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 32, fontWeight: 500, color: 'var(--gold-bright)', lineHeight: 1 }}>Æ</div>
+          <div>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.22em', color: '#fff', fontWeight: 600, textTransform: 'uppercase' }}>AQL GROWTH</div>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase' }}>PERCH · AI Risk &amp; Readiness</div>
+          </div>
         </Link>
+
+        {/* Nav */}
         <nav className="flex items-center gap-6">
           <Link
             to="/dashboard"
-            className={`text-sm font-medium transition-colors ${location.pathname === '/dashboard' ? 'text-[#C5A572]' : 'text-gray-400 hover:text-white'}`}
-            style={{ fontFamily: 'Montserrat' }}
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 11,
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              color: location.pathname === '/dashboard' ? 'var(--gold-bright)' : 'rgba(255,255,255,0.55)',
+              transition: 'color 0.15s',
+            }}
           >
-            Dashboard
+            Archive
           </Link>
           <Link
             to="/new"
-            className="text-sm font-bold px-4 py-1.5 rounded-lg transition-colors"
-            style={{ background: '#CFFF04', color: '#002B49', fontFamily: 'Montserrat' }}
+            style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize: 13,
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              padding: '8px 18px',
+              background: 'var(--gold)',
+              color: 'var(--navy)',
+              borderRadius: 4,
+              transition: 'background 0.15s',
+            }}
           >
             + New Screening
           </Link>
-          <div className="flex items-center gap-3 border-l border-[rgba(197,165,114,0.2)] pl-4">
-            <span className="text-sm text-gray-400" style={{ fontFamily: 'Inter' }}>
+          <div style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>
               {partnerName}
             </span>
             <button
               onClick={handleLogout}
-              className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
             >
               Sign out
             </button>
@@ -59,11 +89,14 @@ export function AppShell({ children }: AppShellProps) {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[rgba(197,165,114,0.1)] py-4 px-6 flex items-center justify-between no-print">
-        <div className="text-xs text-gray-600" style={{ fontFamily: 'Inter' }}>
-          PERCH by AQL — AI Risk &amp; Readiness Diagnostic
+      <footer
+        className="no-print py-5 px-8 flex items-center justify-between"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
+          AQL Growth · PERCH · AI Risk &amp; Readiness Diagnostic · v2026.04
         </div>
-        <div className="text-xs text-gray-600" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>
           Powered by Claude · Research by Tavily
         </div>
       </footer>

@@ -63,8 +63,7 @@ export function LoginPage() {
         <div className="relative z-10 p-10">
           <div className="flex items-baseline gap-2">
             <span
-              className="text-3xl font-bold tracking-tight"
-              style={{ color: '#00C8DC', letterSpacing: '-0.04em' }}
+              style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.2rem', fontWeight: 600, color: 'var(--gold-bright)', letterSpacing: '-0.02em', lineHeight: 1 }}
             >
               PERCH
             </span>
@@ -80,12 +79,11 @@ export function LoginPage() {
         {/* Bottom tagline + feature bullets */}
         <div className="relative z-10 p-10 pb-12">
           <h1
-            className="text-4xl font-bold leading-tight mb-4"
-            style={{ color: '#F0F4F8', letterSpacing: '-0.03em' }}
+            style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 500, fontSize: '2.8rem', lineHeight: 1.1, color: '#F0F4F8', marginBottom: '1rem' }}
           >
             See further.<br />
             Decide faster.<br />
-            <span style={{ color: '#00C8DC' }}>Invest smarter.</span>
+            <span style={{ color: 'var(--teal-bright)' }}>Invest smarter.</span>
           </h1>
           <p className="text-sm mb-8" style={{ color: '#7A90A4', lineHeight: 1.7 }}>
             Perch is an AI-powered investment screening platform for vertical SaaS.<br />
@@ -123,7 +121,7 @@ export function LoginPage() {
       >
         {/* Mobile logo */}
         <div className="lg:hidden mb-10 text-center">
-          <div className="text-4xl font-bold" style={{ color: '#00C8DC', letterSpacing: '-0.04em' }}>
+          <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.2rem', fontWeight: 600, color: 'var(--gold-bright)', letterSpacing: '-0.02em' }}>
             PERCH
           </div>
           <div className="text-xs tracking-widest mt-1" style={{ color: '#3D5166', letterSpacing: '0.2em' }}>
@@ -146,7 +144,7 @@ export function LoginPage() {
               <div className="text-xs font-medium tracking-widest mb-3" style={{ color: '#00C8DC', letterSpacing: '0.2em' }}>
                 PARTNER ACCESS
               </div>
-              <h2 className="text-2xl font-bold text-white" style={{ letterSpacing: '-0.03em' }}>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 500, fontSize: '1.7rem', color: '#fff', lineHeight: 1.1 }}>
                 Sign in to Perch
               </h2>
               <p className="text-sm mt-1" style={{ color: '#7A90A4' }}>

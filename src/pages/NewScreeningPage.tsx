@@ -116,10 +116,10 @@ export function NewScreeningPage() {
       <div className="max-w-2xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+          <div className="text-xs font-semibold tracking-widest mb-2" style={{ color: 'var(--gold)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.22em' }}>
             STEP {step} OF 3
           </div>
-          <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Montserrat' }}>
+          <h1 className="text-white" style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 500, fontSize: '1.8rem' }}>
             {step === 1 ? 'Company Identification' : step === 2 ? 'Context & Documents' : 'Screening Configuration'}
           </h1>
           <p className="text-sm text-gray-400 mt-1" style={{ fontFamily: 'Inter' }}>
@@ -146,7 +146,7 @@ export function NewScreeningPage() {
           {step === 1 && (
             <div className="space-y-6">
               <div>
-                <label className="block text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+                <label className="block text-xs font-semibold mb-2 tracking-widest" style={{ color: 'var(--gold)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
                   COMPANY NAME *
                 </label>
                 <input
@@ -159,7 +159,7 @@ export function NewScreeningPage() {
                 {errors.companyName && <p className="mt-1 text-xs" style={{ color: '#D32F2F' }}>{errors.companyName}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+                <label className="block text-xs font-semibold mb-2 tracking-widest" style={{ color: 'var(--gold)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
                   COMPANY URL *
                 </label>
                 <input
@@ -172,7 +172,7 @@ export function NewScreeningPage() {
                 {errors.companyUrl && <p className="mt-1 text-xs" style={{ color: '#D32F2F' }}>{errors.companyUrl}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+                <label className="block text-xs font-semibold mb-2 tracking-widest" style={{ color: 'var(--gold)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
                   VERTICAL (optional — inferred if blank)
                 </label>
                 <select
@@ -191,7 +191,7 @@ export function NewScreeningPage() {
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <label className="block text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+                <label className="block text-xs font-semibold mb-2 tracking-widest" style={{ color: 'var(--gold)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
                   DOCUMENT UPLOAD (PDF/TXT, up to 3 files, 25MB each)
                 </label>
                 <div
@@ -228,7 +228,7 @@ export function NewScreeningPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-2 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+                <label className="block text-xs font-semibold mb-2 tracking-widest" style={{ color: 'var(--gold)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
                   COMPETITOR HINTS (optional)
                 </label>
                 <div className="flex gap-2">
@@ -269,7 +269,7 @@ export function NewScreeningPage() {
           {step === 3 && (
             <div className="space-y-6">
               <div>
-                <label className="block text-xs font-semibold mb-3 tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>
+                <label className="block text-xs font-semibold mb-3 tracking-widest" style={{ color: 'var(--gold)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
                   CONFIDENCE THRESHOLD
                 </label>
                 <input
@@ -278,18 +278,18 @@ export function NewScreeningPage() {
                   value={confidenceThreshold}
                   onChange={(e) => setConfidenceThreshold(parseFloat(e.target.value))}
                   className="w-full"
-                  style={{ accentColor: '#CFFF04' }}
+                  style={{ accentColor: 'var(--gold)' }}
                 />
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                   <span>Low (0)</span>
-                  <span style={{ color: '#CFFF04' }}>{confidenceThreshold.toFixed(1)}</span>
+                  <span style={{ color: 'var(--gold)' }}>{confidenceThreshold.toFixed(1)}</span>
                   <span>High (1.0)</span>
                 </div>
               </div>
 
               {/* Summary */}
               <div className="rounded-lg p-4 space-y-3" style={{ background: 'rgba(197,165,114,0.05)', border: '1px solid rgba(197,165,114,0.2)' }}>
-                <div className="text-xs font-semibold tracking-widest" style={{ color: '#C5A572', fontFamily: 'Montserrat' }}>SCREENING SUMMARY</div>
+                <div className="text-xs font-semibold tracking-widest" style={{ color: 'var(--gold)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.2em', textTransform: 'uppercase' }}>SCREENING SUMMARY</div>
                 <div className="space-y-2 text-sm" style={{ fontFamily: 'Inter' }}>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Company</span>
@@ -319,7 +319,7 @@ export function NewScreeningPage() {
                   )}
                   <div className="flex justify-between">
                     <span className="text-gray-400">Research depth</span>
-                    <span style={{ color: '#CFFF04' }}>Investment-grade (4-pass)</span>
+                    <span style={{ color: 'var(--gold)' }}>Investment-grade (4-pass)</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Estimated time</span>
@@ -350,18 +350,18 @@ export function NewScreeningPage() {
                 if (step === 1 && !validate()) return;
                 setStep(s => s + 1);
               }}
-              className="px-8 py-2.5 rounded-lg font-bold text-sm"
-              style={{ background: '#CFFF04', color: '#002B49', fontFamily: 'Montserrat' }}
+              className="px-8 py-2.5 rounded font-semibold text-sm"
+              style={{ background: 'var(--gold)', color: 'var(--navy)', fontFamily: 'Inter', letterSpacing: '0.05em', textTransform: 'uppercase' }}
             >
               Continue →
             </button>
           ) : (
             <button
               onClick={handleStart}
-              className="px-8 py-3 rounded-xl font-bold text-sm tracking-wide"
-              style={{ background: '#CFFF04', color: '#002B49', fontFamily: 'Montserrat' }}
+              className="px-8 py-3 rounded font-semibold text-sm tracking-wide"
+              style={{ background: 'var(--gold)', color: 'var(--navy)', fontFamily: 'Inter', letterSpacing: '0.05em', textTransform: 'uppercase' }}
             >
-              🦅 Start PERCH Screening
+              ⚡ Start PERCH Screening
             </button>
           )}
         </div>
