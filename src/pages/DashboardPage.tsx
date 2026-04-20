@@ -115,7 +115,7 @@ export function DashboardPage() {
                 No screenings yet
               </div>
               <div className="text-sm text-gray-500 mb-6" style={{ fontFamily: 'Inter' }}>
-                Start your first Eagle Vision screening to build your archive
+                Start your first PERCH screening to build your archive
               </div>
               <button
                 onClick={() => navigate('/new')}

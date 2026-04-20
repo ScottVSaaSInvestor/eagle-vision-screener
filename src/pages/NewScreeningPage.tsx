@@ -361,7 +361,7 @@ export function NewScreeningPage() {
               className="px-8 py-3 rounded-xl font-bold text-sm tracking-wide"
               style={{ background: '#CFFF04', color: '#002B49', fontFamily: 'Montserrat' }}
             >
-              🦅 Start Eagle Vision Screening
+              🦅 Start PERCH Screening
             </button>
           )}
         </div>

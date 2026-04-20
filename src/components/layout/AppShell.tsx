@@ -61,7 +61,7 @@ export function AppShell({ children }: AppShellProps) {
       {/* Footer */}
       <footer className="border-t border-[rgba(197,165,114,0.1)] py-4 px-6 flex items-center justify-between no-print">
         <div className="text-xs text-gray-600" style={{ fontFamily: 'Inter' }}>
-          Eagle Vision Screener v1.0.0-mvp — AQL Growth
+          PERCH by AQL — AI Risk &amp; Readiness Diagnostic
         </div>
         <div className="text-xs text-gray-600" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
           Powered by Claude · Research by Tavily

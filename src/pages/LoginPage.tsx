@@ -150,7 +150,7 @@ export function LoginPage() {
                 Sign in to Perch
               </h2>
               <p className="text-sm mt-1" style={{ color: '#7A90A4' }}>
-                Internal use — AQL Growth Partners
+                Internal use — AQL Partners
               </p>
             </div>
 

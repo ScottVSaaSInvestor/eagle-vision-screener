@@ -213,7 +213,7 @@ export function ProgressPage() {
           >
             {store.progressLog.length === 0 && (
               <div className="text-xs text-gray-600 text-center py-4" style={{ fontFamily: 'Inter' }}>
-                Initializing Eagle Vision...
+                Initializing PERCH...
               </div>
             )}
             {store.progressLog.map((event, i) => (
